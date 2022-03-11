@@ -27,18 +27,20 @@ pub type GeneralActionMainResult = Box<dyn GeneralActionOutput>;
 
 pub type GeneralActionResult = ActionResult<GeneralActionMainResult>;
 
-pub trait Cast<T> {
-	fn cast(self) -> T;
+pub trait ActionResultGenerator<T> {
+	fn result(self) -> T;
 }
 
-impl<T: 'static + GeneralActionOutput> Cast<GeneralActionResult> for ActionResult<T> {
-	fn cast(self) -> GeneralActionResult {
+impl<T: 'static + GeneralActionOutput> ActionResultGenerator<GeneralActionResult>
+	for ActionResult<T>
+{
+	fn result(self) -> GeneralActionResult {
 		self.map(|data| Box::new(data) as _)
 	}
 }
 
 pub trait GeneralAction: Action<GeneralActionMainResult> {
-	fn exec(self) -> GeneralActionMainResult;
+	fn full_run(self) -> GeneralActionMainResult;
 }
 
 pub struct ActionInput<T> {
@@ -46,7 +48,7 @@ pub struct ActionInput<T> {
 }
 
 impl<T: Action<GeneralActionMainResult>> GeneralAction for T {
-	fn exec(self) -> GeneralActionMainResult {
+	fn full_run(self) -> GeneralActionMainResult {
 		let result = self.run();
 		result.unwrap_or_else(|err| Box::new(err.run()))
 	}

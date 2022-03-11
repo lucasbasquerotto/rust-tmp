@@ -13,7 +13,7 @@ pub fn main() {
 			pass: "p4$$w0rd".to_owned(),
 		},
 	});
-	let result = login_action.exec();
+	let result = login_action.full_run();
 	println!("result: {:?}", result);
 
 	assert!(same_val(

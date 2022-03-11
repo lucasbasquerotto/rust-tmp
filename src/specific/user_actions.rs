@@ -1,5 +1,7 @@
-use crate::action::{Action, ActionInput, ActionResult};
-use crate::action::{Cast, GeneralActionMainResult, GeneralActionOutput, GeneralActionResult};
+use crate::action::{
+	Action, ActionInput, ActionResult, ActionResultGenerator, GeneralActionMainResult,
+	GeneralActionOutput, GeneralActionResult,
+};
 
 pub struct LoginData {
 	pub name: String,
@@ -21,7 +23,7 @@ pub enum UserAction {
 impl Action<GeneralActionMainResult> for UserAction {
 	fn run(self) -> GeneralActionResult {
 		match self {
-			UserAction::LOGIN(data) => login(&data).cast(),
+			UserAction::LOGIN(data) => login(&data).result(),
 		}
 	}
 }
