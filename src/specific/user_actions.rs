@@ -21,16 +21,13 @@ pub enum UserAction {
 impl Action<GeneralActionMainResult> for UserAction {
 	fn run(self) -> GeneralActionResult {
 		match self {
-			UserAction::LOGIN(data) => {
-				let input = data?;
-				login(&input).cast()
-			}
+			UserAction::LOGIN(data) => login(&data).cast(),
 		}
 	}
 }
 
-pub fn login(data: &LoginData) -> ActionResult<LoginResult> {
-	let LoginData { name, pass } = data;
+pub fn login(data: &ActionInput<LoginData>) -> ActionResult<LoginResult> {
+	let LoginData { name, pass } = &data.request;
 	println!("login: {name} ({pass})");
 	let result = LoginResult {
 		id: 1,

@@ -15,8 +15,6 @@ pub trait Exception: std::fmt::Debug {
 
 pub type ActionResult<T> = Result<T, Box<dyn Exception>>;
 
-pub type ActionInput<T> = ActionResult<T>;
-
 pub trait Action<O> {
 	fn run(self) -> ActionResult<O>;
 }
@@ -43,7 +41,9 @@ pub trait GeneralAction: Action<GeneralActionMainResult> {
 	fn exec(self) -> GeneralActionMainResult;
 }
 
-// type ActionInputContext<T> = (a: T);
+pub struct ActionInput<T> {
+	pub request: T,
+}
 
 impl<T: Action<GeneralActionMainResult>> GeneralAction for T {
 	fn exec(self) -> GeneralActionMainResult {
