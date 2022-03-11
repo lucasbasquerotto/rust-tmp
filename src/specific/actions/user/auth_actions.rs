@@ -1,4 +1,4 @@
-use crate::action::{Action, ActionCreator, ActionInput, ActionResult, GeneralActionCreator};
+use crate::action::{Action, ActionCreator, ActionInput, ActionResult};
 
 /////////////////////////////////////////////////////////////////////////////////////
 // LOGIN
@@ -36,12 +36,21 @@ impl ActionCreator<LoginData, LoginResult, Self> for LoginAction {
 	}
 }
 
-impl GeneralActionCreator for LoginAction {}
-
 /////////////////////////////////////////////////////////////////////////////////////
 // LOGOUT
 /////////////////////////////////////////////////////////////////////////////////////
 
-// pub struct LoginAction<'a>(&'a ActionInput<LoginData>);
+pub struct LogoutAction(ActionInput<()>);
 
-// pub struct Logout();
+impl Action<()> for LogoutAction {
+	fn run(self) -> ActionResult<()> {
+		println!("logout");
+		Ok(())
+	}
+}
+
+impl ActionCreator<(), (), Self> for LogoutAction {
+	fn new(input: ActionInput<()>) -> Self {
+		Self(input)
+	}
+}

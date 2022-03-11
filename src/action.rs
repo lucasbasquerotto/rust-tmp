@@ -67,6 +67,6 @@ where
 	I: Debug,
 	O: Debug,
 	K: Action<O>,
-	T: GeneralActionCreator + ActionCreator<I, O, K>,
+	T: ActionCreator<I, O, K>,
 {
 }
