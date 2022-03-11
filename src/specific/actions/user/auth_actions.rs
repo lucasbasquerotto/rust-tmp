@@ -30,15 +30,13 @@ impl Action<LoginResult> for LoginAction {
 	}
 }
 
-pub struct Login();
-
-impl<'a> ActionCreator<'a, LoginData, LoginResult, LoginAction> for Login {
-	fn new(&'a self, input: ActionInput<LoginData>) -> LoginAction {
-		LoginAction(input)
+impl ActionCreator<LoginData, LoginResult, Self> for LoginAction {
+	fn new(input: ActionInput<LoginData>) -> Self {
+		Self(input)
 	}
 }
 
-impl GeneralActionCreator for Login {}
+impl GeneralActionCreator for LoginAction {}
 
 /////////////////////////////////////////////////////////////////////////////////////
 // LOGOUT

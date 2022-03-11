@@ -36,37 +36,37 @@ pub struct ActionInput<T: Debug> {
 	pub request: T,
 }
 
-pub trait ActionCreator<'a, I, O, T>
+pub trait ActionCreator<I, O, T>
 where
 	I: Debug,
-	O: 'a + Debug,
-	T: 'a + Action<O>,
+	O: Debug,
+	T: Action<O>,
 {
-	fn new(&'a self, input: ActionInput<I>) -> T;
+	fn new(input: ActionInput<I>) -> T;
 }
 
 pub trait GeneralActionCreator {}
 
-pub trait ActionRequest<'a, I, O, T>: ActionCreator<'a, I, O, T>
+pub trait ActionRequest<I, O, T>: ActionCreator<I, O, T>
 where
 	I: Debug,
-	O: 'a + Debug,
-	T: 'a + Action<O>,
+	O: Debug,
+	T: Action<O>,
 {
-	fn run<F: Fn() -> ActionInput<I>>(&'a self, get_input: F) -> GeneralActionResult<O> {
+	fn run<F: Fn() -> ActionInput<I>>(get_input: F) -> GeneralActionResult<O> {
 		let input = get_input();
-		let action = self.new(input);
+		let action = Self::new(input);
 		let action_result = action.run();
 		let result = action_result.map_err(|err| err.run());
 		result
 	}
 }
 
-impl<'a, I, O, K, T> ActionRequest<'a, I, O, K> for T
+impl<I, O, K, T> ActionRequest<I, O, K> for T
 where
 	I: Debug,
-	O: 'a + Debug,
-	K: 'a + Action<O>,
-	T: GeneralActionCreator + ActionCreator<'a, I, O, K>,
+	O: Debug,
+	K: Action<O>,
+	T: GeneralActionCreator + ActionCreator<I, O, K>,
 {
 }

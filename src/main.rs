@@ -2,11 +2,19 @@ mod action;
 mod specific;
 
 use crate::action::{ActionInput, ActionRequest};
-use crate::specific::actions::user::auth_actions::{Login, LoginData, LoginResult};
+use crate::specific::actions::user::auth_actions::{LoginAction, LoginData, LoginResult};
 
 pub fn main() {
-	let login = Login();
-	let result = login.run(|| login_input());
+	login();
+}
+
+fn login() {
+	let result = LoginAction::run(|| ActionInput {
+		request: LoginData {
+			name: "User 01".to_owned(),
+			pass: "p4$$w0rd".to_owned(),
+		},
+	});
 	println!("result: {:?}", result);
 
 	assert_eq!(
@@ -16,13 +24,4 @@ pub fn main() {
 			name: "User 01".to_string(),
 		},
 	);
-}
-
-fn login_input() -> ActionInput<LoginData> {
-	ActionInput {
-		request: LoginData {
-			name: "User 01".to_owned(),
-			pass: "p4$$w0rd".to_owned(),
-		},
-	}
 }
