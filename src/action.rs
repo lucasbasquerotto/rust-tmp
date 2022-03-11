@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 pub trait Identifiable<T> {
 	fn id(&self) -> T;
 }
@@ -29,22 +31,31 @@ pub trait ActionResultGenerator<T> {
 	fn result(self) -> T;
 }
 
-pub struct ActionInput<T> {
+#[derive(Debug)]
+pub struct ActionInput<T: Debug> {
 	pub request: T,
 }
 
-pub trait ActionCreator<'a, I, O, T: 'a + Action<O>> {
-	fn new(&'a self, input: &'a ActionInput<I>) -> T;
+pub trait ActionCreator<'a, I, O, T>
+where
+	I: Debug,
+	O: 'a + Debug,
+	T: 'a + Action<O>,
+{
+	fn new(&'a self, input: ActionInput<I>) -> T;
 }
 
 pub trait GeneralActionCreator {}
 
 pub trait ActionRequest<'a, I, O, T>: ActionCreator<'a, I, O, T>
 where
+	I: Debug,
+	O: 'a + Debug,
 	T: 'a + Action<O>,
 {
-	fn run(&'a self, get_input: &'a dyn Fn() -> &'a ActionInput<I>) -> GeneralActionResult<O> {
-		let action = self.new(get_input());
+	fn run<F: Fn() -> ActionInput<I>>(&'a self, get_input: F) -> GeneralActionResult<O> {
+		let input = get_input();
+		let action = self.new(input);
 		let action_result = action.run();
 		let result = action_result.map_err(|err| err.run());
 		result
@@ -53,6 +64,8 @@ where
 
 impl<'a, I, O, K, T> ActionRequest<'a, I, O, K> for T
 where
+	I: Debug,
+	O: 'a + Debug,
 	K: 'a + Action<O>,
 	T: GeneralActionCreator + ActionCreator<'a, I, O, K>,
 {
