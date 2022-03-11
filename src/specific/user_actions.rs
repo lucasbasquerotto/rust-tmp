@@ -1,39 +1,13 @@
-use crate::action::{
-	Action, ActionInput, ActionResult, ActionResultGenerator, GeneralActionMainResult,
-	GeneralActionOutput, GeneralActionResult,
-};
-
-pub struct LoginData {
-	pub name: String,
-	pub pass: String,
-}
-
-#[derive(Debug)]
-pub struct LoginResult {
-	pub id: u64,
-	pub name: String,
-}
-
-impl GeneralActionOutput for LoginResult {}
+use crate::action::Identifiable;
 
 pub enum UserAction {
-	LOGIN(ActionInput<LoginData>),
+	LOGIN,
 }
 
-impl Action<GeneralActionMainResult> for UserAction {
-	fn run(self) -> GeneralActionResult {
+impl Identifiable<u32> for UserAction {
+	fn id(&self) -> u32 {
 		match self {
-			UserAction::LOGIN(data) => login(&data).result(),
+			UserAction::LOGIN => 1,
 		}
 	}
-}
-
-pub fn login(data: &ActionInput<LoginData>) -> ActionResult<LoginResult> {
-	let LoginData { name, pass } = &data.request;
-	println!("login: {name} ({pass})");
-	let result = LoginResult {
-		id: 1,
-		name: name.to_string(),
-	};
-	Ok(result)
 }

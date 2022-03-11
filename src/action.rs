@@ -15,41 +15,45 @@ pub trait Exception: std::fmt::Debug {
 
 pub type ActionResult<T> = Result<T, Box<dyn Exception>>;
 
-pub trait Action<O> {
-	fn run(self) -> ActionResult<O>;
+pub trait Action<T> {
+	fn run(self) -> ActionResult<T>;
 }
 
 pub trait GeneralActionOutput: std::fmt::Debug {}
 
 impl GeneralActionOutput for ErrorData {}
 
-pub type GeneralActionMainResult = Box<dyn GeneralActionOutput>;
-
-pub type GeneralActionResult = ActionResult<GeneralActionMainResult>;
+pub type GeneralActionResult<T> = Result<T, ErrorData>;
 
 pub trait ActionResultGenerator<T> {
 	fn result(self) -> T;
-}
-
-impl<T: 'static + GeneralActionOutput> ActionResultGenerator<GeneralActionResult>
-	for ActionResult<T>
-{
-	fn result(self) -> GeneralActionResult {
-		self.map(|data| Box::new(data) as _)
-	}
-}
-
-pub trait GeneralAction: Action<GeneralActionMainResult> {
-	fn full_run(self) -> GeneralActionMainResult;
 }
 
 pub struct ActionInput<T> {
 	pub request: T,
 }
 
-impl<T: Action<GeneralActionMainResult>> GeneralAction for T {
-	fn full_run(self) -> GeneralActionMainResult {
-		let result = self.run();
-		result.unwrap_or_else(|err| Box::new(err.run()))
+pub trait ActionCreator<'a, I, O, T: 'a + Action<O>> {
+	fn new(&'a self, input: &'a ActionInput<I>) -> T;
+}
+
+pub trait GeneralActionCreator {}
+
+pub trait ActionRequest<'a, I, O, T>: ActionCreator<'a, I, O, T>
+where
+	T: 'a + Action<O>,
+{
+	fn run(&'a self, get_input: &'a dyn Fn() -> &'a ActionInput<I>) -> GeneralActionResult<O> {
+		let action = self.new(get_input());
+		let action_result = action.run();
+		let result = action_result.map_err(|err| err.run());
+		result
 	}
+}
+
+impl<'a, I, O, K, T> ActionRequest<'a, I, O, K> for T
+where
+	K: 'a + Action<O>,
+	T: GeneralActionCreator + ActionCreator<'a, I, O, K>,
+{
 }
