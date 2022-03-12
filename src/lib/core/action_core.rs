@@ -1,6 +1,10 @@
 use crate::lib::base::action::{Action, Exception};
 use std::{collections::HashMap, fmt::Debug};
 
+pub trait ActionType<T> {
+	fn id(&self) -> T;
+}
+
 #[derive(Debug)]
 pub struct ErrorData {
 	pub key: &'static str,
@@ -24,6 +28,7 @@ pub type ActionResult<T> = Result<T, ErrorData>;
 
 pub trait CoreAction<I: Debug, O: Debug> {
 	fn new(input: ActionInput<I>) -> Self;
+	fn get_type(&self) -> Box<dyn ActionType<u32>>;
 	fn run(self) -> ActionResult<O>;
 }
 

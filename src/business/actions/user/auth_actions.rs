@@ -1,4 +1,7 @@
-use crate::lib::core::action_core::{ActionInput, ActionResult, CoreAction};
+use crate::{
+	business::user_actions::UserAction,
+	lib::core::action_core::{ActionInput, ActionResult, ActionType, CoreAction},
+};
 
 /////////////////////////////////////////////////////////////////////////////////////
 // LOGIN
@@ -23,8 +26,13 @@ impl CoreAction<LoginData, LoginResult> for LoginAction {
 		Self(input)
 	}
 
+	fn get_type(&self) -> Box<dyn ActionType<u32>> {
+		Box::new(UserAction::LOGIN)
+	}
+
 	fn run(self) -> ActionResult<LoginResult> {
-		let LoginData { name, pass } = &self.0.request;
+		let LoginAction(input) = &self;
+		let LoginData { name, pass } = &input.request;
 		println!("login: {name} ({pass})");
 		let result = LoginResult {
 			id: 1,
@@ -43,6 +51,10 @@ pub struct LogoutAction(ActionInput<()>);
 impl CoreAction<(), ()> for LogoutAction {
 	fn new(input: ActionInput<()>) -> Self {
 		Self(input)
+	}
+
+	fn get_type(&self) -> Box<dyn ActionType<u32>> {
+		Box::new(UserAction::LOGOUT)
 	}
 
 	fn run(self) -> ActionResult<()> {
