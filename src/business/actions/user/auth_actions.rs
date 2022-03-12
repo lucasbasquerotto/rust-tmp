@@ -1,4 +1,4 @@
-use crate::action::{Action, ActionCreator, ActionInput, ActionResult};
+use crate::lib::core::action_core::{ActionInput, ActionResult, CoreAction};
 
 /////////////////////////////////////////////////////////////////////////////////////
 // LOGIN
@@ -18,7 +18,11 @@ pub struct LoginResult {
 
 pub struct LoginAction(ActionInput<LoginData>);
 
-impl Action<LoginResult> for LoginAction {
+impl CoreAction<LoginData, LoginResult> for LoginAction {
+	fn new(input: ActionInput<LoginData>) -> Self {
+		Self(input)
+	}
+
 	fn run(self) -> ActionResult<LoginResult> {
 		let LoginData { name, pass } = &self.0.request;
 		println!("login: {name} ({pass})");
@@ -30,27 +34,19 @@ impl Action<LoginResult> for LoginAction {
 	}
 }
 
-impl ActionCreator<LoginData, LoginResult, Self> for LoginAction {
-	fn new(input: ActionInput<LoginData>) -> Self {
-		Self(input)
-	}
-}
-
 /////////////////////////////////////////////////////////////////////////////////////
 // LOGOUT
 /////////////////////////////////////////////////////////////////////////////////////
 
 pub struct LogoutAction(ActionInput<()>);
 
-impl Action<()> for LogoutAction {
+impl CoreAction<(), ()> for LogoutAction {
+	fn new(input: ActionInput<()>) -> Self {
+		Self(input)
+	}
+
 	fn run(self) -> ActionResult<()> {
 		println!("logout");
 		Ok(())
-	}
-}
-
-impl ActionCreator<(), (), Self> for LogoutAction {
-	fn new(input: ActionInput<()>) -> Self {
-		Self(input)
 	}
 }

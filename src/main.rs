@@ -1,20 +1,22 @@
 mod action;
-mod specific;
+mod business;
+mod lib;
 
 use std::fmt::Debug;
 
-use crate::action::{ActionInput, ActionRequest, ErrorData};
-use crate::specific::actions::user::auth_actions::{
+use crate::business::actions::user::auth_actions::{
 	LoginAction, LoginData, LoginResult, LogoutAction,
 };
+use crate::lib::base::action::ActionRequest;
+use crate::lib::core::action_core::{ActionInput, ErrorData};
 
 pub fn main() {
 	run("login".to_owned(), || login());
 	run("logout".to_owned(), || logout());
 }
 
-fn input<T: Debug>(request: T) -> ActionInput<T> {
-	ActionInput { request }
+fn input<T: Debug>(request: T) -> Result<ActionInput<T>, ErrorData> {
+	Ok(ActionInput { request })
 }
 
 fn run<T: Debug, F: Fn() -> T>(name: String, function: F) {
@@ -24,12 +26,10 @@ fn run<T: Debug, F: Fn() -> T>(name: String, function: F) {
 }
 
 fn login() -> Result<LoginResult, ErrorData> {
-	let result = LoginAction::run(|| {
-		input(LoginData {
-			name: "User 01".to_owned(),
-			pass: "p4$$w0rd".to_owned(),
-		})
-	});
+	let result = LoginAction::request(input(LoginData {
+		name: "User 01".to_owned(),
+		pass: "p4$$w0rd".to_owned(),
+	}));
 
 	assert!(result.as_ref().is_ok());
 	assert_eq!(
@@ -44,7 +44,7 @@ fn login() -> Result<LoginResult, ErrorData> {
 }
 
 fn logout() -> Result<(), ErrorData> {
-	let result = LogoutAction::run(|| input(()));
+	let result = LogoutAction::request(input(()));
 
 	assert!(result.as_ref().is_ok());
 	assert_eq!(result.as_ref().unwrap(), &());
