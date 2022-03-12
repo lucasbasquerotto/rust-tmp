@@ -26,9 +26,11 @@ pub struct ActionInput<T: Debug> {
 
 pub type ActionResult<T> = Result<T, ErrorData>;
 
+pub type CoreActionType = Box<dyn ActionType<u32>>;
+
 pub trait CoreAction<I: Debug, O: Debug> {
 	fn new(input: ActionInput<I>) -> Self;
-	fn get_type(&self) -> Box<dyn ActionType<u32>>;
+	fn get_type(&self) -> CoreActionType;
 	fn run(self) -> ActionResult<O>;
 }
 

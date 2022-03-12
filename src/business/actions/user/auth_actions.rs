@@ -1,6 +1,6 @@
 use crate::{
 	business::user_actions::UserAction,
-	lib::core::action_core::{ActionInput, ActionResult, ActionType, CoreAction},
+	lib::core::action_core::{ActionInput, ActionResult, CoreAction, CoreActionType},
 };
 
 /////////////////////////////////////////////////////////////////////////////////////
@@ -26,7 +26,7 @@ impl CoreAction<LoginData, LoginResult> for LoginAction {
 		Self(input)
 	}
 
-	fn get_type(&self) -> Box<dyn ActionType<u32>> {
+	fn get_type(&self) -> CoreActionType {
 		Box::new(UserAction::LOGIN)
 	}
 
@@ -53,7 +53,7 @@ impl CoreAction<(), ()> for LogoutAction {
 		Self(input)
 	}
 
-	fn get_type(&self) -> Box<dyn ActionType<u32>> {
+	fn get_type(&self) -> CoreActionType {
 		Box::new(UserAction::LOGOUT)
 	}
 
