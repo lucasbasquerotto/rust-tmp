@@ -1,1 +1,1 @@
-pub mod auth_actions;
+pub mod auth;
