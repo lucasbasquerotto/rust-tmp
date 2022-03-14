@@ -3,6 +3,7 @@ use std::{collections::HashMap, fmt::Debug};
 
 pub trait ActionType<T> {
 	fn id(&self) -> T;
+	// fn context() -> ActionContext;
 }
 
 #[derive(Debug)]
@@ -62,3 +63,24 @@ where
 		self.run()
 	}
 }
+
+// pub trait CoreAction<T: ActionType<u32>, I: Debug, O: Debug> {
+// 	fn get_type() -> T;
+// 	fn new(input: I) -> Self;
+// 	fn run(self) -> ActionResult<O>;
+// }
+
+// impl<A, I, O, T> Action<ActionInput<I>, O, Option<ErrorData>, CoreException> for CoreAction<A, I, O>
+// where
+// 	I: Debug,
+// 	O: Debug,
+// 	A: ActionType<u32>,
+// {
+// 	fn new(input: ActionInput<I>) -> Self {
+// 		Self::new(input)
+// 	}
+
+// 	fn run(self) -> ActionResult<O> {
+// 		self.run()
+// 	}
+// }
