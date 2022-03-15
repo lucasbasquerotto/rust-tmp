@@ -1,7 +1,8 @@
 use crate::{
-	business::actions::{
+	business::action::{
 		business_action::ActionResult,
-		contexts::user_action::{UserAction, UserActionType, UserRequestInfo},
+		context::user_action::UserAction,
+		r#type::user_action_type::{UserActionType, UserRequestInfo},
 	},
 	lib::core::action_core::{RequestInfo, RequestInput},
 };
@@ -17,21 +18,6 @@ pub struct LoginResult {
 	pub id: u64,
 	pub name: String,
 }
-
-// pub struct LoginAction(ActionInput<LoginData>);
-
-// impl CoreAction<LoginData, LoginResult> for LoginAction {
-// 	fn get_type() -> CoreActionType {
-// 		Box::new(UserAction::LOGIN)
-// 	}
-
-// 	fn new(input: ActionInput<LoginData>) -> Self {
-// 		Self(input)
-// 	}
-
-// 	fn run(self) -> ActionResult<LoginResult> {
-// 	}
-// }
 
 #[derive(Debug)]
 pub struct LoginAction<T: RequestInfo>(RequestInput<LoginData, T>);

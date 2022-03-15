@@ -3,15 +3,16 @@ mod lib;
 
 use std::fmt::Debug;
 
-use business::actions::business_action::{
+use business::action::business_action::{
 	ActionRequestResult, ActionResult, Application, Request, Session,
 };
-use business::actions::contexts::user_action::UserRequestInfo;
-use business::actions::types::login_action::LoginResult;
+
+use business::action::r#impl::login_action::LoginResult;
+use business::action::r#type::user_action_type::UserRequestInfo;
 use lib::core::action_core::RequestInput;
 
-use crate::business::actions::types::login_action::{LoginAction, LoginData};
-use crate::business::actions::types::logout_action::LogoutAction;
+use crate::business::action::r#impl::login_action::{LoginAction, LoginData};
+use crate::business::action::r#impl::logout_action::LogoutAction;
 use crate::lib::base::action::ActionRequest;
 
 pub fn main() {

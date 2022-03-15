@@ -16,7 +16,7 @@ pub struct RequestInput<D: Debug, I: RequestInfo> {
 
 pub trait ActionType<T: RequestInfo, E: Debug>: PartialEq + Eq + Debug {
 	fn context() -> ActionContext;
-	fn validate(input: T) -> Result<(), E>;
+	fn validate(&self, input: T) -> Result<(), E>;
 }
 
 // #[derive(Debug)]
