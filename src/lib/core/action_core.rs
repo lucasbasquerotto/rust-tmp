@@ -1,68 +1,73 @@
-use crate::lib::base::action::{Action, Exception};
-use std::{collections::HashMap, fmt::Debug};
+use std::fmt::Debug;
 
-pub trait ActionType<T> {
-	fn id(&self) -> T;
-	// fn context() -> ActionContext;
+pub enum ActionContext {
+	USER,
+	// MODERATOR,
+	// AUTOMATIC,
 }
+
+pub trait RequestInfo: Debug {}
 
 #[derive(Debug)]
-pub struct CoreException {
-	pub private: Option<ErrorData>,
-	pub public: Option<ErrorData>,
+pub struct RequestInput<D: Debug, I: RequestInfo> {
+	pub info: I,
+	pub data: D,
 }
 
-impl Exception<Option<ErrorData>> for CoreException {
-	fn handle(self) -> Option<ErrorData> {
-		//TODO log
-		println!(
-			"error: {private:?} / {public:?}",
-			private = &self.private,
-			public = &self.public
-		);
-		self.public
-	}
+pub trait ActionType<T: RequestInfo, E: Debug>: PartialEq + Eq + Debug {
+	fn context() -> ActionContext;
+	fn validate(input: T) -> Result<(), E>;
 }
 
-#[derive(Debug)]
-pub struct ErrorData {
-	pub key: &'static str,
-	pub msg: &'static str,
-	pub params: Option<HashMap<String, String>>,
-	pub meta: Option<HashMap<String, String>>,
-}
+// #[derive(Debug)]
+// pub struct CoreException {
+// 	pub private: Option<ErrorData>,
+// 	pub public: Option<ErrorData>,
+// }
 
-#[derive(Debug)]
-pub struct ActionInput<T: Debug> {
-	pub request: T,
-}
+// #[derive(Debug)]
+// pub struct ErrorData {
+// 	pub key: &'static str,
+// 	pub msg: &'static str,
+// 	pub params: Option<HashMap<String, String>>,
+// 	pub meta: Option<HashMap<String, String>>,
+// }
 
-pub type ActionResult<T> = Result<T, CoreException>;
+// impl Exception<Option<ErrorData>> for CoreException {
+// 	fn handle(self) -> Option<ErrorData> {
+// 		//TODO log
+// 		println!(
+// 			"error: {private:?} / {public:?}",
+// 			private = &self.private,
+// 			public = &self.public
+// 		);
+// 		self.public
+// 	}
+// }
 
-pub type ActionRequestResult<T> = Result<T, Option<ErrorData>>;
+// pub type ActionResult<T> = Result<T, CoreException>;
 
-pub type CoreActionType = Box<dyn ActionType<u32>>;
+// pub type ActionRequestResult<T> = Result<T, Option<ErrorData>>;
 
-pub trait CoreAction<I: Debug, O: Debug> {
-	fn get_type() -> CoreActionType;
-	fn new(input: ActionInput<I>) -> Self;
-	fn run(self) -> ActionResult<O>;
-}
+// pub trait CoreAction<I: Debug, O: Debug> {
+// 	fn new(input: I) -> Self;
+// 	fn run(self) -> ActionResult<O>;
+// }
 
-impl<I, O, T> Action<ActionInput<I>, O, Option<ErrorData>, CoreException> for T
-where
-	I: Debug,
-	O: Debug,
-	T: CoreAction<I, O>,
-{
-	fn new(input: ActionInput<I>) -> Self {
-		Self::new(input)
-	}
+// impl<I, O, T> Action<I, O, Option<ErrorData>, CoreException> for T
+// where
+// 	I: Debug,
+// 	O: Debug,
+// 	T: CoreAction<I, O>,
+// {
+// 	fn new(input: I) -> Self {
+// 		Self::new(input)
+// 	}
 
-	fn run(self) -> ActionResult<O> {
-		self.run()
-	}
-}
+// 	fn run(self) -> ActionResult<O> {
+// 		self.run()
+// 	}
+// }
 
 // pub trait CoreAction<T: ActionType<u32>, I: Debug, O: Debug> {
 // 	fn get_type() -> T;

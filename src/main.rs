@@ -1,21 +1,35 @@
 mod business;
 mod lib;
-mod test;
 
 use std::fmt::Debug;
 
-use crate::business::actions::user::auth::login_action::{LoginAction, LoginData, LoginResult};
-use crate::business::actions::user::auth::logout_action::LogoutAction;
+use business::actions::business_action::{
+	ActionRequestResult, ActionResult, Application, Request, Session,
+};
+use business::actions::contexts::user_action::UserRequestInfo;
+use business::actions::types::login_action::LoginResult;
+use lib::core::action_core::RequestInput;
+
+use crate::business::actions::types::login_action::{LoginAction, LoginData};
+use crate::business::actions::types::logout_action::LogoutAction;
 use crate::lib::base::action::ActionRequest;
-use crate::lib::core::action_core::{ActionInput, ActionRequestResult, ActionResult};
 
 pub fn main() {
 	run("login".to_owned(), || login());
 	run("logout".to_owned(), || logout());
 }
 
-fn input<T: Debug>(request: T) -> ActionResult<ActionInput<T>> {
-	Ok(ActionInput { request })
+fn input<T: Debug>(data: T) -> ActionResult<RequestInput<T, UserRequestInfo>> {
+	let info = UserRequestInfo {
+		application: Application {
+			request_timeout: 1000,
+		},
+		session: Session { user_id: 123 },
+		request: Request {
+			ip: "1.2.3.4".to_string(),
+		},
+	};
+	Ok(RequestInput { info, data })
 }
 
 fn run<T: Debug, F: Fn() -> T>(name: String, function: F) {
