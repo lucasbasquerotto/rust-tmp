@@ -1,3 +1,10 @@
+impl Exception<Option<ErrorData>> for BusinessException<UserRequestContext> {
+	fn handle(self) -> Option<ErrorData> {
+		let _ = &self.error();
+		self.public
+	}
+}
+
 // use std::fmt::Debug;
 
 // use crate::lib::{

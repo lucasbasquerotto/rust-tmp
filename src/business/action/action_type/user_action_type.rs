@@ -37,15 +37,6 @@ impl DescriptiveRequestContext for UserRequestContext {
 	}
 }
 
-impl RequestContext for UserRequestContext {}
-
-impl Exception<Option<ErrorData>> for BusinessException<UserRequestContext> {
-	fn handle(self) -> Option<ErrorData> {
-		let _ = &self.error();
-		self.public
-	}
-}
-
 impl ActionType<UserRequestContext, Option<ErrorData>, BusinessException<UserRequestContext>, u32>
 	for UserActionType
 {

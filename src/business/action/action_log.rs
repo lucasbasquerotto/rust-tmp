@@ -6,6 +6,8 @@ pub trait DescriptiveRequestContext: RequestContext {
 	fn description(&self) -> String;
 }
 
+impl RequestContext for DescriptiveRequestContext {}
+
 pub trait ActionLogger {
 	fn info(&self);
 	fn warn(&self);
