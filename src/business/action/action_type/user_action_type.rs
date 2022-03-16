@@ -1,8 +1,11 @@
 use std::fmt::Debug;
 
 use crate::{
-	business::action::business_action::{
-		Application, BusinessActionType, BusinessException, ErrorData, Request, Session,
+	business::action::{
+		action_log::{ActionLogger, RequestInfoDescription},
+		business_action::{
+			Application, BusinessActionType, BusinessException, ErrorData, Request, Session,
+		},
 	},
 	lib::{
 		base::action::Exception,
@@ -24,17 +27,23 @@ pub struct UserRequestInfo {
 	pub action_type: UserActionType,
 }
 
+impl RequestInfoDescription for UserRequestInfo {
+	fn description(&self) -> String {
+		let UserRequestInfo {
+			action_type,
+			session: Session { user_id },
+			..
+		} = &self;
+		let action_id = action_type.id();
+		format!("action({action_id}: {action_type:?}), user({user_id:?})")
+	}
+}
+
 impl RequestInfo for UserRequestInfo {}
 
 impl Exception<Option<ErrorData>> for BusinessException<UserRequestInfo> {
 	fn handle(self) -> Option<ErrorData> {
-		//TODO log
-		println!(
-			"error: info: {info:?} -> {private:?} / {public:?}",
-			info = &self.info,
-			private = &self.private,
-			public = &self.public
-		);
+		let _ = &self.error();
 		self.public
 	}
 }
@@ -51,21 +60,77 @@ impl BusinessActionType<UserRequestInfo, u32> for UserActionType {
 		}
 	}
 
-	fn validate(&self, input: UserRequestInfo) -> Result<(), BusinessException<UserRequestInfo>> {
+	fn validate(&self, info: UserRequestInfo) -> Result<(), BusinessException<UserRequestInfo>> {
 		match self {
-			UserActionType::LOGIN => validate_auth(input, false),
-			UserActionType::LOGOUT => validate_auth(input, true),
+			UserActionType::LOGIN => validate_auth(info, false),
+			UserActionType::LOGOUT => validate_auth(info, true),
+		}
+	}
+}
+
+#[derive(Debug)]
+enum UserTypeError {
+	UNAUTHENTICATED,
+	AUTHENTICATED,
+}
+
+impl UserTypeError {
+	fn private_error(&self) -> Option<ErrorData> {
+		match self {
+			UserTypeError::UNAUTHENTICATED => None,
+			UserTypeError::AUTHENTICATED => None,
+		}
+	}
+
+	fn public_error(&self) -> ErrorData {
+		match self {
+			UserTypeError::UNAUTHENTICATED => {
+				self.error_msg("You must be authenticated to execute this action".to_string())
+			}
+			UserTypeError::AUTHENTICATED => {
+				self.error_msg("You must be unauthenticated to execute this action".to_string())
+			}
+		}
+	}
+
+	fn error_msg(&self, msg: String) -> ErrorData {
+		let key = format!("{self:?}");
+
+		ErrorData {
+			key,
+			msg,
+			params: None,
+			meta: None,
+		}
+	}
+
+	fn exception(&self, info: UserRequestInfo) -> BusinessException<UserRequestInfo> {
+		BusinessException {
+			info: Some(info),
+			private: self.private_error(),
+			public: Some(self.public_error()),
 		}
 	}
 }
 
 fn validate_auth(
-	input: UserRequestInfo,
+	info: UserRequestInfo,
 	authenticated: bool,
 ) -> Result<(), BusinessException<UserRequestInfo>> {
-	if authenticated == (input.session.user_id > 0) {
-		Ok(())
-	} else {
-		Ok(())
+	match info.session.user_id {
+		Some(_) => {
+			if authenticated {
+				Ok(())
+			} else {
+				Err(UserTypeError::UNAUTHENTICATED.exception(info))
+			}
+		}
+		None => {
+			if authenticated {
+				Err(UserTypeError::AUTHENTICATED.exception(info))
+			} else {
+				Ok(())
+			}
+		}
 	}
 }

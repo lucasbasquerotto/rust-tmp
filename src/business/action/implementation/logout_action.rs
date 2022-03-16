@@ -18,6 +18,10 @@ impl UserAction<(), ()> for LogoutAction<UserRequestInfo> {
 		Self(input)
 	}
 
+	fn input(self) -> RequestInput<(), UserRequestInfo> {
+		self.0
+	}
+
 	fn run(self) -> UserActionResult<()> {
 		println!("logout");
 		Ok(())

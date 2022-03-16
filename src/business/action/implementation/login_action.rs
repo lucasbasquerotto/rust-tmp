@@ -30,6 +30,10 @@ impl UserAction<LoginData, LoginResult> for LoginAction<UserRequestInfo> {
 		Self(input)
 	}
 
+	fn input(self) -> RequestInput<LoginData, UserRequestInfo> {
+		self.0
+	}
+
 	fn run(self) -> UserActionResult<LoginResult> {
 		let LoginAction(input) = &self;
 		let LoginData { name, pass } = &input.data;

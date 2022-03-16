@@ -13,6 +13,7 @@ pub type UserActionResult<T> = Result<T, BusinessException<UserRequestInfo>>;
 pub trait UserAction<I: Debug, O: Debug>: Debug {
 	fn action_type() -> UserActionType;
 	fn new(input: RequestInput<I, UserRequestInfo>) -> Self;
+	fn input(self) -> RequestInput<I, UserRequestInfo>;
 	fn run(self) -> UserActionResult<O>;
 }
 
@@ -32,6 +33,8 @@ where
 	}
 
 	fn run(self) -> UserActionResult<O> {
+		//TODO
+		//Self::action_type().validate(self.input().info);
 		self.run()
 	}
 }
