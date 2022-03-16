@@ -1,26 +1,11 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::fmt::Debug;
 
 use crate::lib::{
 	base::action::Exception,
 	core::action_core::{ActionContext, ActionType, RequestInfo, RequestInput},
 };
 
-#[derive(Debug)]
-pub struct BusinessException<T: RequestInfo> {
-	pub info: Option<T>,
-	pub private: Option<ErrorData>,
-	pub public: Option<ErrorData>,
-}
-
-#[derive(Debug)]
-pub struct ErrorData {
-	pub key: String,
-	pub msg: &'static str,
-	pub params: Option<HashMap<String, String>>,
-	pub meta: Option<HashMap<String, String>>,
-}
-
-pub type ActionRequestResult<T> = Result<T, Option<ErrorData>>;
+use super::action_data::{BusinessException, ErrorData};
 
 pub trait BusinessActionType<T, I>: PartialEq + Eq + Debug
 where
@@ -57,27 +42,6 @@ pub trait BusinessAction<
 	fn action_type() -> T;
 	fn new(input: RequestInput<D, I>) -> Self;
 	fn run(self) -> Result<O, E>;
-}
-
-#[derive(Clone, Debug)]
-pub struct Request {
-	pub ip: String,
-}
-
-#[derive(Clone, Debug)]
-pub struct Session {
-	pub user_id: Option<u64>,
-}
-
-#[derive(Clone, Debug)]
-pub struct ModeratorSession {
-	pub user_id: u64,
-	pub allowed_actions: u32,
-}
-
-#[derive(Clone, Debug)]
-pub struct Application {
-	pub request_timeout: u32,
 }
 
 // #[derive(Debug)]

@@ -1,6 +1,6 @@
 use crate::lib::core::action_core::RequestInfo;
 
-use super::business_action::BusinessException;
+use super::action_data::BusinessException;
 
 pub trait RequestInfoDescription: RequestInfo {
 	fn description(&self) -> String;
@@ -31,14 +31,14 @@ impl<T: RequestInfoDescription> ActionLogger for BusinessException<T> {
 	}
 
 	fn warn(&self) {
-		info!("{}", create_msg(self, "warn".to_string()))
+		warn!("{}", create_msg(self, "warn".to_string()))
 	}
 
 	fn error(&self) {
-		info!("{}", create_msg(self, "error".to_string()))
+		error!("{}", create_msg(self, "error".to_string()))
 	}
 
 	fn debug(&self) {
-		info!("{}", create_msg(self, "debug".to_string()))
+		debug!("{}", create_msg(self, "debug".to_string()))
 	}
 }

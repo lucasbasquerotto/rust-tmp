@@ -6,7 +6,7 @@ mod lib;
 
 use std::fmt::Debug;
 
-use business::action::business_action::{ActionRequestResult, Application, Request, Session};
+use business::action::action_data::{ActionRequestResult, Application, Request, Session};
 
 use business::action::action_type::user_action_type::UserRequestInfo;
 use business::action::definition::user_action::UserAction;

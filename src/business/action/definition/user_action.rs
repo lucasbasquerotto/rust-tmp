@@ -2,8 +2,9 @@ use std::fmt::Debug;
 
 use crate::{
 	business::action::{
+		action_data::{BusinessException, ErrorData},
 		action_type::user_action_type::{UserActionType, UserRequestInfo},
-		business_action::{BusinessAction, BusinessActionType, BusinessException, ErrorData},
+		business_action::{BusinessAction, BusinessActionType},
 	},
 	lib::{base::action::Action, core::action_core::RequestInput},
 };
