@@ -1,62 +1,80 @@
 use std::fmt::Debug;
 
 use crate::lib::{
-	base::action::Exception,
-	core::action_core::{ActionContext, ActionType, RequestInfo, RequestInput},
+	core::action::Exception,
+	core::action::{ActionScope, ActionType, RequestContext, RequestInput},
 };
 
 use super::action_data::{BusinessException, ErrorData};
 
-pub trait BusinessActionType<T, I>: PartialEq + Eq + Debug
+pub trait BusinessActionType<C, I>: PartialEq + Eq + Debug
 where
-	T: RequestInfo,
+	C: RequestContext,
 	I: PartialEq + Eq + Debug,
 {
-	fn context() -> ActionContext;
+	fn scope() -> ActionScope;
 	fn id(&self) -> I;
-	fn validate(&self, info: &T) -> Result<(), BusinessException<T>>;
+	fn validate(&self, info: &C) -> Result<(), BusinessException<C>>;
 }
 
-impl<I, T> ActionType<I, BusinessException<I>> for T
+impl<C, T> ActionType<C, BusinessException<C>> for T
 where
-	I: RequestInfo,
-	T: BusinessActionType<I, u32>,
+	C: RequestContext,
+	T: BusinessActionType<C, u32>,
 {
-	fn context() -> ActionContext {
-		Self::context()
+	fn scope() -> ActionScope {
+		Self::scope()
 	}
 
-	fn validate(&self, info: &I) -> Result<(), BusinessException<I>> {
+	fn validate(&self, info: &C) -> Result<(), BusinessException<C>> {
 		self.validate(info)
 	}
 }
 
 pub trait BusinessAction<
-	I: RequestInfo,
-	D: Debug,
+	C: RequestContext,
+	I: Debug,
 	O: Debug,
 	E: Exception<Option<ErrorData>>,
-	T: BusinessActionType<I, u32>,
+	T: BusinessActionType<C, u32>,
 >
 {
 	fn action_type() -> T;
-	fn new(input: RequestInput<D, I>) -> Self;
+	fn new(input: RequestInput<I, C>) -> Self;
+	fn input(&self) -> &RequestInput<I, C>;
 	fn run(self) -> Result<O, E>;
 }
 
+// impl<I, D, O, T, A> Action<RequestInput<D, I>, O, Option<ErrorData>, BusinessException<I>> for A
+// where
+// 	I: Debug,
+// 	O: Debug,
+// 	T: ActionType<I, BusinessException<I>>,
+// 	A: BusinessAction<I, D, O, BusinessException<I>, T>,
+// {
+// 	fn new(input: RequestInput<D, I>) -> Self {
+// 		Self::new(input)
+// 	}
+
+// 	fn run(self) -> Result<O, BusinessException<I>> {
+// 		Self::action_type().validate(&self.input().info)?;
+// 		self.run()
+// 	}
+// }
+
 // #[derive(Debug)]
-// pub struct ModeratorRequestInfo {
+// pub struct ModeratorRequestContext {
 // 	pub application: Application,
 // 	pub session: ModeratorSession,
 // 	pub request: Request,
 // }
 
-// impl RequestInfo for ModeratorRequestInfo {}
+// impl RequestContext for ModeratorRequestContext {}
 
 // #[derive(Debug)]
-// pub struct AutomaticRequestInfo {
+// pub struct AutomaticRequestContext {
 // 	pub application: Application,
 // 	pub request: Request,
 // }
 
-// impl RequestInfo for AutomaticRequestInfo {}
+// impl RequestContext for AutomaticRequestContext {}

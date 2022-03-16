@@ -1,8 +1,8 @@
-use crate::lib::core::action_core::RequestInfo;
+use crate::lib::core::action::RequestContext;
 
 use super::action_data::BusinessException;
 
-pub trait RequestInfoDescription: RequestInfo {
+pub trait DescriptiveRequestContext: RequestContext {
 	fn description(&self) -> String;
 }
 
@@ -13,8 +13,11 @@ pub trait ActionLogger {
 	fn debug(&self);
 }
 
-fn create_msg<T: RequestInfoDescription>(item: &BusinessException<T>, msg_type: String) -> String {
-	let description = match &item.info {
+fn create_msg<C: DescriptiveRequestContext>(
+	item: &BusinessException<C>,
+	msg_type: String,
+) -> String {
+	let description = match &item.context {
 		Some(info) => info.description(),
 		None => "".to_string(),
 	};
@@ -25,7 +28,7 @@ fn create_msg<T: RequestInfoDescription>(item: &BusinessException<T>, msg_type: 
 	)
 }
 
-impl<T: RequestInfoDescription> ActionLogger for BusinessException<T> {
+impl<C: DescriptiveRequestContext> ActionLogger for BusinessException<C> {
 	fn info(&self) {
 		info!("{}", create_msg(self, "info".to_string()))
 	}

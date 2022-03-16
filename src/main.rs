@@ -8,14 +8,15 @@ use std::fmt::Debug;
 
 use business::action::action_data::{ActionRequestResult, Application, Request, Session};
 
-use business::action::action_type::user_action_type::UserRequestInfo;
+use business::action::action_type::user_action_type::UserRequestContext;
 use business::action::definition::user_action::UserAction;
 use business::action::implementation::login_action::LoginResult;
-use lib::core::action_core::RequestInput;
+use lib::core::action::RequestInput;
 
+use crate::business::action::action_data::ErrorData;
 use crate::business::action::implementation::login_action::{LoginAction, LoginData};
 use crate::business::action::implementation::logout_action::LogoutAction;
-use crate::lib::base::action::ActionRequest;
+use crate::lib::core::action::ActionRequest;
 
 use log::{Level, LevelFilter, Metadata, Record};
 
@@ -50,7 +51,7 @@ trait TestRequest<I: Debug, O: Debug> {
 
 impl<I: Debug, O: Debug, A: UserAction<I, O>> TestRequest<I, O> for A {
 	fn test_request(data: I) -> ActionRequestResult<O> {
-		let info = UserRequestInfo {
+		let context = UserRequestContext {
 			application: Application {
 				request_timeout: 1000,
 			},
@@ -60,7 +61,7 @@ impl<I: Debug, O: Debug, A: UserAction<I, O>> TestRequest<I, O> for A {
 			},
 			action_type: Self::action_type(),
 		};
-		let input = Ok(RequestInput { info, data });
+		let input = Ok(RequestInput { context, data });
 		Self::request(input)
 	}
 }
@@ -77,14 +78,24 @@ fn login() -> ActionRequestResult<LoginResult> {
 		pass: "p4$$w0rd".to_owned(),
 	});
 
-	assert!(result.as_ref().is_ok());
+	assert!(result.as_ref().is_err());
 	assert_eq!(
-		result.as_ref().unwrap(),
-		&LoginResult {
-			id: 1,
-			name: "User 01".to_string(),
-		},
+		result.as_ref().unwrap_err(),
+		&Some(ErrorData {
+			key: "AUTHENTICATED".to_string(),
+			msg: "You can't execute this action while authenticated.",
+			params: None,
+			meta: None
+		}),
 	);
+	// assert!(result.as_ref().is_ok());
+	// assert_eq!(
+	// 	result.as_ref().unwrap(),
+	// 	&LoginResult {
+	// 		id: 1,
+	// 		name: "User 01".to_string(),
+	// 	},
+	// );
 
 	result
 }

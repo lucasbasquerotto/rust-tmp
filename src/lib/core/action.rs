@@ -1,5 +1,24 @@
 use std::fmt::Debug;
 
+pub enum ActionScope {
+	USER,
+	// MODERATOR,
+	// AUTOMATIC,
+}
+
+pub trait RequestContext: Debug {}
+
+#[derive(Debug)]
+pub struct RequestInput<I: Debug, C: RequestContext> {
+	pub context: C,
+	pub data: I,
+}
+
+pub trait ActionType<T: RequestContext, E: Debug>: PartialEq + Eq + Debug {
+	fn scope() -> ActionScope;
+	fn validate(&self, info: &T) -> Result<(), E>;
+}
+
 pub trait Exception<E: Debug>: Debug {
 	fn handle(self) -> E;
 }

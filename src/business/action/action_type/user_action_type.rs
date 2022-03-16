@@ -3,12 +3,12 @@ use std::fmt::Debug;
 use crate::{
 	business::action::{
 		action_data::{Application, BusinessException, ErrorData, Request, Session},
-		action_log::{ActionLogger, RequestInfoDescription},
+		action_log::{ActionLogger, DescriptiveRequestContext},
 		business_action::BusinessActionType,
 	},
 	lib::{
-		base::action::Exception,
-		core::action_core::{ActionContext, RequestInfo},
+		core::action::Exception,
+		core::action::{ActionScope, RequestContext},
 	},
 };
 
@@ -19,16 +19,16 @@ pub enum UserActionType {
 }
 
 #[derive(Clone, Debug)]
-pub struct UserRequestInfo {
+pub struct UserRequestContext {
 	pub application: Application,
 	pub session: Session,
 	pub request: Request,
 	pub action_type: UserActionType,
 }
 
-impl RequestInfoDescription for UserRequestInfo {
+impl DescriptiveRequestContext for UserRequestContext {
 	fn description(&self) -> String {
-		let UserRequestInfo {
+		let UserRequestContext {
 			action_type,
 			session: Session { user_id },
 			..
@@ -38,18 +38,18 @@ impl RequestInfoDescription for UserRequestInfo {
 	}
 }
 
-impl RequestInfo for UserRequestInfo {}
+impl RequestContext for UserRequestContext {}
 
-impl Exception<Option<ErrorData>> for BusinessException<UserRequestInfo> {
+impl Exception<Option<ErrorData>> for BusinessException<UserRequestContext> {
 	fn handle(self) -> Option<ErrorData> {
 		let _ = &self.error();
 		self.public
 	}
 }
 
-impl BusinessActionType<UserRequestInfo, u32> for UserActionType {
-	fn context() -> ActionContext {
-		ActionContext::USER
+impl BusinessActionType<UserRequestContext, u32> for UserActionType {
+	fn scope() -> ActionScope {
+		ActionScope::USER
 	}
 
 	fn id(&self) -> u32 {
@@ -59,10 +59,13 @@ impl BusinessActionType<UserRequestInfo, u32> for UserActionType {
 		}
 	}
 
-	fn validate(&self, info: &UserRequestInfo) -> Result<(), BusinessException<UserRequestInfo>> {
+	fn validate(
+		&self,
+		context: &UserRequestContext,
+	) -> Result<(), BusinessException<UserRequestContext>> {
 		match self {
-			UserActionType::LOGIN => validate_auth(info, false),
-			UserActionType::LOGOUT => validate_auth(info, true),
+			UserActionType::LOGIN => validate_auth(context, false),
+			UserActionType::LOGOUT => validate_auth(context, true),
 		}
 	}
 }
@@ -103,9 +106,9 @@ impl UserTypeError {
 		}
 	}
 
-	fn exception(&self, info: &UserRequestInfo) -> BusinessException<UserRequestInfo> {
+	fn exception(&self, context: &UserRequestContext) -> BusinessException<UserRequestContext> {
 		BusinessException {
-			info: Some(info.clone()),
+			context: Some(context.clone()),
 			private: self.private_error(),
 			public: Some(self.public_error()),
 		}
@@ -113,20 +116,20 @@ impl UserTypeError {
 }
 
 fn validate_auth(
-	info: &UserRequestInfo,
+	context: &UserRequestContext,
 	expect_auth: bool,
-) -> Result<(), BusinessException<UserRequestInfo>> {
-	match info.session.user_id {
+) -> Result<(), BusinessException<UserRequestContext>> {
+	match context.session.user_id {
 		Some(_) => {
 			if expect_auth {
 				Ok(())
 			} else {
-				Err(UserTypeError::AUTHENTICATED.exception(info))
+				Err(UserTypeError::AUTHENTICATED.exception(context))
 			}
 		}
 		None => {
 			if expect_auth {
-				Err(UserTypeError::UNAUTHENTICATED.exception(info))
+				Err(UserTypeError::UNAUTHENTICATED.exception(context))
 			} else {
 				Ok(())
 			}

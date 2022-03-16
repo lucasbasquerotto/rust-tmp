@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::lib::core::action_core::RequestInfo;
+use crate::lib::core::action::RequestContext;
 
 #[derive(Clone, Debug)]
 pub struct Request {
@@ -24,13 +24,13 @@ pub struct Application {
 }
 
 #[derive(Debug)]
-pub struct BusinessException<T: RequestInfo> {
-	pub info: Option<T>,
+pub struct BusinessException<C: RequestContext> {
+	pub context: Option<C>,
 	pub private: Option<ErrorData>,
 	pub public: Option<ErrorData>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct ErrorData {
 	pub key: String,
 	pub msg: &'static str,

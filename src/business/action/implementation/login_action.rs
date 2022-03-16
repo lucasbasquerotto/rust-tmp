@@ -1,9 +1,9 @@
 use crate::{
 	business::action::{
-		action_type::user_action_type::{UserActionType, UserRequestInfo},
+		action_type::user_action_type::{UserActionType, UserRequestContext},
 		definition::user_action::{UserAction, UserActionResult},
 	},
-	lib::core::action_core::{RequestInfo, RequestInput},
+	lib::core::action::{RequestContext, RequestInput},
 };
 
 #[derive(Debug)]
@@ -19,18 +19,18 @@ pub struct LoginResult {
 }
 
 #[derive(Debug)]
-pub struct LoginAction<T: RequestInfo>(RequestInput<LoginData, T>);
+pub struct LoginAction<T: RequestContext>(RequestInput<LoginData, T>);
 
-impl UserAction<LoginData, LoginResult> for LoginAction<UserRequestInfo> {
+impl UserAction<LoginData, LoginResult> for LoginAction<UserRequestContext> {
 	fn action_type() -> UserActionType {
 		UserActionType::LOGIN
 	}
 
-	fn new(input: RequestInput<LoginData, UserRequestInfo>) -> Self {
+	fn new(input: RequestInput<LoginData, UserRequestContext>) -> Self {
 		Self(input)
 	}
 
-	fn input(&self) -> &RequestInput<LoginData, UserRequestInfo> {
+	fn input(&self) -> &RequestInput<LoginData, UserRequestContext> {
 		&self.0
 	}
 

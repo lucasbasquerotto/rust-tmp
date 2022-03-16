@@ -1,24 +1,24 @@
 use crate::{
 	business::action::{
-		action_type::user_action_type::{UserActionType, UserRequestInfo},
+		action_type::user_action_type::{UserActionType, UserRequestContext},
 		definition::user_action::{UserAction, UserActionResult},
 	},
-	lib::core::action_core::{RequestInfo, RequestInput},
+	lib::core::action::{RequestContext, RequestInput},
 };
 
 #[derive(Debug)]
-pub struct LogoutAction<T: RequestInfo>(RequestInput<(), T>);
+pub struct LogoutAction<T: RequestContext>(RequestInput<(), T>);
 
-impl UserAction<(), ()> for LogoutAction<UserRequestInfo> {
+impl UserAction<(), ()> for LogoutAction<UserRequestContext> {
 	fn action_type() -> UserActionType {
 		UserActionType::LOGOUT
 	}
 
-	fn new(input: RequestInput<(), UserRequestInfo>) -> Self {
+	fn new(input: RequestInput<(), UserRequestContext>) -> Self {
 		Self(input)
 	}
 
-	fn input(&self) -> &RequestInput<(), UserRequestInfo> {
+	fn input(&self) -> &RequestInput<(), UserRequestContext> {
 		&self.0
 	}
 
