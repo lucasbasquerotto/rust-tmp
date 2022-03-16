@@ -13,13 +13,13 @@ use crate::{
 	},
 };
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum UserActionType {
 	LOGIN,
 	LOGOUT,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct UserRequestInfo {
 	pub application: Application,
 	pub session: Session,
@@ -60,7 +60,7 @@ impl BusinessActionType<UserRequestInfo, u32> for UserActionType {
 		}
 	}
 
-	fn validate(&self, info: UserRequestInfo) -> Result<(), BusinessException<UserRequestInfo>> {
+	fn validate(&self, info: &UserRequestInfo) -> Result<(), BusinessException<UserRequestInfo>> {
 		match self {
 			UserActionType::LOGIN => validate_auth(info, false),
 			UserActionType::LOGOUT => validate_auth(info, true),
@@ -85,15 +85,15 @@ impl UserTypeError {
 	fn public_error(&self) -> ErrorData {
 		match self {
 			UserTypeError::UNAUTHENTICATED => {
-				self.error_msg("You must be authenticated to execute this action".to_string())
+				self.error_msg("You must be authenticated to execute this action.")
 			}
 			UserTypeError::AUTHENTICATED => {
-				self.error_msg("You must be unauthenticated to execute this action".to_string())
+				self.error_msg("You can't execute this action while authenticated.")
 			}
 		}
 	}
 
-	fn error_msg(&self, msg: String) -> ErrorData {
+	fn error_msg(&self, msg: &'static str) -> ErrorData {
 		let key = format!("{self:?}");
 
 		ErrorData {
@@ -104,9 +104,9 @@ impl UserTypeError {
 		}
 	}
 
-	fn exception(&self, info: UserRequestInfo) -> BusinessException<UserRequestInfo> {
+	fn exception(&self, info: &UserRequestInfo) -> BusinessException<UserRequestInfo> {
 		BusinessException {
-			info: Some(info),
+			info: Some(info.clone()),
 			private: self.private_error(),
 			public: Some(self.public_error()),
 		}
@@ -114,20 +114,20 @@ impl UserTypeError {
 }
 
 fn validate_auth(
-	info: UserRequestInfo,
-	authenticated: bool,
+	info: &UserRequestInfo,
+	expect_auth: bool,
 ) -> Result<(), BusinessException<UserRequestInfo>> {
 	match info.session.user_id {
 		Some(_) => {
-			if authenticated {
+			if expect_auth {
 				Ok(())
 			} else {
-				Err(UserTypeError::UNAUTHENTICATED.exception(info))
+				Err(UserTypeError::AUTHENTICATED.exception(info))
 			}
 		}
 		None => {
-			if authenticated {
-				Err(UserTypeError::AUTHENTICATED.exception(info))
+			if expect_auth {
+				Err(UserTypeError::UNAUTHENTICATED.exception(info))
 			} else {
 				Ok(())
 			}

@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::{
 	business::action::{
 		action_type::user_action_type::{UserActionType, UserRequestInfo},
-		business_action::{BusinessAction, BusinessException, ErrorData},
+		business_action::{BusinessAction, BusinessActionType, BusinessException, ErrorData},
 	},
 	lib::{base::action::Action, core::action_core::RequestInput},
 };
@@ -13,7 +13,7 @@ pub type UserActionResult<T> = Result<T, BusinessException<UserRequestInfo>>;
 pub trait UserAction<I: Debug, O: Debug>: Debug {
 	fn action_type() -> UserActionType;
 	fn new(input: RequestInput<I, UserRequestInfo>) -> Self;
-	fn input(self) -> RequestInput<I, UserRequestInfo>;
+	fn input(&self) -> &RequestInput<I, UserRequestInfo>;
 	fn run(self) -> UserActionResult<O>;
 }
 
@@ -33,8 +33,7 @@ where
 	}
 
 	fn run(self) -> UserActionResult<O> {
-		//TODO
-		//Self::action_type().validate(self.input().info);
+		Self::action_type().validate(&self.input().info)?;
 		self.run()
 	}
 }

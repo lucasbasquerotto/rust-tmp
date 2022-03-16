@@ -30,8 +30,8 @@ impl UserAction<LoginData, LoginResult> for LoginAction<UserRequestInfo> {
 		Self(input)
 	}
 
-	fn input(self) -> RequestInput<LoginData, UserRequestInfo> {
-		self.0
+	fn input(&self) -> &RequestInput<LoginData, UserRequestInfo> {
+		&self.0
 	}
 
 	fn run(self) -> UserActionResult<LoginResult> {

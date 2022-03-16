@@ -15,7 +15,7 @@ pub struct BusinessException<T: RequestInfo> {
 #[derive(Debug)]
 pub struct ErrorData {
 	pub key: String,
-	pub msg: String,
+	pub msg: &'static str,
 	pub params: Option<HashMap<String, String>>,
 	pub meta: Option<HashMap<String, String>>,
 }
@@ -29,7 +29,7 @@ where
 {
 	fn context() -> ActionContext;
 	fn id(&self) -> I;
-	fn validate(&self, info: T) -> Result<(), BusinessException<T>>;
+	fn validate(&self, info: &T) -> Result<(), BusinessException<T>>;
 }
 
 impl<I, T> ActionType<I, BusinessException<I>> for T
@@ -41,7 +41,7 @@ where
 		Self::context()
 	}
 
-	fn validate(&self, info: I) -> Result<(), BusinessException<I>> {
+	fn validate(&self, info: &I) -> Result<(), BusinessException<I>> {
 		self.validate(info)
 	}
 }
@@ -59,23 +59,23 @@ pub trait BusinessAction<
 	fn run(self) -> Result<O, E>;
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Request {
 	pub ip: String,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Session {
 	pub user_id: Option<u64>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct ModeratorSession {
 	pub user_id: u64,
 	pub allowed_actions: u32,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Application {
 	pub request_timeout: u32,
 }
