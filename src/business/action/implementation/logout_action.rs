@@ -1,8 +1,7 @@
 use crate::{
 	business::action::{
-		business_action::ActionResult,
-		def::user_action::UserAction,
-		r#type::user_action_type::{UserActionType, UserRequestInfo},
+		action_type::user_action_type::{UserActionType, UserRequestInfo},
+		definition::user_action::{UserAction, UserActionResult},
 	},
 	lib::core::action_core::{RequestInfo, RequestInput},
 };
@@ -19,7 +18,7 @@ impl UserAction<(), ()> for LogoutAction<UserRequestInfo> {
 		Self(input)
 	}
 
-	fn run(self) -> ActionResult<()> {
+	fn run(self) -> UserActionResult<()> {
 		println!("logout");
 		Ok(())
 	}

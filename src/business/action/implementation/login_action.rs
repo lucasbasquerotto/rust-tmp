@@ -1,8 +1,7 @@
 use crate::{
 	business::action::{
-		business_action::ActionResult,
-		def::user_action::UserAction,
-		r#type::user_action_type::{UserActionType, UserRequestInfo},
+		action_type::user_action_type::{UserActionType, UserRequestInfo},
+		definition::user_action::{UserAction, UserActionResult},
 	},
 	lib::core::action_core::{RequestInfo, RequestInput},
 };
@@ -31,7 +30,7 @@ impl UserAction<LoginData, LoginResult> for LoginAction<UserRequestInfo> {
 		Self(input)
 	}
 
-	fn run(self) -> ActionResult<LoginResult> {
+	fn run(self) -> UserActionResult<LoginResult> {
 		let LoginAction(input) = &self;
 		let LoginData { name, pass } = &input.data;
 		println!("login: {name} ({pass})");

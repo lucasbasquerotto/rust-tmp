@@ -1,4 +1,4 @@
+pub mod action_type;
 pub mod business_action;
-pub mod def;
-pub mod r#impl;
-pub mod r#type;
+pub mod definition;
+pub mod implementation;

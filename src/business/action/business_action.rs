@@ -6,7 +6,8 @@ use crate::lib::{
 };
 
 #[derive(Debug)]
-pub struct BusinessException {
+pub struct BusinessException<T: RequestInfo> {
+	pub info: Option<T>,
 	pub private: Option<ErrorData>,
 	pub public: Option<ErrorData>,
 }
@@ -19,20 +20,6 @@ pub struct ErrorData {
 	pub meta: Option<HashMap<String, String>>,
 }
 
-impl Exception<Option<ErrorData>> for BusinessException {
-	fn handle(self) -> Option<ErrorData> {
-		//TODO log
-		println!(
-			"error: {private:?} / {public:?}",
-			private = &self.private,
-			public = &self.public
-		);
-		self.public
-	}
-}
-
-pub type ActionResult<T> = Result<T, BusinessException>;
-
 pub type ActionRequestResult<T> = Result<T, Option<ErrorData>>;
 
 pub trait BusinessActionType<T, I>: PartialEq + Eq + Debug
@@ -42,10 +29,10 @@ where
 {
 	fn context() -> ActionContext;
 	fn id(&self) -> I;
-	fn validate(&self, input: T) -> Result<(), BusinessException>;
+	fn validate(&self, input: T) -> Result<(), BusinessException<T>>;
 }
 
-impl<I, T> ActionType<I, BusinessException> for T
+impl<I, T> ActionType<I, BusinessException<I>> for T
 where
 	I: RequestInfo,
 	T: BusinessActionType<I, u32>,
@@ -54,15 +41,22 @@ where
 		Self::context()
 	}
 
-	fn validate(&self, input: I) -> Result<(), BusinessException> {
+	fn validate(&self, input: I) -> Result<(), BusinessException<I>> {
 		self.validate(input)
 	}
 }
 
-pub trait BusinessAction<I: RequestInfo, D: Debug, O: Debug, T: BusinessActionType<I, u32>> {
+pub trait BusinessAction<
+	I: RequestInfo,
+	D: Debug,
+	O: Debug,
+	E: Exception<Option<ErrorData>>,
+	T: BusinessActionType<I, u32>,
+>
+{
 	fn action_type() -> T;
 	fn new(input: RequestInput<D, I>) -> Self;
-	fn run(self) -> ActionResult<O>;
+	fn run(self) -> Result<O, E>;
 }
 
 #[derive(Debug)]
