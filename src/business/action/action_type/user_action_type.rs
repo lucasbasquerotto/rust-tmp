@@ -4,11 +4,10 @@ use crate::{
 	business::action::{
 		action_data::{Application, BusinessException, ErrorData, Request, Session},
 		action_log::{ActionLogger, DescriptiveRequestContext},
-		business_action::BusinessActionType,
 	},
 	lib::{
 		core::action::Exception,
-		core::action::{ActionScope, RequestContext},
+		core::action::{ActionScope, ActionType, RequestContext},
 	},
 };
 
@@ -47,7 +46,9 @@ impl Exception<Option<ErrorData>> for BusinessException<UserRequestContext> {
 	}
 }
 
-impl BusinessActionType<UserRequestContext, u32> for UserActionType {
+impl ActionType<UserRequestContext, Option<ErrorData>, BusinessException<UserRequestContext>, u32>
+	for UserActionType
+{
 	fn scope() -> ActionScope {
 		ActionScope::USER
 	}

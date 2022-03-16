@@ -1,49 +1,49 @@
-use std::fmt::Debug;
+// use std::fmt::Debug;
 
-use crate::lib::{
-	core::action::Exception,
-	core::action::{ActionScope, ActionType, RequestContext, RequestInput},
-};
+// use crate::lib::{
+// 	core::action::Exception,
+// 	core::action::{ActionScope, ActionType, RequestContext, RequestInput},
+// };
 
-use super::action_data::{BusinessException, ErrorData};
+// use super::action_data::{BusinessException, ErrorData};
 
-pub trait BusinessActionType<C, I>: PartialEq + Eq + Debug
-where
-	C: RequestContext,
-	I: PartialEq + Eq + Debug,
-{
-	fn scope() -> ActionScope;
-	fn id(&self) -> I;
-	fn validate(&self, info: &C) -> Result<(), BusinessException<C>>;
-}
+// pub trait BusinessActionType<C, I>: PartialEq + Eq + Debug
+// where
+// 	C: RequestContext,
+// 	I: PartialEq + Eq + Debug,
+// {
+// 	fn scope() -> ActionScope;
+// 	fn id(&self) -> I;
+// 	fn validate(&self, info: &C) -> Result<(), BusinessException<C>>;
+// }
 
-impl<C, T> ActionType<C, BusinessException<C>> for T
-where
-	C: RequestContext,
-	T: BusinessActionType<C, u32>,
-{
-	fn scope() -> ActionScope {
-		Self::scope()
-	}
+// impl<C, T> ActionType<C, BusinessException<C>> for T
+// where
+// 	C: RequestContext,
+// 	T: BusinessActionType<C, u32>,
+// {
+// 	fn scope() -> ActionScope {
+// 		Self::scope()
+// 	}
 
-	fn validate(&self, info: &C) -> Result<(), BusinessException<C>> {
-		self.validate(info)
-	}
-}
+// 	fn validate(&self, info: &C) -> Result<(), BusinessException<C>> {
+// 		self.validate(info)
+// 	}
+// }
 
-pub trait BusinessAction<
-	C: RequestContext,
-	I: Debug,
-	O: Debug,
-	E: Exception<Option<ErrorData>>,
-	T: BusinessActionType<C, u32>,
->
-{
-	fn action_type() -> T;
-	fn new(input: RequestInput<I, C>) -> Self;
-	fn input(&self) -> &RequestInput<I, C>;
-	fn run(self) -> Result<O, E>;
-}
+// pub trait BusinessAction<
+// 	C: RequestContext,
+// 	I: Debug,
+// 	O: Debug,
+// 	E: Exception<Option<ErrorData>>,
+// 	T: BusinessActionType<C, u32>,
+// >
+// {
+// 	fn action_type() -> T;
+// 	fn new(input: RequestInput<I, C>) -> Self;
+// 	fn input(&self) -> &RequestInput<I, C>;
+// 	fn run(self) -> Result<O, E>;
+// }
 
 // impl<I, D, O, T, A> Action<RequestInput<D, I>, O, Option<ErrorData>, BusinessException<I>> for A
 // where
