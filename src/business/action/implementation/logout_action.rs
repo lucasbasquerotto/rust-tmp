@@ -22,7 +22,7 @@ impl UserAction<(), ()> for LogoutAction<UserRequestContext> {
 		&self.0
 	}
 
-	fn run(self) -> UserActionResult<()> {
+	fn run_inner(self) -> UserActionResult<()> {
 		println!("logout");
 		Ok(())
 	}

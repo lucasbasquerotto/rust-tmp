@@ -34,7 +34,7 @@ impl UserAction<LoginData, LoginResult> for LoginAction<UserRequestContext> {
 		&self.0
 	}
 
-	fn run(self) -> UserActionResult<LoginResult> {
+	fn run_inner(self) -> UserActionResult<LoginResult> {
 		let LoginAction(input) = &self;
 		let LoginData { name, pass } = &input.data;
 		println!("login: {name} ({pass})");
