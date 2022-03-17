@@ -1,16 +1,12 @@
-use crate::{
-	business::action::{
-		action_data::{
-			general_action_data::{
-				BusinessException, ErrorData, UserAuthSession, UserNoAuthSession, UserSession,
-			},
-			user_action_data::{
-				UserAuthRequestContext, UserNoAuthRequestContext, UserRequestContext,
-			},
+use crate::business::action::{
+	action_data::{
+		general_action_data::{BusinessException, ErrorData},
+		user_action_data::{
+			UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext, UserNoAuthSession,
+			UserRequestContext, UserSession,
 		},
-		business_action::{BusinessErrorGenerator, DescriptiveRequestContext},
 	},
-	lib::core::action::ActionType,
+	business_action::{BusinessErrorGenerator, DescriptiveRequestContext},
 };
 
 impl DescriptiveRequestContext for UserRequestContext {
@@ -20,7 +16,7 @@ impl DescriptiveRequestContext for UserRequestContext {
 			session: UserSession { user_id },
 			..
 		} = &self;
-		let action_id = action_type.id();
+		let action_id = action_type.get_id();
 		format!("action({action_id}: {action_type:?}), user({user_id:?})")
 	}
 }

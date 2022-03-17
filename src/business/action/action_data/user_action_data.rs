@@ -1,12 +1,38 @@
-use super::general_action_data::{
-	Application, Request, UserAuthSession, UserNoAuthSession, UserSession,
-};
+use super::general_action_data::{Application, Request, Session};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum UserActionType {
-	LOGIN,
-	LOGOUT,
+	Login,
+	Logout,
 }
+
+impl UserActionType {
+	pub fn get_id(&self) -> u32 {
+		match self {
+			UserActionType::Login => 1,
+			UserActionType::Logout => 2,
+		}
+	}
+}
+
+#[derive(Clone, Debug)]
+pub struct UserSession {
+	pub user_id: Option<u64>,
+}
+
+impl Session for UserSession {}
+
+#[derive(Clone, Debug)]
+pub struct UserAuthSession {
+	pub user_id: u64,
+}
+
+impl Session for UserAuthSession {}
+
+#[derive(Clone, Debug)]
+pub struct UserNoAuthSession();
+
+impl Session for UserNoAuthSession {}
 
 #[derive(Clone, Debug)]
 pub struct UserRequestContext {

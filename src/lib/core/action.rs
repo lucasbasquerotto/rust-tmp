@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
 pub enum ActionScope {
-	USER,
-	// MODERATOR,
+	User,
+	Moderator,
 	// AUTOMATIC,
 }
 

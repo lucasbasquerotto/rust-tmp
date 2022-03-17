@@ -23,7 +23,7 @@ pub struct LoginAction<T: RequestContext>(RequestInput<LoginData, T>);
 
 impl UserAction<LoginData, LoginResult> for LoginAction<UserRequestContext> {
 	fn action_type() -> UserActionType {
-		UserActionType::LOGIN
+		UserActionType::Login
 	}
 
 	fn new(input: RequestInput<LoginData, UserRequestContext>) -> Self {

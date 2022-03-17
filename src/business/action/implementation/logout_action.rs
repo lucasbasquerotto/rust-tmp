@@ -11,7 +11,7 @@ pub struct LogoutAction<T: RequestContext>(RequestInput<(), T>);
 
 impl UserAction<(), ()> for LogoutAction<UserRequestContext> {
 	fn action_type() -> UserActionType {
-		UserActionType::LOGOUT
+		UserActionType::Logout
 	}
 
 	fn new(input: RequestInput<(), UserRequestContext>) -> Self {
