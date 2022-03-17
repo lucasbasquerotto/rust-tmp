@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use crate::lib::core::action::Exception;
 
 use super::{
-	action_data::{BusinessException, ErrorData},
+	action_data::general_action_data::{BusinessException, ErrorData},
 	action_log::ActionLogger,
 };
 
@@ -18,6 +18,43 @@ impl<T: DescriptiveRequestContext> Exception<Option<ErrorData>> for BusinessExce
 	}
 }
 
+fn type_of<T>(_: &T) -> String {
+	format!("{}", std::any::type_name::<T>())
+		.split("::")
+		.last()
+		.unwrap_or("")
+		.to_string()
+}
+
+pub trait BusinessErrorGenerator<T: DescriptiveRequestContext>: Debug {
+	fn private_error(&self) -> Option<ErrorData>;
+
+	fn public_error(&self) -> Option<ErrorData>;
+
+	fn get_key(&self) -> String {
+		let type_name = type_of(&self);
+		let key = format!("{type_name}::{self:?}");
+		key
+	}
+
+	fn error_msg(&self, msg: &'static str) -> Option<ErrorData> {
+		Some(ErrorData {
+			key: self.get_key(),
+			msg,
+			params: None,
+			meta: None,
+		})
+	}
+
+	fn exception(&self, context: &T) -> BusinessException<T> {
+		BusinessException {
+			context: Some(context.clone()),
+			private: self.private_error(),
+			public: self.public_error(),
+		}
+	}
+}
+
 // use std::fmt::Debug;
 
 // use crate::lib::{
@@ -25,7 +62,7 @@ impl<T: DescriptiveRequestContext> Exception<Option<ErrorData>> for BusinessExce
 // 	core::action::{ActionScope, ActionType, RequestContext, RequestInput},
 // };
 
-// use super::action_data::{BusinessException, ErrorData};
+// use super::action_data::general_data::{BusinessException, ErrorData};
 
 // pub trait BusinessActionType<C, I>: PartialEq + Eq + Debug
 // where

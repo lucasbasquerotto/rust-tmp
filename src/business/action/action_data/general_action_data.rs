@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 
 use crate::lib::core::action::RequestContext;
 
@@ -7,16 +7,34 @@ pub struct Request {
 	pub ip: String,
 }
 
+pub trait Session: Clone + Debug {}
+
 #[derive(Clone, Debug)]
-pub struct Session {
+pub struct UserSession {
 	pub user_id: Option<u64>,
 }
+
+impl Session for UserSession {}
+
+#[derive(Clone, Debug)]
+pub struct UserAuthSession {
+	pub user_id: u64,
+}
+
+impl Session for UserAuthSession {}
+
+#[derive(Clone, Debug)]
+pub struct UserNoAuthSession();
+
+impl Session for UserNoAuthSession {}
 
 #[derive(Clone, Debug)]
 pub struct ModeratorSession {
 	pub user_id: u64,
-	pub allowed_actions: u32,
+	pub allowed_actions: Vec<u32>,
 }
+
+impl Session for ModeratorSession {}
 
 #[derive(Clone, Debug)]
 pub struct Application {

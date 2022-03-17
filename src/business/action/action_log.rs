@@ -1,6 +1,8 @@
 use crate::lib::core::action::RequestContext;
 
-use super::{action_data::BusinessException, business_action::DescriptiveRequestContext};
+use super::{
+	action_data::general_action_data::BusinessException, business_action::DescriptiveRequestContext,
+};
 
 impl<T: DescriptiveRequestContext> RequestContext for T {}
 

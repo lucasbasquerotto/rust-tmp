@@ -1,6 +1,6 @@
 use crate::{
 	business::action::{
-		action_type::user_action_type::{UserActionType, UserRequestContext},
+		action_data::user_action_data::{UserActionType, UserRequestContext},
 		definition::user_action::{UserAction, UserActionResult},
 	},
 	lib::core::action::{RequestContext, RequestInput},

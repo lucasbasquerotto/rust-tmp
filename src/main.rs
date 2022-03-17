@@ -6,14 +6,16 @@ mod lib;
 
 use std::fmt::Debug;
 
-use business::action::action_data::{ActionRequestResult, Application, Request, Session};
+use business::action::action_data::general_action_data::{
+	ActionRequestResult, Application, Request, UserSession,
+};
 
-use business::action::action_type::user_action_type::UserRequestContext;
+use business::action::action_data::user_action_data::UserRequestContext;
 use business::action::definition::user_action::UserAction;
 use business::action::implementation::login_action::LoginResult;
 use lib::core::action::RequestInput;
 
-use crate::business::action::action_data::ErrorData;
+use crate::business::action::action_data::general_action_data::ErrorData;
 use crate::business::action::implementation::login_action::{LoginAction, LoginData};
 use crate::business::action::implementation::logout_action::LogoutAction;
 use crate::lib::core::action::ActionRequest;
@@ -55,7 +57,7 @@ impl<I: Debug, O: Debug, A: UserAction<I, O>> TestRequest<I, O> for A {
 			application: Application {
 				request_timeout: 1000,
 			},
-			session: Session { user_id: Some(123) },
+			session: UserSession { user_id: Some(123) },
 			request: Request {
 				ip: "1.2.3.4".to_string(),
 			},
@@ -82,7 +84,7 @@ fn login() -> ActionRequestResult<LoginResult> {
 	assert_eq!(
 		result.as_ref().unwrap_err(),
 		&Some(ErrorData {
-			key: "AUTHENTICATED".to_string(),
+			key: "UserActionContextError::AUTHENTICATED".to_string(),
 			msg: "You can't execute this action while authenticated.",
 			params: None,
 			meta: None

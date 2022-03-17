@@ -2,8 +2,8 @@ use std::fmt::Debug;
 
 use crate::{
 	business::action::{
-		action_data::{BusinessException, ErrorData},
-		action_type::user_action_type::{UserActionType, UserRequestContext},
+		action_data::general_action_data::{BusinessException, ErrorData},
+		action_data::user_action_data::{UserActionType, UserRequestContext},
 	},
 	lib::{
 		core::action::Action,
