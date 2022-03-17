@@ -1,4 +1,17 @@
-impl Exception<Option<ErrorData>> for BusinessException<UserRequestContext> {
+use std::fmt::Debug;
+
+use crate::lib::core::action::Exception;
+
+use super::{
+	action_data::{BusinessException, ErrorData},
+	action_log::ActionLogger,
+};
+
+pub trait DescriptiveRequestContext: Debug + Clone {
+	fn description(&self) -> String;
+}
+
+impl<T: DescriptiveRequestContext> Exception<Option<ErrorData>> for BusinessException<T> {
 	fn handle(self) -> Option<ErrorData> {
 		let _ = &self.error();
 		self.public

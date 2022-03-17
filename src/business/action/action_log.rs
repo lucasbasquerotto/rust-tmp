@@ -1,12 +1,8 @@
 use crate::lib::core::action::RequestContext;
 
-use super::action_data::BusinessException;
+use super::{action_data::BusinessException, business_action::DescriptiveRequestContext};
 
-pub trait DescriptiveRequestContext: RequestContext {
-	fn description(&self) -> String;
-}
-
-impl RequestContext for DescriptiveRequestContext {}
+impl<T: DescriptiveRequestContext> RequestContext for T {}
 
 pub trait ActionLogger {
 	fn info(&self);
