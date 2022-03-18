@@ -45,6 +45,13 @@ where
 	}
 
 	fn new(input: RequestInput<I, ModeratorRequestContext>) -> ModeratorActionResult<Self> {
+		//&input.context.action_type == Self::action_type();
+		&input
+			.context
+			.session
+			.allowed_actions
+			.contains(&Self::action_type().id());
+
 		Self::new(input)
 	}
 

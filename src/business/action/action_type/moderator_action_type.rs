@@ -3,7 +3,7 @@ use crate::{
 	lib::core::action::ActionScope,
 };
 
-use super::action_type::BusinessActionType;
+use super::action_type::{BusinessActionType, BusinessRequestContext};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ModeratorActionType {
@@ -25,5 +25,11 @@ impl ModeratorActionType {
 impl BusinessActionType<ModeratorRequestContext> for ModeratorActionType {
 	fn scope() -> ActionScope {
 		ActionScope::Moderator
+	}
+}
+
+impl BusinessRequestContext<ModeratorActionType> for ModeratorRequestContext {
+	fn action_type(&self) -> &ModeratorActionType {
+		&self.action_type
 	}
 }

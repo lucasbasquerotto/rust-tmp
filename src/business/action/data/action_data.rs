@@ -24,7 +24,7 @@ pub struct BusinessException<C: RequestContext> {
 #[derive(Debug, Eq, PartialEq)]
 pub struct ErrorData {
 	pub key: String,
-	pub msg: &'static str,
+	pub msg: String,
 	pub params: Option<HashMap<String, String>>,
 	pub meta: Option<HashMap<String, String>>,
 }

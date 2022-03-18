@@ -13,7 +13,9 @@ use crate::{
 	lib::core::action::RequestInput,
 };
 
-pub type UserActionResult<T> = Result<T, BusinessException<UserRequestContext>>;
+/////////////////////////////////////////////////////////
+// Input + Output
+/////////////////////////////////////////////////////////
 
 pub trait ActionInput: Debug {}
 
@@ -23,9 +25,13 @@ impl ActionInput for () {}
 
 impl ActionOutput for () {}
 
-// pub trait BusinessAction<I: ActionInput, O: ActionOutput, C: ActionType<C, E, X, D>>: Debug {}
+/////////////////////////////////////////////////////////
+// User Action
+/////////////////////////////////////////////////////////
 
-pub trait UserAction<I: ActionInput, O: ActionOutput>
+pub type UserActionResult<T> = Result<T, BusinessException<UserRequestContext>>;
+
+pub trait UserAction<I: ActionInput, O: ActionOutput>: Debug
 where
 	Self: Sized,
 {
@@ -34,11 +40,13 @@ where
 	fn run_inner(self) -> UserActionResult<O>;
 }
 
-// impl<I: ActionInput, O: ActionOutput, T: UserAction<I, O>> BusinessAction<I, O> for T {}
+/////////////////////////////////////////////////////////
+// Moderator Action
+/////////////////////////////////////////////////////////
 
 pub type ModeratorActionResult<T> = Result<T, BusinessException<ModeratorRequestContext>>;
 
-pub trait ModeratorAction<I: ActionInput, O: ActionOutput>
+pub trait ModeratorAction<I: ActionInput, O: ActionOutput>: Debug
 where
 	Self: Sized,
 {
@@ -46,5 +54,3 @@ where
 	fn new(input: RequestInput<I, ModeratorRequestContext>) -> ModeratorActionResult<Self>;
 	fn run_inner(self) -> ModeratorActionResult<O>;
 }
-
-// impl<I: ActionInput, O: ActionOutput, T: ModeratorAction<I, O>> BusinessAction<I, O> for T {}

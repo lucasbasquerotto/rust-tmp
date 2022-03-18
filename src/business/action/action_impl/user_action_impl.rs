@@ -10,7 +10,9 @@ use crate::{
 				UserNoAuthSession, UserRequestContext, UserSession,
 			},
 		},
-		definition::action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
+		definition::action_helpers::{
+			ActionTypeHelper, DescriptiveRequestContext, UserRequestContextLike,
+		},
 		definition::business_action::{UserAction, UserActionResult},
 		definition::{
 			action_error::BusinessErrorGenerator,
@@ -54,25 +56,25 @@ impl DescriptiveRequestContext for UserNoAuthRequestContext {
 
 #[derive(Debug)]
 enum UserActionContextError {
-	UNAUTHENTICATED,
-	AUTHENTICATED,
+	Authenticated,
+	Unauthenticated,
 }
 
 impl BusinessErrorGenerator<UserRequestContext> for UserActionContextError {
 	fn private_error(&self) -> Option<ErrorData> {
 		match self {
-			UserActionContextError::UNAUTHENTICATED => None,
-			UserActionContextError::AUTHENTICATED => None,
+			UserActionContextError::Unauthenticated => None,
+			UserActionContextError::Authenticated => None,
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			UserActionContextError::UNAUTHENTICATED => {
-				self.error_msg("You must be authenticated to execute this action.")
+			UserActionContextError::Authenticated => {
+				self.error_msg("You can't execute this action while authenticated.".to_string())
 			}
-			UserActionContextError::AUTHENTICATED => {
-				self.error_msg("You can't execute this action while authenticated.")
+			UserActionContextError::Unauthenticated => {
+				self.error_msg("You must be authenticated to execute this action.".to_string())
 			}
 		}
 	}
@@ -94,7 +96,7 @@ impl UserRequestContext {
 				request,
 				action_type,
 			}),
-			None => Err(UserActionContextError::UNAUTHENTICATED.exception(self)),
+			None => Err(UserActionContextError::Unauthenticated.exception(self)),
 		}
 	}
 
@@ -107,7 +109,7 @@ impl UserRequestContext {
 		} = self.clone();
 
 		match session.user_id {
-			Some(_) => Err(UserActionContextError::AUTHENTICATED.exception(self)),
+			Some(_) => Err(UserActionContextError::Authenticated.exception(self)),
 			None => Ok(UserNoAuthRequestContext {
 				application,
 				session: UserNoAuthSession(),
@@ -230,6 +232,7 @@ where
 	}
 
 	fn new(input: RequestInput<I, UserRequestContext>) -> UserActionResult<Self> {
+		Self::validate_type(&input.context)?;
 		Self::new(input)
 	}
 

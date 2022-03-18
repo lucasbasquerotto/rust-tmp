@@ -120,8 +120,8 @@ fn login() -> ActionRequestResult<LoginResult> {
 	assert_eq!(
 		result.as_ref().unwrap_err(),
 		&Some(ErrorData {
-			key: "UserActionContextError::AUTHENTICATED".to_string(),
-			msg: "You can't execute this action while authenticated.",
+			key: "UserActionContextError::Authenticated".to_string(),
+			msg: "You can't execute this action while authenticated.".to_string(),
 			params: None,
 			meta: None
 		}),

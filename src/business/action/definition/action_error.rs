@@ -23,7 +23,7 @@ pub trait BusinessErrorGenerator<T: DescriptiveRequestContext>: Debug {
 		key
 	}
 
-	fn error_msg(&self, msg: &'static str) -> Option<ErrorData> {
+	fn error_msg(&self, msg: String) -> Option<ErrorData> {
 		Some(ErrorData {
 			key: self.get_key(),
 			msg,
