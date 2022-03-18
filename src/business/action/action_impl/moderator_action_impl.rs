@@ -12,6 +12,7 @@ use crate::{
 	},
 	lib::core::action::{Action, RequestInput},
 };
+use business::action::definition::action_helpers::ActionTypeHelper;
 
 impl DescriptiveRequestContext for ModeratorRequestContext {
 	fn description(&self) -> String {
@@ -45,7 +46,7 @@ where
 	}
 
 	fn new(input: RequestInput<I, ModeratorRequestContext>) -> ModeratorActionResult<Self> {
-		//&input.context.action_type == Self::action_type();
+		Self::validate_type(&input.context)?;
 		&input
 			.context
 			.session

@@ -1,10 +1,14 @@
 use crate::{
 	business::action::{
-		action_type::action_type::BusinessActionType,
+		action_type::action_type::{BusinessActionType, BusinessRequestContext},
 		data::action_data::{BusinessException, ErrorData},
-		definition::action_helpers::{ActionLogger, DescriptiveRequestContext},
+		definition::{
+			action_error::BusinessErrorGenerator,
+			action_helpers::{ActionLogger, ActionTypeHelper, DescriptiveRequestContext},
+			business_action::{ActionInput, ActionOutput},
+		},
 	},
-	lib::core::action::{ActionScope, ActionType, Exception, RequestContext},
+	lib::core::action::{Action, ActionScope, ActionType, Exception, RequestContext},
 };
 
 impl<C: DescriptiveRequestContext, T: BusinessActionType<C>>
@@ -54,5 +58,59 @@ impl<C: DescriptiveRequestContext> ActionLogger for BusinessException<C> {
 
 	fn debug(&self) {
 		debug!("{}", create_msg(self, "debug".to_string()))
+	}
+}
+
+#[derive(Debug)]
+struct ExpectedFoundErrorParam {
+	expected: String,
+	found: String,
+}
+
+#[derive(Debug)]
+enum ActionHelperError {
+	WrongAction(ExpectedFoundErrorParam),
+}
+
+impl<C: DescriptiveRequestContext> BusinessErrorGenerator<C> for ActionHelperError {
+	fn private_error(&self) -> Option<ErrorData> {
+		match self {
+			ActionHelperError::WrongAction(ExpectedFoundErrorParam { expected, found }) => {
+				BusinessErrorGenerator::<C>::error_msg(
+					self,
+					format!("Wrong action defined: expected={expected}, found={found}."),
+				)
+			}
+		}
+	}
+
+	fn public_error(&self) -> Option<ErrorData> {
+		match self {
+			ActionHelperError::WrongAction(_) => None,
+		}
+	}
+}
+
+impl<C, I, O, T, A> ActionTypeHelper<C, I, O, T> for A
+where
+	C: BusinessRequestContext<T>,
+	I: ActionInput,
+	O: ActionOutput,
+	T: ActionType<C, Option<ErrorData>, BusinessException<C>> + BusinessActionType<C>,
+	A: Action<C, I, O, Option<ErrorData>, BusinessException<C>, T>,
+{
+	fn validate_type(context: &C) -> Result<(), BusinessException<C>> {
+		let expected = &Self::action_type();
+		let found = context.action_type();
+
+		if expected != found {
+			Err(ActionHelperError::WrongAction(ExpectedFoundErrorParam {
+				expected: format!("{expected:?}").to_string(),
+				found: format!("{found:?}").to_string(),
+			})
+			.exception(context))?;
+		}
+
+		Ok(())
 	}
 }
