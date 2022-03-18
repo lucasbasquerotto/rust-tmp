@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use crate::{
 	business::action::{
 		action_type::moderator_action_type::ModeratorActionType,
@@ -9,7 +7,7 @@ use crate::{
 		},
 		definition::{
 			action_helpers::DescriptiveRequestContext,
-			business_action::{ModeratorAction, ModeratorActionResult},
+			business_action::{ActionInput, ActionOutput, ModeratorAction, ModeratorActionResult},
 		},
 	},
 	lib::core::action::{Action, ActionScope, ActionType, RequestInput},
@@ -42,17 +40,6 @@ impl
 	fn id(&self) -> u32 {
 		self.get_id()
 	}
-
-	fn validate(
-		&self,
-		_: &ModeratorRequestContext,
-	) -> Result<(), BusinessException<ModeratorRequestContext>> {
-		match self {
-			ModeratorActionType::EchoInfo => Ok(()),
-			ModeratorActionType::EchoWarn => Ok(()),
-			ModeratorActionType::EchoError => Ok(()),
-		}
-	}
 }
 
 impl<I, O, T>
@@ -66,24 +53,21 @@ impl<I, O, T>
 		ModeratorActionType,
 	> for T
 where
-	I: Debug,
-	O: Debug,
+	I: ActionInput,
+	O: ActionOutput,
 	T: ModeratorAction<I, O>,
+	Self: Sized,
 {
 	fn action_type() -> ModeratorActionType {
 		Self::action_type()
 	}
 
-	fn new(input: RequestInput<I, ModeratorRequestContext>) -> Self {
+	fn new(input: RequestInput<I, ModeratorRequestContext>) -> ModeratorActionResult<Self> {
 		Self::new(input)
 	}
 
-	fn input(&self) -> &RequestInput<I, ModeratorRequestContext> {
-		self.input()
-	}
-
 	fn run(self) -> ModeratorActionResult<O> {
-		Self::action_type().validate(&self.input().context)?;
+		//TODO: Self::action_type().validate(&self.input().context)?;
 		self.run_inner()
 	}
 }

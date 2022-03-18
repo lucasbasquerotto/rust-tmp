@@ -15,12 +15,8 @@ impl UserAction<(), ()> for LogoutAction<UserRequestContext> {
 		UserActionType::Logout
 	}
 
-	fn new(input: RequestInput<(), UserRequestContext>) -> Self {
-		Self(input)
-	}
-
-	fn input(&self) -> &RequestInput<(), UserRequestContext> {
-		&self.0
+	fn new(input: RequestInput<(), UserRequestContext>) -> UserActionResult<Self> {
+		Ok(Self(input))
 	}
 
 	fn run_inner(self) -> UserActionResult<()> {

@@ -1,17 +1,19 @@
 use crate::{
 	business::action::{
 		action_type::user_action_type::UserActionType,
-		data::user_action_data::UserRequestContext,
-		definition::business_action::{UserAction, UserActionResult},
+		data::user_action_data::{UserNoAuthRequestContext, UserRequestContext},
+		definition::business_action::{ActionInput, ActionOutput, UserAction, UserActionResult},
 	},
 	lib::core::action::{RequestContext, RequestInput},
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct LoginData {
 	pub name: String,
 	pub pass: String,
 }
+
+impl ActionInput for LoginData {}
 
 #[derive(Debug, PartialEq)]
 pub struct LoginResult {
@@ -19,20 +21,19 @@ pub struct LoginResult {
 	pub name: String,
 }
 
+impl ActionOutput for LoginResult {}
+
 #[derive(Debug)]
 pub struct LoginAction<T: RequestContext>(RequestInput<LoginData, T>);
 
-impl UserAction<LoginData, LoginResult> for LoginAction<UserRequestContext> {
+impl UserAction<LoginData, LoginResult> for LoginAction<UserNoAuthRequestContext> {
 	fn action_type() -> UserActionType {
 		UserActionType::Login
 	}
 
-	fn new(input: RequestInput<LoginData, UserRequestContext>) -> Self {
-		Self(input)
-	}
-
-	fn input(&self) -> &RequestInput<LoginData, UserRequestContext> {
-		&self.0
+	fn new(input: RequestInput<LoginData, UserRequestContext>) -> UserActionResult<Self> {
+		let real_input = input.to_no_auth()?;
+		Ok(Self(real_input))
 	}
 
 	fn run_inner(self) -> UserActionResult<LoginResult> {

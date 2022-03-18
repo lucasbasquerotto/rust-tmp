@@ -10,9 +10,12 @@ use crate::{
 				UserNoAuthSession, UserRequestContext, UserSession,
 			},
 		},
-		definition::action_error::BusinessErrorGenerator,
-		definition::action_helpers::DescriptiveRequestContext,
+		definition::action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
 		definition::business_action::{UserAction, UserActionResult},
+		definition::{
+			action_error::BusinessErrorGenerator,
+			business_action::{ActionInput, ActionOutput},
+		},
 	},
 	lib::core::action::{Action, ActionScope, ActionType, RequestInput},
 };
@@ -26,6 +29,26 @@ impl DescriptiveRequestContext for UserRequestContext {
 		} = &self;
 		let action_id = action_type.get_id();
 		format!("action({action_id}: {action_type:?}), user({user_id:?})")
+	}
+}
+
+impl DescriptiveRequestContext for UserAuthRequestContext {
+	fn description(&self) -> String {
+		let UserAuthRequestContext {
+			action_type,
+			session: UserAuthSession { user_id },
+			..
+		} = &self;
+		let action_id = action_type.get_id();
+		format!("action({action_id}: {action_type:?}), user({user_id:?})")
+	}
+}
+
+impl DescriptiveRequestContext for UserNoAuthRequestContext {
+	fn description(&self) -> String {
+		let UserNoAuthRequestContext { action_type, .. } = &self;
+		let action_id = action_type.get_id();
+		format!("action({action_id}: {action_type:?}), unauthenticated")
 	}
 }
 
@@ -95,6 +118,25 @@ impl UserRequestContext {
 	}
 }
 
+impl<T> RequestInput<T, UserRequestContext> {
+	#[allow(dead_code)]
+	pub fn to_auth(self) -> UserActionResult<RequestInput<T, UserAuthRequestContext>> {
+		let context = self.context.to_auth()?;
+		Ok(RequestInput {
+			context,
+			data: self.data,
+		})
+	}
+
+	pub fn to_no_auth(self) -> UserActionResult<RequestInput<T, UserNoAuthRequestContext>> {
+		let context = self.context.to_no_auth()?;
+		Ok(RequestInput {
+			context,
+			data: self.data,
+		})
+	}
+}
+
 #[allow(dead_code)]
 impl UserAuthRequestContext {
 	pub fn to_general(&self) -> UserRequestContext {
@@ -114,11 +156,22 @@ impl UserAuthRequestContext {
 			action_type,
 		}
 	}
+}
 
-	pub fn to_no_auth(
-		&self,
-	) -> Result<UserNoAuthRequestContext, BusinessException<UserRequestContext>> {
-		self.to_general().to_no_auth()
+impl<T> RequestInput<T, UserAuthRequestContext> {
+	#[allow(dead_code)]
+	pub fn to_general(self) -> RequestInput<T, UserRequestContext> {
+		let context = self.context.to_general();
+		RequestInput {
+			context,
+			data: self.data,
+		}
+	}
+}
+
+impl UserRequestContextLike for UserAuthRequestContext {
+	fn user_context(&self) -> UserRequestContext {
+		self.to_general()
 	}
 }
 
@@ -139,9 +192,22 @@ impl UserNoAuthRequestContext {
 			action_type,
 		}
 	}
+}
 
-	pub fn to_auth(&self) -> Result<UserAuthRequestContext, BusinessException<UserRequestContext>> {
-		self.to_general().to_auth()
+impl UserRequestContextLike for UserNoAuthRequestContext {
+	fn user_context(&self) -> UserRequestContext {
+		self.to_general()
+	}
+}
+
+impl<T> RequestInput<T, UserNoAuthRequestContext> {
+	#[allow(dead_code)]
+	pub fn to_general(self) -> RequestInput<T, UserRequestContext> {
+		let context = self.context.to_general();
+		RequestInput {
+			context,
+			data: self.data,
+		}
 	}
 }
 
@@ -156,15 +222,15 @@ impl ActionType<UserRequestContext, Option<ErrorData>, BusinessException<UserReq
 		self.get_id()
 	}
 
-	fn validate(
-		&self,
-		context: &UserRequestContext,
-	) -> Result<(), BusinessException<UserRequestContext>> {
-		match self {
-			UserActionType::Login => context.to_no_auth().map(|_| ()),
-			UserActionType::Logout => context.to_auth().map(|_| ()),
-		}
-	}
+	// fn validate(
+	// 	&self,
+	// 	context: &UserRequestContext,
+	// ) -> Result<(), BusinessException<UserRequestContext>> {
+	// 	match self {
+	// 		UserActionType::Login => context.to_no_auth().map(|_| ()),
+	// 		UserActionType::Logout => context.to_auth().map(|_| ()),
+	// 	}
+	// }
 }
 
 impl<I, O, T>
@@ -178,24 +244,19 @@ impl<I, O, T>
 		UserActionType,
 	> for T
 where
-	I: Debug,
-	O: Debug,
+	I: ActionInput,
+	O: ActionOutput,
 	T: UserAction<I, O>,
 {
 	fn action_type() -> UserActionType {
 		Self::action_type()
 	}
 
-	fn new(input: RequestInput<I, UserRequestContext>) -> Self {
+	fn new(input: RequestInput<I, UserRequestContext>) -> UserActionResult<Self> {
 		Self::new(input)
 	}
 
-	fn input(&self) -> &RequestInput<I, UserRequestContext> {
-		self.input()
-	}
-
 	fn run(self) -> UserActionResult<O> {
-		Self::action_type().validate(&self.input().context)?;
 		self.run_inner()
 	}
 }

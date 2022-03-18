@@ -12,13 +12,15 @@ use business::action::data::action_data::{ActionRequestResult, Application, Requ
 
 use business::action::data::moderator_action_data::{ModeratorRequestContext, ModeratorSession};
 use business::action::data::user_action_data::{UserRequestContext, UserSession};
-use business::action::definition::business_action::ModeratorAction;
 use business::action::definition::business_action::UserAction;
+use business::action::definition::business_action::{ActionInput, ActionOutput, ModeratorAction};
 use business::action::main::login_action::LoginResult;
 use lib::core::action::RequestInput;
 
 use crate::business::action::data::action_data::ErrorData;
-use crate::business::action::main::echo_action::{EchoErrorAction, EchoInfoAction, EchoWarnAction};
+use crate::business::action::main::echo::echo_error_action::EchoErrorAction;
+use crate::business::action::main::echo::echo_info_action::EchoInfoAction;
+use crate::business::action::main::echo::echo_warn_action::EchoWarnAction;
 use crate::business::action::main::login_action::{LoginAction, LoginData};
 use crate::business::action::main::logout_action::LogoutAction;
 use crate::lib::core::action::ActionRequest;
@@ -51,11 +53,16 @@ impl log::Log for MyLogger {
 	fn flush(&self) {}
 }
 
-trait TestRequest<I: Debug, O: Debug, A> {
+trait TestRequest<I: ActionInput, O: ActionOutput, A> {
 	fn test_request(data: I) -> ActionRequestResult<O>;
 }
 
-impl<I: Debug, O: Debug, A: UserAction<I, O>> TestRequest<I, O, UserActionType> for A {
+impl<I, O, A> TestRequest<I, O, UserActionType> for A
+where
+	I: ActionInput,
+	O: ActionOutput,
+	A: UserAction<I, O>,
+{
 	fn test_request(data: I) -> ActionRequestResult<O> {
 		let context = UserRequestContext {
 			application: Application {
@@ -72,7 +79,12 @@ impl<I: Debug, O: Debug, A: UserAction<I, O>> TestRequest<I, O, UserActionType> 
 	}
 }
 
-impl<I: Debug, O: Debug, A: ModeratorAction<I, O>> TestRequest<I, O, ModeratorActionType> for A {
+impl<I, O, A> TestRequest<I, O, ModeratorActionType> for A
+where
+	I: ActionInput,
+	O: ActionOutput,
+	A: ModeratorAction<I, O>,
+{
 	fn test_request(data: I) -> ActionRequestResult<O> {
 		let context = ModeratorRequestContext {
 			application: Application {
