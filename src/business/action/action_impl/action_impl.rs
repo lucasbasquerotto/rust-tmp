@@ -1,10 +1,8 @@
 use crate::{
 	business::action::{
+		action_type::action_type::BusinessActionType,
 		data::action_data::{BusinessException, ErrorData},
-		definition::{
-			action_helpers::{ActionLogger, DescriptiveRequestContext},
-			business_action::BusinessActionType,
-		},
+		definition::action_helpers::{ActionLogger, DescriptiveRequestContext},
 	},
 	lib::core::action::{ActionScope, ActionType, Exception, RequestContext},
 };

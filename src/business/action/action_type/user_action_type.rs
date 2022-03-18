@@ -1,9 +1,8 @@
 use crate::{
-	business::action::{
-		data::user_action_data::UserRequestContext, definition::business_action::BusinessActionType,
-	},
-	lib::core::action::ActionScope,
+	business::action::data::user_action_data::UserRequestContext, lib::core::action::ActionScope,
 };
+
+use super::action_type::BusinessActionType;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum UserActionType {

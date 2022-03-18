@@ -1,10 +1,9 @@
 use crate::{
-	business::action::{
-		data::moderator_action_data::ModeratorRequestContext,
-		definition::business_action::BusinessActionType,
-	},
+	business::action::data::moderator_action_data::ModeratorRequestContext,
 	lib::core::action::ActionScope,
 };
+
+use super::action_type::BusinessActionType;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ModeratorActionType {

@@ -10,7 +10,7 @@ use crate::{
 			user_action_data::UserRequestContext,
 		},
 	},
-	lib::core::action::{ActionScope, RequestContext, RequestInput},
+	lib::core::action::RequestInput,
 };
 
 pub type UserActionResult<T> = Result<T, BusinessException<UserRequestContext>>;
@@ -22,10 +22,6 @@ pub trait ActionOutput: Debug {}
 impl ActionInput for () {}
 
 impl ActionOutput for () {}
-
-pub trait BusinessActionType<C: RequestContext>: Debug + Eq + PartialEq {
-	fn scope() -> ActionScope;
-}
 
 // pub trait BusinessAction<I: ActionInput, O: ActionOutput, C: ActionType<C, E, X, D>>: Debug {}
 
