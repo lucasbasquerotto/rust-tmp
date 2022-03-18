@@ -12,26 +12,23 @@ pub struct RequestInput<I, C: RequestContext> {
 	pub data: I,
 }
 
-pub trait ActionType<C, E, X, D>: PartialEq + Eq
+pub trait ActionType<C, E, X>: PartialEq + Eq
 where
 	C: RequestContext,
 	X: Exception<E>,
-	D: Eq + PartialEq,
 {
 	fn scope() -> ActionScope;
-	fn id(&self) -> D;
 }
 
 pub trait Exception<E> {
 	fn handle(self) -> E;
 }
 
-pub trait Action<C, I, O, E, X, D, T>
+pub trait Action<C, I, O, E, X, T>
 where
 	C: RequestContext,
 	X: Exception<E>,
-	D: Eq + PartialEq,
-	T: ActionType<C, E, X, D>,
+	T: ActionType<C, E, X>,
 	Self: Sized,
 {
 	fn action_type() -> T;
@@ -39,23 +36,21 @@ where
 	fn run(self) -> Result<O, X>;
 }
 
-pub trait ActionRequest<C, I, O, E, X, D, T>: Action<C, I, O, E, X, D, T>
+pub trait ActionRequest<C, I, O, E, X, T>: Action<C, I, O, E, X, T>
 where
 	C: RequestContext,
 	X: Exception<E>,
-	D: Eq + PartialEq,
-	T: ActionType<C, E, X, D>,
+	T: ActionType<C, E, X>,
 {
 	fn request(input: Result<RequestInput<I, C>, X>) -> Result<O, E>;
 }
 
-impl<C, I, O, E, X, D, T, A> ActionRequest<C, I, O, E, X, D, T> for A
+impl<C, I, O, E, X, T, A> ActionRequest<C, I, O, E, X, T> for A
 where
 	C: RequestContext,
 	X: Exception<E>,
-	D: Eq + PartialEq,
-	T: ActionType<C, E, X, D>,
-	A: Action<C, I, O, E, X, D, T>,
+	T: ActionType<C, E, X>,
+	A: Action<C, I, O, E, X, T>,
 {
 	fn request(input: Result<RequestInput<I, C>, X>) -> Result<O, E> {
 		let input = input.map_err(|err| err.handle())?;

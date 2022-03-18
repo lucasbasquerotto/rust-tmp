@@ -10,7 +10,7 @@ use crate::{
 			business_action::{ActionInput, ActionOutput, ModeratorAction, ModeratorActionResult},
 		},
 	},
-	lib::core::action::{Action, ActionScope, ActionType, RequestInput},
+	lib::core::action::{Action, RequestInput},
 };
 
 impl DescriptiveRequestContext for ModeratorRequestContext {
@@ -20,25 +20,8 @@ impl DescriptiveRequestContext for ModeratorRequestContext {
 			session: ModeratorSession { user_id, .. },
 			..
 		} = &self;
-		let action_id = action_type.get_id();
+		let action_id = action_type.id();
 		format!("action({action_id}: {action_type:?}), moderator({user_id:?})")
-	}
-}
-
-impl
-	ActionType<
-		ModeratorRequestContext,
-		Option<ErrorData>,
-		BusinessException<ModeratorRequestContext>,
-		u32,
-	> for ModeratorActionType
-{
-	fn scope() -> ActionScope {
-		ActionScope::Moderator
-	}
-
-	fn id(&self) -> u32 {
-		self.get_id()
 	}
 }
 
@@ -49,7 +32,6 @@ impl<I, O, T>
 		O,
 		Option<ErrorData>,
 		BusinessException<ModeratorRequestContext>,
-		u32,
 		ModeratorActionType,
 	> for T
 where

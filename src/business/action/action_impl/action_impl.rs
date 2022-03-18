@@ -1,10 +1,21 @@
 use crate::{
 	business::action::{
 		data::action_data::{BusinessException, ErrorData},
-		definition::action_helpers::{ActionLogger, DescriptiveRequestContext},
+		definition::{
+			action_helpers::{ActionLogger, DescriptiveRequestContext},
+			business_action::BusinessActionType,
+		},
 	},
-	lib::core::action::{Exception, RequestContext},
+	lib::core::action::{ActionScope, ActionType, Exception, RequestContext},
 };
+
+impl<C: DescriptiveRequestContext, T: BusinessActionType<C>>
+	ActionType<C, Option<ErrorData>, BusinessException<C>> for T
+{
+	fn scope() -> ActionScope {
+		Self::scope()
+	}
+}
 
 impl<T: DescriptiveRequestContext> RequestContext for T {}
 

@@ -17,7 +17,7 @@ use crate::{
 			business_action::{ActionInput, ActionOutput},
 		},
 	},
-	lib::core::action::{Action, ActionScope, ActionType, RequestInput},
+	lib::core::action::{Action, RequestInput},
 };
 
 impl DescriptiveRequestContext for UserRequestContext {
@@ -27,7 +27,7 @@ impl DescriptiveRequestContext for UserRequestContext {
 			session: UserSession { user_id },
 			..
 		} = &self;
-		let action_id = action_type.get_id();
+		let action_id = action_type.id();
 		format!("action({action_id}: {action_type:?}), user({user_id:?})")
 	}
 }
@@ -39,7 +39,7 @@ impl DescriptiveRequestContext for UserAuthRequestContext {
 			session: UserAuthSession { user_id },
 			..
 		} = &self;
-		let action_id = action_type.get_id();
+		let action_id = action_type.id();
 		format!("action({action_id}: {action_type:?}), user({user_id:?})")
 	}
 }
@@ -47,7 +47,7 @@ impl DescriptiveRequestContext for UserAuthRequestContext {
 impl DescriptiveRequestContext for UserNoAuthRequestContext {
 	fn description(&self) -> String {
 		let UserNoAuthRequestContext { action_type, .. } = &self;
-		let action_id = action_type.get_id();
+		let action_id = action_type.id();
 		format!("action({action_id}: {action_type:?}), unauthenticated")
 	}
 }
@@ -211,28 +211,6 @@ impl<T> RequestInput<T, UserNoAuthRequestContext> {
 	}
 }
 
-impl ActionType<UserRequestContext, Option<ErrorData>, BusinessException<UserRequestContext>, u32>
-	for UserActionType
-{
-	fn scope() -> ActionScope {
-		ActionScope::User
-	}
-
-	fn id(&self) -> u32 {
-		self.get_id()
-	}
-
-	// fn validate(
-	// 	&self,
-	// 	context: &UserRequestContext,
-	// ) -> Result<(), BusinessException<UserRequestContext>> {
-	// 	match self {
-	// 		UserActionType::Login => context.to_no_auth().map(|_| ()),
-	// 		UserActionType::Logout => context.to_auth().map(|_| ()),
-	// 	}
-	// }
-}
-
 impl<I, O, T>
 	Action<
 		UserRequestContext,
@@ -240,7 +218,6 @@ impl<I, O, T>
 		O,
 		Option<ErrorData>,
 		BusinessException<UserRequestContext>,
-		u32,
 		UserActionType,
 	> for T
 where
