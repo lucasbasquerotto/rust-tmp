@@ -1,29 +1,14 @@
-use crate::{
-	business::action::action_data::{
-		general_action_data::{BusinessException, ErrorData},
-		user_action_data::{UserActionType, UserRequestContext},
-	},
-	lib::core::action::{ActionScope, ActionType},
-};
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum UserActionType {
+	Login,
+	Logout,
+}
 
-impl ActionType<UserRequestContext, Option<ErrorData>, BusinessException<UserRequestContext>, u32>
-	for UserActionType
-{
-	fn scope() -> ActionScope {
-		ActionScope::User
-	}
-
-	fn id(&self) -> u32 {
-		self.get_id()
-	}
-
-	fn validate(
-		&self,
-		context: &UserRequestContext,
-	) -> Result<(), BusinessException<UserRequestContext>> {
+impl UserActionType {
+	pub fn get_id(&self) -> u32 {
 		match self {
-			UserActionType::Login => context.to_no_auth().map(|_| ()),
-			UserActionType::Logout => context.to_auth().map(|_| ()),
+			UserActionType::Login => 1,
+			UserActionType::Logout => 2,
 		}
 	}
 }

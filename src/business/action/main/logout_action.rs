@@ -1,7 +1,8 @@
 use crate::{
 	business::action::{
-		action_data::user_action_data::{UserActionType, UserRequestContext},
-		definition::user_action::{UserAction, UserActionResult},
+		action_type::user_action_type::UserActionType,
+		data::user_action_data::UserRequestContext,
+		definition::business_action::{UserAction, UserActionResult},
 	},
 	lib::core::action::{RequestContext, RequestInput},
 };

@@ -1,16 +1,18 @@
-use crate::lib::core::action::RequestContext;
-
-use super::{
-	action_data::general_action_data::BusinessException, business_action::DescriptiveRequestContext,
+use crate::{
+	business::action::{
+		data::action_data::{BusinessException, ErrorData},
+		definition::action_helpers::{ActionLogger, DescriptiveRequestContext},
+	},
+	lib::core::action::{Exception, RequestContext},
 };
 
 impl<T: DescriptiveRequestContext> RequestContext for T {}
 
-pub trait ActionLogger {
-	fn info(&self);
-	fn warn(&self);
-	fn error(&self);
-	fn debug(&self);
+impl<T: DescriptiveRequestContext> Exception<Option<ErrorData>> for BusinessException<T> {
+	fn handle(self) -> Option<ErrorData> {
+		let _ = &self.error();
+		self.public
+	}
 }
 
 fn create_msg<C: DescriptiveRequestContext>(

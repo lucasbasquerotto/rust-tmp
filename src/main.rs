@@ -6,27 +6,21 @@ mod lib;
 
 use std::fmt::Debug;
 
-use business::action::action_data::general_action_data::{
-	ActionRequestResult, Application, Request,
-};
+use business::action::action_type::moderator_action_type::ModeratorActionType;
+use business::action::action_type::user_action_type::UserActionType;
+use business::action::data::action_data::{ActionRequestResult, Application, Request};
 
-use business::action::action_data::moderator_action_data::{
-	ModeratorActionType, ModeratorRequestContext, ModeratorSession,
-};
-use business::action::action_data::user_action_data::{
-	UserActionType, UserRequestContext, UserSession,
-};
-use business::action::definition::moderator_action::ModeratorAction;
-use business::action::definition::user_action::UserAction;
-use business::action::implementation::login_action::LoginResult;
+use business::action::data::moderator_action_data::{ModeratorRequestContext, ModeratorSession};
+use business::action::data::user_action_data::{UserRequestContext, UserSession};
+use business::action::definition::business_action::ModeratorAction;
+use business::action::definition::business_action::UserAction;
+use business::action::main::login_action::LoginResult;
 use lib::core::action::RequestInput;
 
-use crate::business::action::action_data::general_action_data::ErrorData;
-use crate::business::action::implementation::echo_action::{
-	EchoErrorAction, EchoInfoAction, EchoWarnAction,
-};
-use crate::business::action::implementation::login_action::{LoginAction, LoginData};
-use crate::business::action::implementation::logout_action::LogoutAction;
+use crate::business::action::data::action_data::ErrorData;
+use crate::business::action::main::echo_action::{EchoErrorAction, EchoInfoAction, EchoWarnAction};
+use crate::business::action::main::login_action::{LoginAction, LoginData};
+use crate::business::action::main::logout_action::LogoutAction;
 use crate::lib::core::action::ActionRequest;
 
 use log::{Level, LevelFilter, Metadata, Record};

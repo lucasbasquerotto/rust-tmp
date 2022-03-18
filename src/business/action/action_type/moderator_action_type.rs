@@ -1,35 +1,16 @@
-use crate::{
-	business::action::action_data::{
-		general_action_data::{BusinessException, ErrorData},
-		moderator_action_data::{ModeratorActionType, ModeratorRequestContext},
-	},
-	lib::core::action::{ActionScope, ActionType},
-};
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum ModeratorActionType {
+	EchoInfo,
+	EchoWarn,
+	EchoError,
+}
 
-impl
-	ActionType<
-		ModeratorRequestContext,
-		Option<ErrorData>,
-		BusinessException<ModeratorRequestContext>,
-		u32,
-	> for ModeratorActionType
-{
-	fn scope() -> ActionScope {
-		ActionScope::Moderator
-	}
-
-	fn id(&self) -> u32 {
-		self.get_id()
-	}
-
-	fn validate(
-		&self,
-		_: &ModeratorRequestContext,
-	) -> Result<(), BusinessException<ModeratorRequestContext>> {
+impl ModeratorActionType {
+	pub fn get_id(&self) -> u32 {
 		match self {
-			ModeratorActionType::EchoInfo => Ok(()),
-			ModeratorActionType::EchoWarn => Ok(()),
-			ModeratorActionType::EchoError => Ok(()),
+			ModeratorActionType::EchoInfo => 1,
+			ModeratorActionType::EchoWarn => 2,
+			ModeratorActionType::EchoError => 3,
 		}
 	}
 }

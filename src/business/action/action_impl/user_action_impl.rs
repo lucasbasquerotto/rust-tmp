@@ -1,12 +1,20 @@
-use crate::business::action::{
-	action_data::{
-		general_action_data::{BusinessException, ErrorData},
-		user_action_data::{
-			UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext, UserNoAuthSession,
-			UserRequestContext, UserSession,
+use std::fmt::Debug;
+
+use crate::{
+	business::action::{
+		action_type::user_action_type::UserActionType,
+		data::{
+			action_data::{BusinessException, ErrorData},
+			user_action_data::{
+				UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
+				UserNoAuthSession, UserRequestContext, UserSession,
+			},
 		},
+		definition::action_error::BusinessErrorGenerator,
+		definition::action_helpers::DescriptiveRequestContext,
+		definition::business_action::{UserAction, UserActionResult},
 	},
-	business_action::{BusinessErrorGenerator, DescriptiveRequestContext},
+	lib::core::action::{Action, ActionScope, ActionType, RequestInput},
 };
 
 impl DescriptiveRequestContext for UserRequestContext {
@@ -134,5 +142,60 @@ impl UserNoAuthRequestContext {
 
 	pub fn to_auth(&self) -> Result<UserAuthRequestContext, BusinessException<UserRequestContext>> {
 		self.to_general().to_auth()
+	}
+}
+
+impl ActionType<UserRequestContext, Option<ErrorData>, BusinessException<UserRequestContext>, u32>
+	for UserActionType
+{
+	fn scope() -> ActionScope {
+		ActionScope::User
+	}
+
+	fn id(&self) -> u32 {
+		self.get_id()
+	}
+
+	fn validate(
+		&self,
+		context: &UserRequestContext,
+	) -> Result<(), BusinessException<UserRequestContext>> {
+		match self {
+			UserActionType::Login => context.to_no_auth().map(|_| ()),
+			UserActionType::Logout => context.to_auth().map(|_| ()),
+		}
+	}
+}
+
+impl<I, O, T>
+	Action<
+		UserRequestContext,
+		I,
+		O,
+		Option<ErrorData>,
+		BusinessException<UserRequestContext>,
+		u32,
+		UserActionType,
+	> for T
+where
+	I: Debug,
+	O: Debug,
+	T: UserAction<I, O>,
+{
+	fn action_type() -> UserActionType {
+		Self::action_type()
+	}
+
+	fn new(input: RequestInput<I, UserRequestContext>) -> Self {
+		Self::new(input)
+	}
+
+	fn input(&self) -> &RequestInput<I, UserRequestContext> {
+		self.input()
+	}
+
+	fn run(self) -> UserActionResult<O> {
+		Self::action_type().validate(&self.input().context)?;
+		self.run_inner()
 	}
 }

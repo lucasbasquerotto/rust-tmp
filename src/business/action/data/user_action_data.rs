@@ -1,19 +1,6 @@
-use super::general_action_data::{Application, Request, Session};
+use crate::business::action::action_type::user_action_type::UserActionType;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub enum UserActionType {
-	Login,
-	Logout,
-}
-
-impl UserActionType {
-	pub fn get_id(&self) -> u32 {
-		match self {
-			UserActionType::Login => 1,
-			UserActionType::Logout => 2,
-		}
-	}
-}
+use super::action_data::{Application, Request, Session};
 
 #[derive(Clone, Debug)]
 pub struct UserSession {
