@@ -6,6 +6,7 @@ mod lib;
 
 use std::fmt::Debug;
 
+use business::action::action_type::action_type::BusinessActionType;
 use business::action::action_type::moderator_action_type::ModeratorActionType;
 use business::action::action_type::user_action_type::UserActionType;
 use business::action::data::action_data::{ActionRequestResult, Application, Request};
@@ -72,7 +73,6 @@ where
 			request: Request {
 				ip: "1.2.3.4".to_string(),
 			},
-			action_type: Self::action_type(),
 		};
 		let input = Ok(RequestInput { context, data });
 		Self::request(input)
@@ -92,12 +92,15 @@ where
 			},
 			session: ModeratorSession {
 				user_id: 123,
-				allowed_actions: vec![],
+				allowed_actions: vec![
+					EchoInfoAction::action_type().id(),
+					EchoWarnAction::action_type().id(),
+					// EchoErrorAction::action_type().id(),
+				],
 			},
 			request: Request {
 				ip: "5.6.7.8".to_string(),
 			},
-			action_type: Self::action_type(),
 		};
 		let input = Ok(RequestInput { context, data });
 		Self::request(input)

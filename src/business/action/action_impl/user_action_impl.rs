@@ -10,9 +10,7 @@ use crate::{
 				UserNoAuthSession, UserRequestContext, UserSession,
 			},
 		},
-		definition::action_helpers::{
-			ActionTypeHelper, DescriptiveRequestContext, UserRequestContextLike,
-		},
+		definition::action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
 		definition::business_action::{UserAction, UserActionResult},
 		definition::{
 			action_error::BusinessErrorGenerator,
@@ -25,32 +23,26 @@ use crate::{
 impl DescriptiveRequestContext for UserRequestContext {
 	fn description(&self) -> String {
 		let UserRequestContext {
-			action_type,
 			session: UserSession { user_id },
 			..
 		} = &self;
-		let action_id = action_type.id();
-		format!("action({action_id}: {action_type:?}), user({user_id:?})")
+		format!("user({user_id:?})")
 	}
 }
 
 impl DescriptiveRequestContext for UserAuthRequestContext {
 	fn description(&self) -> String {
 		let UserAuthRequestContext {
-			action_type,
 			session: UserAuthSession { user_id },
 			..
 		} = &self;
-		let action_id = action_type.id();
-		format!("action({action_id}: {action_type:?}), user({user_id:?})")
+		format!("user({user_id:?})")
 	}
 }
 
 impl DescriptiveRequestContext for UserNoAuthRequestContext {
 	fn description(&self) -> String {
-		let UserNoAuthRequestContext { action_type, .. } = &self;
-		let action_id = action_type.id();
-		format!("action({action_id}: {action_type:?}), unauthenticated")
+		"unauthenticated".to_string()
 	}
 }
 
@@ -86,7 +78,6 @@ impl UserRequestContext {
 			application,
 			session,
 			request,
-			action_type,
 		} = self.clone();
 
 		match session.user_id {
@@ -94,7 +85,6 @@ impl UserRequestContext {
 				application,
 				session: UserAuthSession { user_id },
 				request,
-				action_type,
 			}),
 			None => Err(UserActionContextError::Unauthenticated.exception(self)),
 		}
@@ -105,7 +95,6 @@ impl UserRequestContext {
 			application,
 			session,
 			request,
-			action_type,
 		} = self.clone();
 
 		match session.user_id {
@@ -114,7 +103,6 @@ impl UserRequestContext {
 				application,
 				session: UserNoAuthSession(),
 				request,
-				action_type,
 			}),
 		}
 	}
@@ -146,7 +134,6 @@ impl UserAuthRequestContext {
 			application,
 			session,
 			request,
-			action_type,
 		} = self.clone();
 
 		UserRequestContext {
@@ -155,7 +142,6 @@ impl UserAuthRequestContext {
 				user_id: Some(session.user_id),
 			},
 			request,
-			action_type,
 		}
 	}
 }
@@ -183,7 +169,6 @@ impl UserNoAuthRequestContext {
 		let UserNoAuthRequestContext {
 			application,
 			request,
-			action_type,
 			..
 		} = self.clone();
 
@@ -191,7 +176,6 @@ impl UserNoAuthRequestContext {
 			application,
 			session: UserSession { user_id: None },
 			request,
-			action_type,
 		}
 	}
 }
@@ -232,7 +216,6 @@ where
 	}
 
 	fn new(input: RequestInput<I, UserRequestContext>) -> UserActionResult<Self> {
-		Self::validate_type(&input.context)?;
 		Self::new(input)
 	}
 

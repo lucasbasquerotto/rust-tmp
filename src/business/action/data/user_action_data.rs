@@ -1,5 +1,3 @@
-use crate::business::action::action_type::user_action_type::UserActionType;
-
 use super::action_data::{Application, Request, Session};
 
 #[derive(Clone, Debug)]
@@ -26,7 +24,6 @@ pub struct UserRequestContext {
 	pub application: Application,
 	pub session: UserSession,
 	pub request: Request,
-	pub action_type: UserActionType,
 }
 
 #[derive(Clone, Debug)]
@@ -34,7 +31,6 @@ pub struct UserAuthRequestContext {
 	pub application: Application,
 	pub session: UserAuthSession,
 	pub request: Request,
-	pub action_type: UserActionType,
 }
 
 #[derive(Clone, Debug)]
@@ -42,5 +38,4 @@ pub struct UserNoAuthRequestContext {
 	pub application: Application,
 	pub session: UserNoAuthSession,
 	pub request: Request,
-	pub action_type: UserActionType,
 }

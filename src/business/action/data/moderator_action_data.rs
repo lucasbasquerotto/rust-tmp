@@ -1,5 +1,3 @@
-use crate::business::action::action_type::moderator_action_type::ModeratorActionType;
-
 use super::action_data::{Application, Request, Session};
 
 #[derive(Clone, Debug)]
@@ -15,5 +13,4 @@ pub struct ModeratorRequestContext {
 	pub application: Application,
 	pub session: ModeratorSession,
 	pub request: Request,
-	pub action_type: ModeratorActionType,
 }
