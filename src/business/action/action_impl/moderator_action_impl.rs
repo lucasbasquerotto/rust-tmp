@@ -4,13 +4,16 @@ use crate::{
 			action_type::BusinessActionType, moderator_action_type::ModeratorActionType,
 		},
 		data::{
-			action_data::{BusinessException, ErrorData},
-			moderator_action_data::{ModeratorRequestContext, ModeratorSession},
+			action_data::{ErrorContext, ErrorData},
+			moderator_action_data::{
+				ModeratorActionError, ModeratorErrorInput, ModeratorRequestContext,
+				ModeratorSession,
+			},
 		},
 		definition::{
-			action_error::BusinessErrorGenerator,
+			action_error::BusinessException,
 			action_helpers::DescriptiveRequestContext,
-			business_action::{ActionInput, ActionOutput, ModeratorAction, ModeratorActionResult},
+			business_action::{ActionError, ActionInput, ActionOutput, ModeratorAction},
 		},
 	},
 	lib::core::action::{Action, RequestInput},
@@ -22,64 +25,65 @@ impl DescriptiveRequestContext for ModeratorRequestContext {
 			session: ModeratorSession { user_id, .. },
 			..
 		} = &self;
-		// let action_id = action_type.id();
-		// format!("action({action_id}: {action_type:?}), moderator({user_id:?})")
 		format!("moderator({user_id:?})")
 	}
 }
 
-#[derive(Debug)]
-enum ModeratorActionError<'a> {
-	NotAllowed(&'a u32),
-}
+impl ActionError for ModeratorActionError {}
 
-impl BusinessErrorGenerator<ModeratorRequestContext> for ModeratorActionError<'_> {
-	fn private_error(&self) -> Option<ErrorData> {
+impl BusinessException<ModeratorActionType, ModeratorRequestContext> for ModeratorActionError {
+	fn error_context(&self) -> &ErrorContext<ModeratorActionType, ModeratorRequestContext> {
 		match self {
-			ModeratorActionError::NotAllowed(_) => None,
+			ModeratorActionError::NotAllowed(input) => &input.error_context,
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			ModeratorActionError::NotAllowed(action_id) => self.error_msg(format!(
-				"You are not allowed to execute this action ({action_id})."
+			ModeratorActionError::NotAllowed(input) => self.error_msg(format!(
+				"You are not allowed to execute this action ({action_id}).",
+				action_id = input.data
 			)),
 		}
 	}
+
+	fn description(&self) -> String {
+		self.default_description()
+	}
 }
 
-impl<I, O, T>
-	Action<
-		ModeratorRequestContext,
-		I,
-		O,
-		Option<ErrorData>,
-		BusinessException<ModeratorRequestContext>,
-		ModeratorActionType,
-	> for T
+impl<I, O, E, T> Action<ModeratorRequestContext, I, O, E, ModeratorActionType> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
-	T: ModeratorAction<I, O>,
+	E: BusinessException<ModeratorActionType, ModeratorRequestContext> + ActionError,
+	T: ModeratorAction<I, O, E>,
 	Self: Sized,
 {
-	fn action_type() -> ModeratorActionType {
-		Self::action_type()
-	}
+	// fn action_type() -> ModeratorActionType {
+	// 	Self::action_type()
+	// }
 
-	fn new(input: RequestInput<I, ModeratorRequestContext>) -> ModeratorActionResult<Self> {
+	fn new(input: RequestInput<I, ModeratorRequestContext>) -> Result<Self, E> {
 		let context = &input.context;
-		let action_id = &Self::action_type().id();
+		let action_type = &Self::action_type();
+		let action_id = &action_type.id();
 
 		if !context.session.allowed_actions.contains(action_id) {
-			Err(ModeratorActionError::NotAllowed(action_id).exception(context))?;
+			let error_context = ErrorContext {
+				action_type: action_type.clone(),
+				context: context.clone(),
+			};
+			Self::new_inner(Err(ModeratorActionError::NotAllowed(ModeratorErrorInput {
+				error_context,
+				data: action_type.id(),
+			})))
+		} else {
+			Self::new_inner(Ok(input))
 		}
-
-		Self::new(input)
 	}
 
-	fn run(self) -> ModeratorActionResult<O> {
+	fn run(self) -> Result<O, E> {
 		self.run_inner()
 	}
 }

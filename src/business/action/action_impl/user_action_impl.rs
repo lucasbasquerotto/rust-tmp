@@ -1,20 +1,18 @@
-use std::fmt::Debug;
-
 use crate::{
 	business::action::{
 		action_type::user_action_type::UserActionType,
 		data::{
-			action_data::{BusinessException, ErrorData},
+			action_data::{ErrorContext, ErrorData},
 			user_action_data::{
-				UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
-				UserNoAuthSession, UserRequestContext, UserSession,
+				UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInput,
+				UserNoAuthRequestContext, UserNoAuthSession, UserRequestContext, UserSession,
 			},
 		},
-		definition::action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
-		definition::business_action::{UserAction, UserActionResult},
+		definition::business_action::{ActionError, UserAction},
+		definition::business_action::{ActionInput, ActionOutput},
 		definition::{
-			action_error::BusinessErrorGenerator,
-			business_action::{ActionInput, ActionOutput},
+			action_error::BusinessException,
+			action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
 		},
 	},
 	lib::core::action::{Action, RequestInput},
@@ -46,34 +44,37 @@ impl DescriptiveRequestContext for UserNoAuthRequestContext {
 	}
 }
 
-#[derive(Debug)]
-enum UserActionContextError {
-	Authenticated,
-	Unauthenticated,
-}
+impl ActionError for UserActionError {}
 
-impl BusinessErrorGenerator<UserRequestContext> for UserActionContextError {
-	fn private_error(&self) -> Option<ErrorData> {
+impl BusinessException<UserActionType, UserRequestContext> for UserActionError {
+	fn error_context(&self) -> &ErrorContext<UserActionType, UserRequestContext> {
 		match self {
-			UserActionContextError::Unauthenticated => None,
-			UserActionContextError::Authenticated => None,
+			UserActionError::Authenticated(input) => &input.error_context,
+			UserActionError::Unauthenticated(input) => &input.error_context,
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			UserActionContextError::Authenticated => {
+			UserActionError::Authenticated(_) => {
 				self.error_msg("You can't execute this action while authenticated.".to_string())
 			}
-			UserActionContextError::Unauthenticated => {
+			UserActionError::Unauthenticated(_) => {
 				self.error_msg("You must be authenticated to execute this action.".to_string())
 			}
 		}
 	}
+
+	fn description(&self) -> String {
+		self.default_description()
+	}
 }
 
 impl UserRequestContext {
-	pub fn to_auth(&self) -> Result<UserAuthRequestContext, BusinessException<Self>> {
+	pub fn to_auth(
+		&self,
+		action_type: UserActionType,
+	) -> Result<UserAuthRequestContext, UserActionError> {
 		let UserRequestContext {
 			application,
 			session,
@@ -86,11 +87,20 @@ impl UserRequestContext {
 				session: UserAuthSession { user_id },
 				request,
 			}),
-			None => Err(UserActionContextError::Unauthenticated.exception(self)),
+			None => Err(UserActionError::Unauthenticated(UserErrorInput {
+				error_context: ErrorContext {
+					action_type,
+					context: self.clone(),
+				},
+				data: (),
+			})),
 		}
 	}
 
-	pub fn to_no_auth(&self) -> Result<UserNoAuthRequestContext, BusinessException<Self>> {
+	pub fn to_no_auth(
+		&self,
+		action_type: UserActionType,
+	) -> Result<UserNoAuthRequestContext, UserActionError> {
 		let UserRequestContext {
 			application,
 			session,
@@ -98,7 +108,13 @@ impl UserRequestContext {
 		} = self.clone();
 
 		match session.user_id {
-			Some(_) => Err(UserActionContextError::Authenticated.exception(self)),
+			Some(_) => Err(UserActionError::Authenticated(UserErrorInput {
+				error_context: ErrorContext {
+					action_type,
+					context: self.clone(),
+				},
+				data: (),
+			})),
 			None => Ok(UserNoAuthRequestContext {
 				application,
 				session: UserNoAuthSession(),
@@ -108,18 +124,24 @@ impl UserRequestContext {
 	}
 }
 
-impl<T> RequestInput<T, UserRequestContext> {
+impl<I> RequestInput<I, UserRequestContext> {
 	#[allow(dead_code)]
-	pub fn to_auth(self) -> UserActionResult<RequestInput<T, UserAuthRequestContext>> {
-		let context = self.context.to_auth()?;
+	pub fn to_auth(
+		self,
+		action_type: UserActionType,
+	) -> Result<RequestInput<I, UserAuthRequestContext>, UserActionError> {
+		let context = self.context.to_auth(action_type)?;
 		Ok(RequestInput {
 			context,
 			data: self.data,
 		})
 	}
 
-	pub fn to_no_auth(self) -> UserActionResult<RequestInput<T, UserNoAuthRequestContext>> {
-		let context = self.context.to_no_auth()?;
+	pub fn to_no_auth(
+		self,
+		action_type: UserActionType,
+	) -> Result<RequestInput<I, UserNoAuthRequestContext>, UserActionError> {
+		let context = self.context.to_no_auth(action_type)?;
 		Ok(RequestInput {
 			context,
 			data: self.data,
@@ -197,29 +219,22 @@ impl<T> RequestInput<T, UserNoAuthRequestContext> {
 	}
 }
 
-impl<I, O, T>
-	Action<
-		UserRequestContext,
-		I,
-		O,
-		Option<ErrorData>,
-		BusinessException<UserRequestContext>,
-		UserActionType,
-	> for T
+impl<I, O, E, T> Action<UserRequestContext, I, O, E, UserActionType> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
-	T: UserAction<I, O>,
+	E: BusinessException<UserActionType, UserRequestContext> + ActionError,
+	T: UserAction<I, O, E>,
 {
-	fn action_type() -> UserActionType {
-		Self::action_type()
+	// fn action_type() -> UserActionType {
+	// 	Self::action_type()
+	// }
+
+	fn new(input: RequestInput<I, UserRequestContext>) -> Result<Self, E> {
+		Self::new_inner(Ok(input))
 	}
 
-	fn new(input: RequestInput<I, UserRequestContext>) -> UserActionResult<Self> {
-		Self::new(input)
-	}
-
-	fn run(self) -> UserActionResult<O> {
+	fn run(self) -> Result<O, E> {
 		self.run_inner()
 	}
 }

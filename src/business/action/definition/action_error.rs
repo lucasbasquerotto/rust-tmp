@@ -1,42 +1,66 @@
 use std::fmt::Debug;
 
-use crate::business::action::data::action_data::{BusinessException, ErrorData};
+use crate::business::action::{
+	action_type::action_type::BusinessActionType,
+	data::action_data::{ErrorContext, ErrorData},
+};
 
 use super::action_helpers::DescriptiveRequestContext;
 
-fn type_of<T>(_: &T) -> String {
-	format!("{}", std::any::type_name::<T>())
-		.split("::")
-		.last()
-		.unwrap_or("")
-		.to_string()
-}
-
-pub trait BusinessErrorGenerator<T: DescriptiveRequestContext>: Debug {
-	fn private_error(&self) -> Option<ErrorData>;
+pub trait BusinessException<T: BusinessActionType, C: DescriptiveRequestContext>: Debug
+where
+	Self: Sized,
+{
+	fn error_context(&self) -> &ErrorContext<T, C>;
 
 	fn public_error(&self) -> Option<ErrorData>;
 
-	fn get_key(&self) -> String {
-		let type_name = type_of(&self);
-		let key = format!("{type_name}::{self:?}");
-		key
+	fn description(&self) -> String;
+
+	fn default_description(&self) -> String {
+		let error_context = self.error_context();
+		format!(
+			"[action({action_id}: {action_type:?})] {public} [context={context:?}]",
+			action_id = error_context.action_type.id(),
+			action_type = error_context.action_type,
+			public = self
+				.public_error()
+				.map(|data| data.msg)
+				.unwrap_or("".to_string()),
+			context = error_context.context.description()
+		)
+	}
+
+	fn handle(self) -> Option<ErrorData> {
+		let _ = &self.error();
+		self.public_error()
 	}
 
 	fn error_msg(&self, msg: String) -> Option<ErrorData> {
-		Some(ErrorData {
-			key: self.get_key(),
-			msg,
-			params: None,
-			meta: None,
-		})
+		Some(ErrorData { msg, params: None })
 	}
 
-	fn exception(&self, context: &T) -> BusinessException<T> {
-		BusinessException {
-			context: Some(context.clone()),
-			private: self.private_error(),
-			public: self.public_error(),
-		}
+	fn type_of<K>(_: &K) -> String {
+		format!("{}", std::any::type_name::<T>())
+			.split("::")
+			.last()
+			.unwrap_or("")
+			.to_string()
+	}
+
+	fn info(&self) {
+		info!("{}", self.description())
+	}
+
+	fn warn(&self) {
+		warn!("{}", self.description())
+	}
+
+	fn error(&self) {
+		error!("{}", self.description())
+	}
+
+	fn debug(&self) {
+		debug!("{}", self.description())
 	}
 }

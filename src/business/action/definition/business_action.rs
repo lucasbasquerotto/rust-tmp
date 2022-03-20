@@ -6,8 +6,8 @@ use crate::{
 			moderator_action_type::ModeratorActionType, user_action_type::UserActionType,
 		},
 		data::{
-			action_data::BusinessException, moderator_action_data::ModeratorRequestContext,
-			user_action_data::UserRequestContext,
+			moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
+			user_action_data::{UserActionError, UserRequestContext},
 		},
 	},
 	lib::core::action::RequestInput,
@@ -21,36 +21,40 @@ pub trait ActionInput: Debug {}
 
 pub trait ActionOutput: Debug {}
 
+pub trait ActionError: Debug {}
+
 impl ActionInput for () {}
 
 impl ActionOutput for () {}
+
+impl ActionError for () {}
 
 /////////////////////////////////////////////////////////
 // User Action
 /////////////////////////////////////////////////////////
 
-pub type UserActionResult<T> = Result<T, BusinessException<UserRequestContext>>;
-
-pub trait UserAction<I: ActionInput, O: ActionOutput>: Debug
+pub trait UserAction<I: ActionInput, O: ActionOutput, E: ActionError>: Debug
 where
 	Self: Sized,
 {
 	fn action_type() -> UserActionType;
-	fn new(input: RequestInput<I, UserRequestContext>) -> UserActionResult<Self>;
-	fn run_inner(self) -> UserActionResult<O>;
+	fn new_inner(
+		input: Result<RequestInput<I, UserRequestContext>, UserActionError>,
+	) -> Result<Self, E>;
+	fn run_inner(self) -> Result<O, E>;
 }
 
 /////////////////////////////////////////////////////////
 // Moderator Action
 /////////////////////////////////////////////////////////
 
-pub type ModeratorActionResult<T> = Result<T, BusinessException<ModeratorRequestContext>>;
-
-pub trait ModeratorAction<I: ActionInput, O: ActionOutput>: Debug
+pub trait ModeratorAction<I: ActionInput, O: ActionOutput, E: ActionError>: Debug
 where
 	Self: Sized,
 {
 	fn action_type() -> ModeratorActionType;
-	fn new(input: RequestInput<I, ModeratorRequestContext>) -> ModeratorActionResult<Self>;
-	fn run_inner(self) -> ModeratorActionResult<O>;
+	fn new_inner(
+		input: Result<RequestInput<I, ModeratorRequestContext>, ModeratorActionError>,
+	) -> Result<Self, E>;
+	fn run_inner(self) -> Result<O, E>;
 }
