@@ -1,13 +1,13 @@
 use std::fmt::Debug;
 
 use crate::business::action::{
-	action_type::action_type::BusinessActionType,
+	action_type::action_type::ActionType,
 	data::action_data::{ErrorContext, ErrorData},
 };
 
 use super::action_helpers::DescriptiveRequestContext;
 
-pub trait BusinessException<T: BusinessActionType, C: DescriptiveRequestContext>: Debug
+pub trait BusinessException<T: ActionType, C: DescriptiveRequestContext>: Debug
 where
 	Self: Sized,
 {

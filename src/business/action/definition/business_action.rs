@@ -1,16 +1,12 @@
 use std::fmt::Debug;
 
-use crate::{
-	business::action::{
-		action_type::{
-			moderator_action_type::ModeratorActionType, user_action_type::UserActionType,
-		},
-		data::{
-			moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
-			user_action_data::{UserActionError, UserRequestContext},
-		},
+use crate::business::action::{
+	action_type::{moderator_action_type::ModeratorActionType, user_action_type::UserActionType},
+	data::{
+		action_data::RequestInput,
+		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
+		user_action_data::{UserActionError, UserRequestContext},
 	},
-	lib::core::action::RequestInput,
 };
 
 /////////////////////////////////////////////////////////
@@ -29,12 +25,26 @@ impl ActionOutput for () {}
 
 impl ActionError for () {}
 
+pub trait Action<I, O, E>: Debug
+where
+	I: ActionInput,
+	O: ActionOutput,
+	E: ActionError,
+	Self: Sized,
+{
+	fn new(input: I) -> Result<Self, E>;
+	fn run(self) -> Result<O, E>;
+}
+
 /////////////////////////////////////////////////////////
 // User Action
 /////////////////////////////////////////////////////////
 
-pub trait UserAction<I: ActionInput, O: ActionOutput, E: ActionError>: Debug
+pub trait UserAction<I, O, E>: Action<RequestInput<I, UserRequestContext>, O, E>
 where
+	I: ActionInput,
+	O: ActionOutput,
+	E: ActionError,
 	Self: Sized,
 {
 	fn action_type() -> UserActionType;
@@ -48,8 +58,11 @@ where
 // Moderator Action
 /////////////////////////////////////////////////////////
 
-pub trait ModeratorAction<I: ActionInput, O: ActionOutput, E: ActionError>: Debug
+pub trait ModeratorAction<I, O, E>: Action<RequestInput<I, ModeratorRequestContext>, O, E>
 where
+	I: ActionInput,
+	O: ActionOutput,
+	E: ActionError,
 	Self: Sized,
 {
 	fn action_type() -> ModeratorActionType;

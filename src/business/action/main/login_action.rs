@@ -1,16 +1,13 @@
-use crate::{
-	business::action::{
-		action_type::user_action_type::UserActionType,
-		data::{
-			action_data::{ErrorContext, ErrorData},
-			user_action_data::{UserActionError, UserNoAuthRequestContext, UserRequestContext},
-		},
-		definition::{
-			action_error::BusinessException,
-			business_action::{ActionError, ActionInput, ActionOutput, UserAction},
-		},
+use crate::business::action::{
+	action_type::user_action_type::UserActionType,
+	data::{
+		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
+		user_action_data::{UserActionError, UserNoAuthRequestContext, UserRequestContext},
 	},
-	lib::core::action::{RequestContext, RequestInput},
+	definition::{
+		action_error::BusinessException,
+		business_action::{ActionError, ActionInput, ActionOutput, UserAction},
+	},
 };
 
 #[derive(Debug, PartialEq)]

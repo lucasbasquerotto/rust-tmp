@@ -1,21 +1,18 @@
-use crate::{
-	business::action::{
-		action_type::user_action_type::UserActionType,
-		data::{
-			action_data::{ErrorContext, ErrorData},
-			user_action_data::{
-				UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInput,
-				UserNoAuthRequestContext, UserNoAuthSession, UserRequestContext, UserSession,
-			},
-		},
-		definition::business_action::{ActionError, UserAction},
-		definition::business_action::{ActionInput, ActionOutput},
-		definition::{
-			action_error::BusinessException,
-			action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
+use crate::business::action::{
+	action_type::user_action_type::UserActionType,
+	data::{
+		action_data::{ErrorContext, ErrorData, RequestInput},
+		user_action_data::{
+			UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInput,
+			UserNoAuthRequestContext, UserNoAuthSession, UserRequestContext, UserSession,
 		},
 	},
-	lib::core::action::{Action, RequestInput},
+	definition::business_action::{Action, ActionError, UserAction},
+	definition::business_action::{ActionInput, ActionOutput},
+	definition::{
+		action_error::BusinessException,
+		action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
+	},
 };
 
 impl DescriptiveRequestContext for UserRequestContext {
@@ -219,17 +216,15 @@ impl<T> RequestInput<T, UserNoAuthRequestContext> {
 	}
 }
 
-impl<I, O, E, T> Action<UserRequestContext, I, O, E, UserActionType> for T
+impl<I: ActionInput> ActionInput for RequestInput<I, UserRequestContext> {}
+
+impl<I, O, E, T> Action<RequestInput<I, UserRequestContext>, O, E> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
 	E: BusinessException<UserActionType, UserRequestContext> + ActionError,
 	T: UserAction<I, O, E>,
 {
-	// fn action_type() -> UserActionType {
-	// 	Self::action_type()
-	// }
-
 	fn new(input: RequestInput<I, UserRequestContext>) -> Result<Self, E> {
 		Self::new_inner(Ok(input))
 	}

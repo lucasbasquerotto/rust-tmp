@@ -1,6 +1,6 @@
-use crate::lib::core::action::ActionScope;
+use crate::business::action::data::action_data::ActionScope;
 
-use super::action_type::BusinessActionType;
+use super::action_type::ActionType;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum UserActionType {
@@ -10,7 +10,7 @@ pub enum UserActionType {
 
 impl UserActionType {}
 
-impl BusinessActionType for UserActionType {
+impl ActionType for UserActionType {
 	fn scope() -> ActionScope {
 		ActionScope::User
 	}

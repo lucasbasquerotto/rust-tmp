@@ -1,22 +1,16 @@
-use crate::{
-	business::action::{
-		action_type::{
-			action_type::BusinessActionType, moderator_action_type::ModeratorActionType,
-		},
-		data::{
-			action_data::{ErrorContext, ErrorData},
-			moderator_action_data::{
-				ModeratorActionError, ModeratorErrorInput, ModeratorRequestContext,
-				ModeratorSession,
-			},
-		},
-		definition::{
-			action_error::BusinessException,
-			action_helpers::DescriptiveRequestContext,
-			business_action::{ActionError, ActionInput, ActionOutput, ModeratorAction},
+use crate::business::action::{
+	action_type::{action_type::ActionType, moderator_action_type::ModeratorActionType},
+	data::{
+		action_data::{ErrorContext, ErrorData, RequestInput},
+		moderator_action_data::{
+			ModeratorActionError, ModeratorErrorInput, ModeratorRequestContext, ModeratorSession,
 		},
 	},
-	lib::core::action::{Action, RequestInput},
+	definition::{
+		action_error::BusinessException,
+		action_helpers::DescriptiveRequestContext,
+		business_action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
+	},
 };
 
 impl DescriptiveRequestContext for ModeratorRequestContext {
@@ -52,7 +46,9 @@ impl BusinessException<ModeratorActionType, ModeratorRequestContext> for Moderat
 	}
 }
 
-impl<I, O, E, T> Action<ModeratorRequestContext, I, O, E, ModeratorActionType> for T
+impl<I: ActionInput> ActionInput for RequestInput<I, ModeratorRequestContext> {}
+
+impl<I, O, E, T> Action<RequestInput<I, ModeratorRequestContext>, O, E> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -60,10 +56,6 @@ where
 	T: ModeratorAction<I, O, E>,
 	Self: Sized,
 {
-	// fn action_type() -> ModeratorActionType {
-	// 	Self::action_type()
-	// }
-
 	fn new(input: RequestInput<I, ModeratorRequestContext>) -> Result<Self, E> {
 		let context = &input.context;
 		let action_type = &Self::action_type();

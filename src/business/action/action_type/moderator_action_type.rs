@@ -1,6 +1,6 @@
-use crate::lib::core::action::ActionScope;
+use crate::business::action::data::action_data::ActionScope;
 
-use super::action_type::BusinessActionType;
+use super::action_type::ActionType;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ModeratorActionType {
@@ -9,7 +9,7 @@ pub enum ModeratorActionType {
 	EchoError,
 }
 
-impl BusinessActionType for ModeratorActionType {
+impl ActionType for ModeratorActionType {
 	fn scope() -> ActionScope {
 		ActionScope::Moderator
 	}

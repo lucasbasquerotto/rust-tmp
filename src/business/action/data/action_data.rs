@@ -1,9 +1,20 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use crate::{
-	business::action::action_type::action_type::BusinessActionType,
-	lib::core::action::RequestContext,
-};
+use crate::business::action::action_type::action_type::ActionType;
+
+pub enum ActionScope {
+	User,
+	Moderator,
+	// AUTOMATIC,
+}
+
+pub trait RequestContext {}
+
+#[derive(Debug)]
+pub struct RequestInput<I, C: RequestContext> {
+	pub context: C,
+	pub data: I,
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Request {
@@ -18,13 +29,13 @@ pub struct Application {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ErrorContext<T: BusinessActionType, C: RequestContext> {
+pub struct ErrorContext<T: ActionType, C: RequestContext> {
 	pub action_type: T,
 	pub context: C,
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct ErrorInput<T: BusinessActionType, C: RequestContext, D> {
+pub struct ErrorInput<T: ActionType, C: RequestContext, D> {
 	pub error_context: ErrorContext<T, C>,
 	pub data: D,
 }

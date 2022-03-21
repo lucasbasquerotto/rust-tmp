@@ -2,14 +2,15 @@
 extern crate log;
 
 mod business;
-mod lib;
 
 use std::fmt::Debug;
 
-use business::action::action_type::action_type::BusinessActionType;
+use business::action::action_type::action_type::ActionType;
 use business::action::action_type::moderator_action_type::ModeratorActionType;
 use business::action::action_type::user_action_type::UserActionType;
-use business::action::data::action_data::{ActionRequestResult, Application, Request};
+use business::action::data::action_data::{
+	ActionRequestResult, Application, Request, RequestInput,
+};
 
 use business::action::data::moderator_action_data::{ModeratorRequestContext, ModeratorSession};
 use business::action::data::user_action_data::{UserRequestContext, UserSession};
@@ -18,7 +19,6 @@ use business::action::definition::business_action::{ActionError, UserAction};
 use business::action::definition::business_action::{ActionInput, ActionOutput, ModeratorAction};
 use business::action::main::login_action::{LoginError, LoginResult};
 use business::action::main::logout_action::LogoutError;
-use lib::core::action::{Action, RequestInput};
 
 use crate::business::action::data::action_data::ErrorData;
 use crate::business::action::main::echo::echo_error_action::EchoErrorAction;
@@ -64,7 +64,7 @@ where
 	I: ActionInput,
 	O: ActionOutput,
 	E: BusinessException<UserActionType, UserRequestContext> + ActionError,
-	A: UserAction<I, O, E> + Action<UserRequestContext, I, O, E, UserActionType>,
+	A: UserAction<I, O, E>,
 {
 	fn test_request(data: I) -> Result<O, E> {
 		let context = UserRequestContext {
@@ -87,7 +87,7 @@ where
 	I: ActionInput,
 	O: ActionOutput,
 	E: ActionError,
-	A: ModeratorAction<I, O, E> + Action<ModeratorRequestContext, I, O, E, ModeratorActionType>,
+	A: ModeratorAction<I, O, E>,
 {
 	fn test_request(data: I) -> Result<O, E> {
 		let context = ModeratorRequestContext {

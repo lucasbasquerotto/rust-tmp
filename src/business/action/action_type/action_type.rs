@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
-use crate::lib::core::action::ActionScope;
+use crate::business::action::data::action_data::ActionScope;
 
-pub trait BusinessActionType: Clone + Debug + Eq + PartialEq {
+pub trait ActionType: Clone + Debug + Eq + PartialEq {
 	fn scope() -> ActionScope;
 	fn id(&self) -> u32;
 }
