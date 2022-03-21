@@ -7,9 +7,9 @@ use crate::business::action::{
 		},
 	},
 	definition::{
-		action_error::BusinessException,
+		action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
+		action_error::ActionErrorHelper,
 		action_helpers::DescriptiveRequestContext,
-		business_action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
 	},
 };
 
@@ -23,9 +23,7 @@ impl DescriptiveRequestContext for ModeratorRequestContext {
 	}
 }
 
-impl ActionError for ModeratorActionError {}
-
-impl BusinessException<ModeratorActionType, ModeratorRequestContext> for ModeratorActionError {
+impl ActionError<ModeratorActionType, ModeratorRequestContext> for ModeratorActionError {
 	fn error_context(&self) -> &ErrorContext<ModeratorActionType, ModeratorRequestContext> {
 		match self {
 			ModeratorActionError::NotAllowed(input) => &input.error_context,
@@ -52,7 +50,7 @@ impl<I, O, E, T> Action<RequestInput<I, ModeratorRequestContext>, O, E> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: BusinessException<ModeratorActionType, ModeratorRequestContext> + ActionError,
+	E: ActionError<ModeratorActionType, ModeratorRequestContext>,
 	T: ModeratorAction<I, O, E>,
 	Self: Sized,
 {

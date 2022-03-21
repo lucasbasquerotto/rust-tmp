@@ -7,11 +7,11 @@ use crate::business::action::{
 			UserNoAuthRequestContext, UserNoAuthSession, UserRequestContext, UserSession,
 		},
 	},
-	definition::business_action::{Action, ActionError, UserAction},
-	definition::business_action::{ActionInput, ActionOutput},
+	definition::action::{ActionInput, ActionOutput},
+	definition::action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
 	definition::{
-		action_error::BusinessException,
-		action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
+		action::{Action, ActionError, UserAction},
+		action_error::ActionErrorHelper,
 	},
 };
 
@@ -41,9 +41,7 @@ impl DescriptiveRequestContext for UserNoAuthRequestContext {
 	}
 }
 
-impl ActionError for UserActionError {}
-
-impl BusinessException<UserActionType, UserRequestContext> for UserActionError {
+impl ActionError<UserActionType, UserRequestContext> for UserActionError {
 	fn error_context(&self) -> &ErrorContext<UserActionType, UserRequestContext> {
 		match self {
 			UserActionError::Authenticated(input) => &input.error_context,
@@ -222,7 +220,7 @@ impl<I, O, E, T> Action<RequestInput<I, UserRequestContext>, O, E> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: BusinessException<UserActionType, UserRequestContext> + ActionError,
+	E: ActionError<UserActionType, UserRequestContext>,
 	T: UserAction<I, O, E>,
 {
 	fn new(input: RequestInput<I, UserRequestContext>) -> Result<Self, E> {

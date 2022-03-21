@@ -5,8 +5,8 @@ use crate::business::action::{
 		user_action_data::{UserActionError, UserRequestContext},
 	},
 	definition::{
-		action_error::BusinessException,
-		business_action::{ActionError, UserAction},
+		action::{ActionError, UserAction},
+		action_error::ActionErrorHelper,
 	},
 };
 
@@ -17,8 +17,6 @@ pub struct LogoutAction<T: RequestContext>(RequestInput<(), T>);
 pub enum LogoutError {
 	UserError(UserActionError),
 }
-
-impl ActionError for LogoutError {}
 
 impl UserAction<(), (), LogoutError> for LogoutAction<UserRequestContext> {
 	fn action_type() -> UserActionType {
@@ -40,7 +38,7 @@ impl UserAction<(), (), LogoutError> for LogoutAction<UserRequestContext> {
 	}
 }
 
-impl BusinessException<UserActionType, UserRequestContext> for LogoutError {
+impl ActionError<UserActionType, UserRequestContext> for LogoutError {
 	fn error_context(&self) -> &ErrorContext<UserActionType, UserRequestContext> {
 		match &self {
 			&Self::UserError(error) => error.error_context(),

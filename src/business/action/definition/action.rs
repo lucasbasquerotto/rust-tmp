@@ -1,35 +1,41 @@
 use std::fmt::Debug;
 
 use crate::business::action::{
-	action_type::{moderator_action_type::ModeratorActionType, user_action_type::UserActionType},
+	action_type::{
+		action_type::ActionType, moderator_action_type::ModeratorActionType,
+		user_action_type::UserActionType,
+	},
 	data::{
-		action_data::RequestInput,
+		action_data::{ErrorContext, ErrorData, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 		user_action_data::{UserActionError, UserRequestContext},
 	},
 };
 
+use super::action_helpers::DescriptiveRequestContext;
+
 /////////////////////////////////////////////////////////
-// Input + Output
+// Input + Output + Error
 /////////////////////////////////////////////////////////
 
 pub trait ActionInput: Debug {}
 
 pub trait ActionOutput: Debug {}
 
-pub trait ActionError: Debug {}
+pub trait ActionError<T: ActionType, C: DescriptiveRequestContext>: Debug {
+	fn error_context(&self) -> &ErrorContext<T, C>;
+
+	fn public_error(&self) -> Option<ErrorData>;
+
+	fn description(&self) -> String;
+}
 
 impl ActionInput for () {}
 
 impl ActionOutput for () {}
 
-impl ActionError for () {}
-
 pub trait Action<I, O, E>: Debug
 where
-	I: ActionInput,
-	O: ActionOutput,
-	E: ActionError,
 	Self: Sized,
 {
 	fn new(input: I) -> Result<Self, E>;
@@ -44,7 +50,7 @@ pub trait UserAction<I, O, E>: Action<RequestInput<I, UserRequestContext>, O, E>
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError,
+	E: ActionError<UserActionType, UserRequestContext>,
 	Self: Sized,
 {
 	fn action_type() -> UserActionType;
@@ -62,7 +68,7 @@ pub trait ModeratorAction<I, O, E>: Action<RequestInput<I, ModeratorRequestConte
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError,
+	E: ActionError<ModeratorActionType, ModeratorRequestContext>,
 	Self: Sized,
 {
 	fn action_type() -> ModeratorActionType;

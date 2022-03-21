@@ -5,20 +5,36 @@ use crate::business::action::{
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 	},
 	definition::{
-		action_error::BusinessException,
-		business_action::{ActionError, ModeratorAction},
+		action::{ActionError, ModeratorAction},
+		action_error::ActionErrorHelper,
 	},
 };
-
-#[derive(Debug)]
-pub struct EchoInfoAction<T: RequestContext>(RequestInput<(), T>);
 
 #[derive(Debug, PartialEq)]
 pub enum EchoInfoError {
 	ModeratorError(ModeratorActionError),
 }
 
-impl ActionError for EchoInfoError {}
+impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoInfoError {
+	fn error_context(&self) -> &ErrorContext<ModeratorActionType, ModeratorRequestContext> {
+		match &self {
+			&Self::ModeratorError(error) => error.error_context(),
+		}
+	}
+
+	fn public_error(&self) -> Option<ErrorData> {
+		match &self {
+			&Self::ModeratorError(error) => error.public_error(),
+		}
+	}
+
+	fn description(&self) -> String {
+		self.default_description()
+	}
+}
+
+#[derive(Debug)]
+pub struct EchoInfoAction<T: RequestContext>(RequestInput<(), T>);
 
 impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction<ModeratorRequestContext> {
 	fn action_type() -> ModeratorActionType {
@@ -37,23 +53,5 @@ impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction<ModeratorRequestC
 	fn run_inner(self) -> Result<(), EchoInfoError> {
 		info!("echo info action");
 		Ok(())
-	}
-}
-
-impl BusinessException<ModeratorActionType, ModeratorRequestContext> for EchoInfoError {
-	fn error_context(&self) -> &ErrorContext<ModeratorActionType, ModeratorRequestContext> {
-		match &self {
-			&Self::ModeratorError(error) => error.error_context(),
-		}
-	}
-
-	fn public_error(&self) -> Option<ErrorData> {
-		match &self {
-			&Self::ModeratorError(error) => error.public_error(),
-		}
-	}
-
-	fn description(&self) -> String {
-		self.default_description()
 	}
 }

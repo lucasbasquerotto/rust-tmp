@@ -14,9 +14,9 @@ use business::action::data::action_data::{
 
 use business::action::data::moderator_action_data::{ModeratorRequestContext, ModeratorSession};
 use business::action::data::user_action_data::{UserRequestContext, UserSession};
-use business::action::definition::action_error::BusinessException;
-use business::action::definition::business_action::{ActionError, UserAction};
-use business::action::definition::business_action::{ActionInput, ActionOutput, ModeratorAction};
+use business::action::definition::action::{ActionError, UserAction};
+use business::action::definition::action::{ActionInput, ActionOutput, ModeratorAction};
+use business::action::definition::action_helpers::DescriptiveRequestContext;
 use business::action::main::login_action::{LoginError, LoginResult};
 use business::action::main::logout_action::LogoutError;
 
@@ -55,15 +55,23 @@ impl log::Log for MyLogger {
 	fn flush(&self) {}
 }
 
-trait TestRequest<I: ActionInput, O: ActionOutput, E: ActionError, A> {
+trait TestRequest<
+	T: ActionType,
+	C: DescriptiveRequestContext,
+	I: ActionInput,
+	O: ActionOutput,
+	E: ActionError<T, C>,
+	A,
+>
+{
 	fn test_request(data: I) -> Result<O, E>;
 }
 
-impl<I, O, E, A> TestRequest<I, O, E, UserActionType> for A
+impl<I, O, E, A> TestRequest<UserActionType, UserRequestContext, I, O, E, UserActionType> for A
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: BusinessException<UserActionType, UserRequestContext> + ActionError,
+	E: ActionError<UserActionType, UserRequestContext>,
 	A: UserAction<I, O, E>,
 {
 	fn test_request(data: I) -> Result<O, E> {
@@ -82,11 +90,12 @@ where
 	}
 }
 
-impl<I, O, E, A> TestRequest<I, O, E, ModeratorActionType> for A
+impl<I, O, E, A>
+	TestRequest<ModeratorActionType, ModeratorRequestContext, I, O, E, ModeratorActionType> for A
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError,
+	E: ActionError<ModeratorActionType, ModeratorRequestContext>,
 	A: ModeratorAction<I, O, E>,
 {
 	fn test_request(data: I) -> Result<O, E> {

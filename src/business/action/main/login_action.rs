@@ -5,8 +5,8 @@ use crate::business::action::{
 		user_action_data::{UserActionError, UserNoAuthRequestContext, UserRequestContext},
 	},
 	definition::{
-		action_error::BusinessException,
-		business_action::{ActionError, ActionInput, ActionOutput, UserAction},
+		action::{ActionError, ActionInput, ActionOutput, UserAction},
+		action_error::ActionErrorHelper,
 	},
 };
 
@@ -31,7 +31,23 @@ pub enum LoginError {
 	UserError(UserActionError),
 }
 
-impl ActionError for LoginError {}
+impl ActionError<UserActionType, UserRequestContext> for LoginError {
+	fn error_context(&self) -> &ErrorContext<UserActionType, UserRequestContext> {
+		match &self {
+			&Self::UserError(error) => error.error_context(),
+		}
+	}
+
+	fn public_error(&self) -> Option<ErrorData> {
+		match &self {
+			&Self::UserError(error) => error.public_error(),
+		}
+	}
+
+	fn description(&self) -> String {
+		self.default_description()
+	}
+}
 
 #[derive(Debug)]
 pub struct LoginAction<T: RequestContext>(RequestInput<LoginData, T>);
@@ -66,23 +82,5 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction<UserNoAuthRe
 			name: name.to_string(),
 		};
 		Ok(result)
-	}
-}
-
-impl BusinessException<UserActionType, UserRequestContext> for LoginError {
-	fn error_context(&self) -> &ErrorContext<UserActionType, UserRequestContext> {
-		match &self {
-			&Self::UserError(error) => error.error_context(),
-		}
-	}
-
-	fn public_error(&self) -> Option<ErrorData> {
-		match &self {
-			&Self::UserError(error) => error.public_error(),
-		}
-	}
-
-	fn description(&self) -> String {
-		self.default_description()
 	}
 }
