@@ -6,33 +6,11 @@ use crate::business::action::{
 		user_action_type::UserActionType,
 	},
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestInput},
+		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 		user_action_data::{UserActionError, UserRequestContext},
 	},
 };
-
-use super::action_helpers::DescriptiveRequestContext;
-
-/////////////////////////////////////////////////////////
-// Input + Output + Error
-/////////////////////////////////////////////////////////
-
-pub trait ActionInput: Debug {}
-
-pub trait ActionOutput: Debug {}
-
-pub trait ActionError<T: ActionType, C: DescriptiveRequestContext>: Debug {
-	fn error_context(&self) -> &ErrorContext<T, C>;
-
-	fn public_error(&self) -> Option<ErrorData>;
-
-	fn description(&self) -> String;
-}
-
-impl ActionInput for () {}
-
-impl ActionOutput for () {}
 
 pub trait Action<I, O, E>: Debug
 where
@@ -40,6 +18,26 @@ where
 {
 	fn new(input: I) -> Result<Self, E>;
 	fn run(self) -> Result<O, E>;
+}
+
+/////////////////////////////////////////////////////////
+// Input + Output + Error
+/////////////////////////////////////////////////////////
+
+pub trait ActionInput: Debug {}
+
+impl ActionInput for () {}
+
+pub trait ActionOutput: Debug {}
+
+impl ActionOutput for () {}
+
+pub trait ActionError<T: ActionType, C: RequestContext>: Debug {
+	fn error_context(&self) -> &ErrorContext<T, C>;
+
+	fn public_error(&self) -> Option<ErrorData>;
+
+	fn description(&self) -> String;
 }
 
 /////////////////////////////////////////////////////////

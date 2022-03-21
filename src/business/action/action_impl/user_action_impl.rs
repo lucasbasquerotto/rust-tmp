@@ -11,7 +11,7 @@ use crate::business::action::{
 	definition::action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
 	definition::{
 		action::{Action, ActionError, UserAction},
-		action_error::ActionErrorHelper,
+		action_helpers::ActionErrorHelper,
 	},
 };
 

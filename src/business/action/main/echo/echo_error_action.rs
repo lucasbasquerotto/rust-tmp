@@ -6,7 +6,7 @@ use crate::business::action::{
 	},
 	definition::{
 		action::{ActionError, ModeratorAction},
-		action_error::ActionErrorHelper,
+		action_helpers::ActionErrorHelper,
 	},
 };
 
