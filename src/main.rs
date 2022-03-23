@@ -10,5 +10,8 @@ pub mod tests {
 	pub mod test_utils;
 
 	#[test]
-	pub fn main() {}
+	pub fn main() {
+		// log::set_logger(&MY_LOGGER).unwrap();
+		// log::set_max_level(LevelFilter::Info);
+	}
 }

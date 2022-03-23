@@ -1,5 +1,8 @@
 #[cfg(test)]
 pub mod tests {
+	extern crate lazy_static;
+	extern crate log;
+
 	use std::fmt::Debug;
 	use std::sync::{Arc, Mutex};
 
@@ -15,8 +18,6 @@ pub mod tests {
 	use business::definition::action_helpers::DescriptiveRequestContext;
 
 	use log::{Level, Metadata, Record};
-
-	extern crate lazy_static;
 
 	lazy_static::lazy_static! {
 		static ref MY_LOGGER: MyLogger = MyLogger(Arc::new(Mutex::new(vec![])));
