@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use crate::business::action::action_type::action_type::ActionType;
+use crate::business::action_type::action_type::ActionType;
 
 pub enum ActionScope {
 	User,
@@ -46,4 +46,5 @@ pub struct ErrorData {
 	pub params: Option<HashMap<String, String>>,
 }
 
+#[allow(dead_code)]
 pub type ActionRequestResult<T> = Result<T, Option<ErrorData>>;

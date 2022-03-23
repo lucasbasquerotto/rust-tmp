@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::business::action::{
+use crate::business::{
 	action_type::action_type::ActionType,
 	data::{action_data::ErrorData, user_action_data::UserRequestContext},
 };

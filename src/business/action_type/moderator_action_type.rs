@@ -1,4 +1,4 @@
-use crate::business::action::data::action_data::ActionScope;
+use crate::business::data::action_data::ActionScope;
 
 use super::action_type::ActionType;
 

@@ -1,4 +1,4 @@
-use crate::business::action::action_type::user_action_type::UserActionType;
+use crate::business::action_type::user_action_type::UserActionType;
 
 use super::action_data::{Application, ErrorInput, Request, Session};
 

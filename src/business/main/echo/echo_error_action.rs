@@ -1,4 +1,4 @@
-use crate::business::action::{
+use crate::business::{
 	action_type::moderator_action_type::ModeratorActionType,
 	data::{
 		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
@@ -11,11 +11,11 @@ use crate::business::action::{
 };
 
 #[derive(Debug, PartialEq)]
-pub enum EchoInfoError {
+pub enum EchoErrorError {
 	ModeratorError(ModeratorActionError),
 }
 
-impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoInfoError {
+impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoErrorError {
 	fn error_context(&self) -> &ErrorContext<ModeratorActionType, ModeratorRequestContext> {
 		match &self {
 			&Self::ModeratorError(error) => error.error_context(),
@@ -34,24 +34,24 @@ impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoInfoError
 }
 
 #[derive(Debug)]
-pub struct EchoInfoAction<T: RequestContext>(RequestInput<(), T>);
+pub struct EchoErrorAction<T: RequestContext>(RequestInput<(), T>);
 
-impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction<ModeratorRequestContext> {
+impl ModeratorAction<(), (), EchoErrorError> for EchoErrorAction<ModeratorRequestContext> {
 	fn action_type() -> ModeratorActionType {
-		ModeratorActionType::EchoInfo
+		ModeratorActionType::EchoError
 	}
 
 	fn new_inner(
 		input: Result<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
-	) -> Result<Self, EchoInfoError> {
+	) -> Result<Self, EchoErrorError> {
 		match input {
-			Err(err) => Err(EchoInfoError::ModeratorError(err)),
+			Err(err) => Err(EchoErrorError::ModeratorError(err)),
 			Ok(ok_input) => Ok(Self(ok_input)),
 		}
 	}
 
-	fn run_inner(self) -> Result<(), EchoInfoError> {
-		info!("echo info action");
+	fn run_inner(self) -> Result<(), EchoErrorError> {
+		error!("echo error action");
 		Ok(())
 	}
 }

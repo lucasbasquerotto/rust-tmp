@@ -1,4 +1,4 @@
-use crate::business::action::{
+use crate::business::{
 	action_type::{action_type::ActionType, moderator_action_type::ModeratorActionType},
 	data::{
 		action_data::{ErrorContext, ErrorData, RequestInput},
@@ -53,12 +53,12 @@ where
 	T: ModeratorAction<I, O, E>,
 	Self: Sized,
 {
-	fn new(input: RequestInput<I, ModeratorRequestContext>) -> Result<Self, E> {
+	fn run(input: RequestInput<I, ModeratorRequestContext>) -> Result<O, E> {
 		let context = &input.context;
 		let action_type = &Self::action_type();
 		let action_id = &action_type.id();
 
-		if !context.session.allowed_actions.contains(action_id) {
+		let action = if !context.session.allowed_actions.contains(action_id) {
 			let error_context = ErrorContext {
 				action_type: action_type.clone(),
 				context: context.clone(),
@@ -66,13 +66,11 @@ where
 			Self::new_inner(Err(ModeratorActionError::NotAllowed(ModeratorErrorInput {
 				error_context,
 				data: action_type.id(),
-			})))
+			})))?
 		} else {
-			Self::new_inner(Ok(input))
-		}
-	}
+			Self::new_inner(Ok(input))?
+		};
 
-	fn run(self) -> Result<O, E> {
-		self.run_inner()
+		action.run_inner()
 	}
 }

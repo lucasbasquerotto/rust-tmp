@@ -1,4 +1,4 @@
-use crate::business::action::action_type::moderator_action_type::ModeratorActionType;
+use crate::business::action_type::moderator_action_type::ModeratorActionType;
 
 use super::action_data::{Application, ErrorInput, Request, Session};
 

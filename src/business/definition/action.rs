@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::business::action::{
+use crate::business::{
 	action_type::{
 		action_type::ActionType, moderator_action_type::ModeratorActionType,
 		user_action_type::UserActionType,
@@ -16,8 +16,7 @@ pub trait Action<I, O, E>: Debug
 where
 	Self: Sized,
 {
-	fn new(input: I) -> Result<Self, E>;
-	fn run(self) -> Result<O, E>;
+	fn run(input: I) -> Result<O, E>;
 }
 
 /////////////////////////////////////////////////////////

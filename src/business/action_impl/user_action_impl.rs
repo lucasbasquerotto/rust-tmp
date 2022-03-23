@@ -1,4 +1,4 @@
-use crate::business::action::{
+use crate::business::{
 	action_type::user_action_type::UserActionType,
 	data::{
 		action_data::{ErrorContext, ErrorData, RequestInput},
@@ -223,11 +223,8 @@ where
 	E: ActionError<UserActionType, UserRequestContext>,
 	T: UserAction<I, O, E>,
 {
-	fn new(input: RequestInput<I, UserRequestContext>) -> Result<Self, E> {
-		Self::new_inner(Ok(input))
-	}
-
-	fn run(self) -> Result<O, E> {
-		self.run_inner()
+	fn run(input: RequestInput<I, UserRequestContext>) -> Result<O, E> {
+		let action = Self::new_inner(Ok(input))?;
+		action.run_inner()
 	}
 }
