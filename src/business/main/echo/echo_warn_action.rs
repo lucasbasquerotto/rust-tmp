@@ -55,3 +55,50 @@ impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction<ModeratorRequestC
 		Ok(())
 	}
 }
+
+#[cfg(test)]
+pub mod tests {
+	use super::EchoWarnAction;
+	use crate::business::action_type::moderator_action_type::ModeratorActionType;
+	use crate::business::data::action_data::{ErrorContext, ErrorInput};
+	use crate::business::data::moderator_action_data::ModeratorActionError;
+	use crate::business::main::echo::echo_warn_action::EchoWarnError;
+	use crate::tests::test_utils::tests::{
+		moderator_context, pop_log, ModeratorOptions, TestRequest,
+	};
+	use business::action_type::action_type::ActionType;
+	use business::definition::action::ModeratorAction;
+
+	#[test]
+	fn main() {
+		assert_eq!(pop_log(), None);
+
+		let context = moderator_context(ModeratorOptions {
+			allowed_actions: vec![],
+		});
+
+		let result = EchoWarnAction::test_request((), context.clone());
+		assert_eq!(
+			result,
+			Err(EchoWarnError::ModeratorError(
+				ModeratorActionError::NotAllowed(ErrorInput {
+					error_context: ErrorContext {
+						action_type: ModeratorActionType::EchoWarn,
+						context: context.clone()
+					},
+					data: ModeratorActionType::EchoWarn.id()
+				})
+			))
+		);
+		assert_eq!(pop_log(), None);
+
+		let context = moderator_context(ModeratorOptions {
+			allowed_actions: vec![EchoWarnAction::action_type().id()],
+		});
+
+		let result = EchoWarnAction::test_request((), context.clone());
+		assert_eq!(result, Ok(()));
+		//assert_eq!(pop_log(), Some("WARN - echo warn action".to_string()));
+		assert_eq!(pop_log(), None);
+	}
+}

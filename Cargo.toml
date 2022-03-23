@@ -5,3 +5,4 @@ authors = ["lucas"]
 
 [dependencies]
 log = { version = "0.4", features = ["std", "serde"] }
+lazy_static = "1.4.0"
