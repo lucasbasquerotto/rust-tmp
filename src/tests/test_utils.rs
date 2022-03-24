@@ -17,7 +17,7 @@ pub mod tests {
 	use business::definition::action::{ActionInput, ActionOutput, ModeratorAction};
 	use business::definition::action_helpers::DescriptiveRequestContext;
 
-	use log::{Level, Metadata, Record};
+	use log::{Level, LevelFilter, Metadata, Record};
 
 	lazy_static::lazy_static! {
 		static ref MY_LOGGER: MyLogger = MyLogger(Arc::new(Mutex::new(vec![])));
@@ -132,5 +132,10 @@ pub mod tests {
 			let input = RequestInput { context, data };
 			Self::run(input)
 		}
+	}
+
+	pub fn init() {
+		log::set_logger(&*MY_LOGGER).unwrap();
+		log::set_max_level(LevelFilter::Info);
 	}
 }

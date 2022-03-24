@@ -1,14 +1,17 @@
-use crate::business::data::action_data::ActionScope;
-
 use super::action_type::ActionType;
+use crate::business::data::action_data::ActionScope;
+use std::{collections::HashMap, iter::FromIterator};
+use strum::{EnumIter, IntoEnumIterator};
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, EnumIter)]
 pub enum UserActionType {
 	Login,
 	Logout,
 }
 
-impl UserActionType {}
+#[ctor::ctor]
+static ID_ACTION_MAP: HashMap<u32, UserActionType> =
+	HashMap::from_iter(UserActionType::iter().map(|item| (item.id(), item)));
 
 impl ActionType for UserActionType {
 	fn scope() -> ActionScope {
@@ -20,5 +23,20 @@ impl ActionType for UserActionType {
 			UserActionType::Login => 1,
 			UserActionType::Logout => 2,
 		}
+	}
+
+	fn from_id(id: u32) -> Option<&'static Self> {
+		ID_ACTION_MAP.get(&id)
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::ID_ACTION_MAP;
+	use crate::business::action_type::action_type::tests::test_enum_action_type;
+
+	#[test]
+	fn main() {
+		test_enum_action_type(ID_ACTION_MAP.clone());
 	}
 }

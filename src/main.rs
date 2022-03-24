@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate log;
+extern crate strum;
 
 mod business;
 
@@ -9,9 +10,13 @@ pub fn main() {}
 pub mod tests {
 	pub mod test_utils;
 
-	#[test]
-	pub fn main() {
-		// log::set_logger(&MY_LOGGER).unwrap();
-		// log::set_max_level(LevelFilter::Info);
+	use self::test_utils::tests;
+
+	#[ctor::ctor]
+	fn init() {
+		tests::init();
 	}
+
+	#[test]
+	pub fn main() {}
 }

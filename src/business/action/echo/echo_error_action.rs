@@ -59,10 +59,10 @@ impl ModeratorAction<(), (), EchoErrorError> for EchoErrorAction<ModeratorReques
 #[cfg(test)]
 pub mod tests {
 	use super::EchoErrorAction;
+	use crate::business::action::echo::echo_error_action::EchoErrorError;
 	use crate::business::action_type::moderator_action_type::ModeratorActionType;
 	use crate::business::data::action_data::{ErrorContext, ErrorInput};
 	use crate::business::data::moderator_action_data::ModeratorActionError;
-	use crate::business::main::echo::echo_error_action::EchoErrorError;
 	use crate::tests::test_utils::tests::{
 		moderator_context, pop_log, ModeratorOptions, TestRequest,
 	};
@@ -98,7 +98,7 @@ pub mod tests {
 
 		let result = EchoErrorAction::test_request((), context.clone());
 		assert_eq!(result, Ok(()));
-		//assert_eq!(pop_log(), Some("ERROR - echo error action".to_string()));
+		assert_eq!(pop_log(), Some("ERROR - echo error action".to_string()));
 		assert_eq!(pop_log(), None);
 	}
 }

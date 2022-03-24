@@ -11,11 +11,11 @@ use crate::business::{
 };
 
 #[derive(Debug, PartialEq)]
-pub enum EchoInfoError {
+pub enum EchoWarnError {
 	ModeratorError(ModeratorActionError),
 }
 
-impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoInfoError {
+impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoWarnError {
 	fn error_context(&self) -> &ErrorContext<ModeratorActionType, ModeratorRequestContext> {
 		match &self {
 			&Self::ModeratorError(error) => error.error_context(),
@@ -34,35 +34,35 @@ impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoInfoError
 }
 
 #[derive(Debug)]
-pub struct EchoInfoAction<T: RequestContext>(RequestInput<(), T>);
+pub struct EchoWarnAction<T: RequestContext>(RequestInput<(), T>);
 
-impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction<ModeratorRequestContext> {
+impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction<ModeratorRequestContext> {
 	fn action_type() -> ModeratorActionType {
-		ModeratorActionType::EchoInfo
+		ModeratorActionType::EchoWarn
 	}
 
 	fn new_inner(
 		input: Result<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
-	) -> Result<Self, EchoInfoError> {
+	) -> Result<Self, EchoWarnError> {
 		match input {
-			Err(err) => Err(EchoInfoError::ModeratorError(err)),
+			Err(err) => Err(EchoWarnError::ModeratorError(err)),
 			Ok(ok_input) => Ok(Self(ok_input)),
 		}
 	}
 
-	fn run_inner(self) -> Result<(), EchoInfoError> {
-		info!("echo info action");
+	fn run_inner(self) -> Result<(), EchoWarnError> {
+		warn!("echo warn action");
 		Ok(())
 	}
 }
 
 #[cfg(test)]
 pub mod tests {
-	use super::EchoInfoAction;
+	use super::EchoWarnAction;
+	use crate::business::action::echo::echo_warn_action::EchoWarnError;
 	use crate::business::action_type::moderator_action_type::ModeratorActionType;
 	use crate::business::data::action_data::{ErrorContext, ErrorInput};
 	use crate::business::data::moderator_action_data::ModeratorActionError;
-	use crate::business::main::echo::echo_info_action::EchoInfoError;
 	use crate::tests::test_utils::tests::{
 		moderator_context, pop_log, ModeratorOptions, TestRequest,
 	};
@@ -77,28 +77,28 @@ pub mod tests {
 			allowed_actions: vec![],
 		});
 
-		let result = EchoInfoAction::test_request((), context.clone());
+		let result = EchoWarnAction::test_request((), context.clone());
 		assert_eq!(
 			result,
-			Err(EchoInfoError::ModeratorError(
+			Err(EchoWarnError::ModeratorError(
 				ModeratorActionError::NotAllowed(ErrorInput {
 					error_context: ErrorContext {
-						action_type: ModeratorActionType::EchoInfo,
+						action_type: ModeratorActionType::EchoWarn,
 						context: context.clone()
 					},
-					data: ModeratorActionType::EchoInfo.id()
+					data: ModeratorActionType::EchoWarn.id()
 				})
 			))
 		);
 		assert_eq!(pop_log(), None);
 
 		let context = moderator_context(ModeratorOptions {
-			allowed_actions: vec![EchoInfoAction::action_type().id()],
+			allowed_actions: vec![EchoWarnAction::action_type().id()],
 		});
 
-		let result = EchoInfoAction::test_request((), context.clone());
+		let result = EchoWarnAction::test_request((), context.clone());
 		assert_eq!(result, Ok(()));
-		//assert_eq!(pop_log(), Some("INFO - echo info action".to_string()));
+		assert_eq!(pop_log(), Some("WARN - echo warn action".to_string()));
 		assert_eq!(pop_log(), None);
 	}
 }
