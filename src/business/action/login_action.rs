@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::user_action_type::UserActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
+		action_data::{ErrorContext, ErrorData, RequestInput},
 		user_action_data::{UserActionError, UserNoAuthRequestContext, UserRequestContext},
 	},
 	definition::{
@@ -50,9 +50,9 @@ impl ActionError<UserActionType, UserRequestContext> for LoginError {
 }
 
 #[derive(Debug)]
-pub struct LoginAction<T: RequestContext>(RequestInput<LoginData, T>);
+pub struct LoginAction(RequestInput<LoginData, UserNoAuthRequestContext>);
 
-impl UserAction<LoginData, LoginResult, LoginError> for LoginAction<UserNoAuthRequestContext> {
+impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 	fn action_type() -> UserActionType {
 		UserActionType::Login
 	}
@@ -122,7 +122,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_ok_no_auth() {
+	fn test_ok() {
 		run_test(|_| {
 			let context = user_context(UserOptions { user_id: None });
 

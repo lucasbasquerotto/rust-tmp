@@ -6,6 +6,7 @@ use strum::{EnumIter, IntoEnumIterator};
 #[derive(Clone, Debug, Eq, PartialEq, EnumIter)]
 pub enum AutomaticActionType {
 	Test,
+	Auto,
 }
 
 #[ctor::ctor]
@@ -20,6 +21,7 @@ impl ActionType for AutomaticActionType {
 	fn id(&self) -> u32 {
 		match self {
 			AutomaticActionType::Test => 0,
+			AutomaticActionType::Auto => 1,
 		}
 	}
 
