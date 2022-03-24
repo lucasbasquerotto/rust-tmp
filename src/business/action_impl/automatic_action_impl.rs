@@ -210,7 +210,7 @@ where
 	T: AutomaticAction<I, O, E>,
 {
 	fn run(input: RequestInput<I, AutomaticRequestContext>) -> Result<O, E> {
-		let action = Self::new_inner(Ok(input))?;
+		let action = Self::new(Ok(input))?;
 		action.run_inner()
 	}
 }
@@ -244,7 +244,7 @@ pub mod tests {
 			AutomaticActionType::Test
 		}
 
-		fn new_inner(
+		fn new(
 			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
 		) -> Result<Self, AutomaticActionError> {
 			let ok_input = input?;
@@ -265,7 +265,7 @@ pub mod tests {
 			AutomaticActionType::Test
 		}
 
-		fn new_inner(
+		fn new(
 			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
 		) -> Result<Self, AutomaticActionError> {
 			match input {
@@ -292,7 +292,7 @@ pub mod tests {
 			AutomaticActionType::Test
 		}
 
-		fn new_inner(
+		fn new(
 			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
 		) -> Result<Self, AutomaticActionError> {
 			match input {

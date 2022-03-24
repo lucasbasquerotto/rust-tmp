@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::automatic_action_type::AutomaticActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestInput},
+		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
 		automatic_action_data::{
 			AutomaticActionError, AutomaticRequestContext, HookRequestContext,
 			InternalRequestContext,
@@ -65,7 +65,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 		AutomaticActionType::Auto
 	}
 
-	fn new_inner(
+	fn new(
 		input: Result<RequestInput<AutoData, AutomaticRequestContext>, AutomaticActionError>,
 	) -> Result<Self, AutoError> {
 		match input {
@@ -83,14 +83,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 
 	fn run_inner(self) -> Result<AutoResult, AutoError> {
 		let AutoActionInternal(input) = &self;
-		let AutoData { param1, param2 } = &input.data;
-		let result = AutoResult {
-			id: 1,
-			auto: "internal".to_string(),
-			param1: param1.to_string(),
-			param2: param2.clone(),
-		};
-		Ok(result)
+		run(input, "internal".to_string())
 	}
 }
 
@@ -99,7 +92,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 		AutomaticActionType::Auto
 	}
 
-	fn new_inner(
+	fn new(
 		input: Result<RequestInput<AutoData, AutomaticRequestContext>, AutomaticActionError>,
 	) -> Result<Self, AutoError> {
 		match input {
@@ -117,15 +110,22 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 
 	fn run_inner(self) -> Result<AutoResult, AutoError> {
 		let AutoActionHook(input) = &self;
-		let AutoData { param1, param2 } = &input.data;
-		let result = AutoResult {
-			id: 1,
-			auto: "hook".to_string(),
-			param1: param1.to_string(),
-			param2: param2.clone(),
-		};
-		Ok(result)
+		run(input, "hook".to_string())
 	}
+}
+
+fn run<C: RequestContext>(
+	input: &RequestInput<AutoData, C>,
+	type_name: String,
+) -> Result<AutoResult, AutoError> {
+	let AutoData { param1, param2 } = &input.data;
+	let result = AutoResult {
+		id: 1,
+		auto: type_name,
+		param1: param1.to_string(),
+		param2: param2.clone(),
+	};
+	Ok(result)
 }
 
 #[cfg(test)]

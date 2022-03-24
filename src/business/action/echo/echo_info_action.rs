@@ -41,7 +41,7 @@ impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction<ModeratorRequestC
 		ModeratorActionType::EchoInfo
 	}
 
-	fn new_inner(
+	fn new(
 		input: Result<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
 	) -> Result<Self, EchoInfoError> {
 		match input {

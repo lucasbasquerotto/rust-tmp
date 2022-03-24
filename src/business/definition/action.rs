@@ -52,9 +52,7 @@ where
 	Self: Sized,
 {
 	fn action_type() -> UserActionType;
-	fn new_inner(
-		input: Result<RequestInput<I, UserRequestContext>, UserActionError>,
-	) -> Result<Self, E>;
+	fn new(input: Result<RequestInput<I, UserRequestContext>, UserActionError>) -> Result<Self, E>;
 	fn run_inner(self) -> Result<O, E>;
 }
 
@@ -70,7 +68,7 @@ where
 	Self: Sized,
 {
 	fn action_type() -> ModeratorActionType;
-	fn new_inner(
+	fn new(
 		input: Result<RequestInput<I, ModeratorRequestContext>, ModeratorActionError>,
 	) -> Result<Self, E>;
 	fn run_inner(self) -> Result<O, E>;
@@ -88,7 +86,7 @@ where
 	Self: Sized,
 {
 	fn action_type() -> AutomaticActionType;
-	fn new_inner(
+	fn new(
 		input: Result<RequestInput<I, AutomaticRequestContext>, AutomaticActionError>,
 	) -> Result<Self, E>;
 	fn run_inner(self) -> Result<O, E>;

@@ -57,7 +57,7 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 		UserActionType::Login
 	}
 
-	fn new_inner(
+	fn new(
 		input: Result<RequestInput<LoginData, UserRequestContext>, UserActionError>,
 	) -> Result<Self, LoginError> {
 		match input {

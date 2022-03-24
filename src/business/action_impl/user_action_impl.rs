@@ -224,7 +224,7 @@ where
 	T: UserAction<I, O, E>,
 {
 	fn run(input: RequestInput<I, UserRequestContext>) -> Result<O, E> {
-		let action = Self::new_inner(Ok(input))?;
+		let action = Self::new(Ok(input))?;
 		action.run_inner()
 	}
 }
@@ -256,7 +256,7 @@ pub mod tests {
 			UserActionType::Test
 		}
 
-		fn new_inner(
+		fn new(
 			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> Result<Self, UserActionError> {
 			let ok_input = input?;
@@ -277,7 +277,7 @@ pub mod tests {
 			UserActionType::Test
 		}
 
-		fn new_inner(
+		fn new(
 			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> Result<Self, UserActionError> {
 			match input {
@@ -304,7 +304,7 @@ pub mod tests {
 			UserActionType::Test
 		}
 
-		fn new_inner(
+		fn new(
 			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> Result<Self, UserActionError> {
 			match input {

@@ -60,13 +60,13 @@ where
 			context.session.admin || context.session.allowed_actions.contains(action_type);
 
 		let action = if allowed {
-			Self::new_inner(Ok(input))?
+			Self::new(Ok(input))?
 		} else {
 			let error_context = ErrorContext {
 				action_type: action_type.clone(),
 				context: context.clone(),
 			};
-			Self::new_inner(Err(ModeratorActionError::NotAllowed(ModeratorErrorInput {
+			Self::new(Err(ModeratorActionError::NotAllowed(ModeratorErrorInput {
 				error_context,
 				data: action_type.id(),
 			})))?
@@ -101,7 +101,7 @@ pub mod tests {
 			ModeratorActionType::Test
 		}
 
-		fn new_inner(
+		fn new(
 			input: Result<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
 		) -> Result<Self, ModeratorActionError> {
 			match input {

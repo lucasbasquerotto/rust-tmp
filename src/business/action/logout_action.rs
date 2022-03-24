@@ -23,7 +23,7 @@ impl UserAction<(), (), LogoutError> for LogoutAction<UserRequestContext> {
 		UserActionType::Logout
 	}
 
-	fn new_inner(
+	fn new(
 		input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
 	) -> Result<Self, LogoutError> {
 		match input {
