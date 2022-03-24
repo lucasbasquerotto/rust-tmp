@@ -68,17 +68,10 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 	fn new(
 		input: Result<RequestInput<AutoData, AutomaticRequestContext>, AutomaticActionError>,
 	) -> Result<Self, AutoError> {
-		match input {
-			Err(err) => Err(AutoError::AutomaticError(err)),
-			Ok(ok_input) => {
-				let real_input = ok_input.to_internal(Self::action_type());
-
-				match real_input {
-					Err(err) => Err(AutoError::AutomaticError(err)),
-					Ok(real_ok_input) => Ok(Self(real_ok_input)),
-				}
-			}
-		}
+		input
+			.and_then(|ok_input| ok_input.to_internal(Self::action_type()))
+			.map(|ok_input| Self(ok_input))
+			.map_err(|err| AutoError::AutomaticError(err))
 	}
 
 	fn run_inner(self) -> Result<AutoResult, AutoError> {

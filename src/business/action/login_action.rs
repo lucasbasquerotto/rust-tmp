@@ -60,17 +60,10 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 	fn new(
 		input: Result<RequestInput<LoginData, UserRequestContext>, UserActionError>,
 	) -> Result<Self, LoginError> {
-		match input {
-			Err(err) => Err(LoginError::UserError(err)),
-			Ok(ok_input) => {
-				let real_input = ok_input.to_no_auth(Self::action_type());
-
-				match real_input {
-					Err(err) => Err(LoginError::UserError(err)),
-					Ok(real_ok_input) => Ok(Self(real_ok_input)),
-				}
-			}
-		}
+		input
+			.and_then(|ok_input| ok_input.to_no_auth(Self::action_type()))
+			.map(|ok_input| Self(ok_input))
+			.map_err(|err| LoginError::UserError(err))
 	}
 
 	fn run_inner(self) -> Result<LoginResult, LoginError> {

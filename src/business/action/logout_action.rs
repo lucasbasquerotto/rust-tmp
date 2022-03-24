@@ -10,32 +10,9 @@ use crate::business::{
 	},
 };
 
-#[derive(Debug)]
-pub struct LogoutAction<T: RequestContext>(RequestInput<(), T>);
-
 #[derive(Debug, PartialEq)]
 pub enum LogoutError {
 	UserError(UserActionError),
-}
-
-impl UserAction<(), (), LogoutError> for LogoutAction<UserRequestContext> {
-	fn action_type() -> UserActionType {
-		UserActionType::Logout
-	}
-
-	fn new(
-		input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
-	) -> Result<Self, LogoutError> {
-		match input {
-			Err(err) => Err(LogoutError::UserError(err)),
-			Ok(ok_input) => Ok(Self(ok_input)),
-		}
-	}
-
-	fn run_inner(self) -> Result<(), LogoutError> {
-		println!("logout");
-		Ok(())
-	}
 }
 
 impl ActionError<UserActionType, UserRequestContext> for LogoutError {
@@ -53,6 +30,28 @@ impl ActionError<UserActionType, UserRequestContext> for LogoutError {
 
 	fn description(&self) -> String {
 		self.default_description()
+	}
+}
+
+#[derive(Debug)]
+pub struct LogoutAction<T: RequestContext>(RequestInput<(), T>);
+
+impl UserAction<(), (), LogoutError> for LogoutAction<UserRequestContext> {
+	fn action_type() -> UserActionType {
+		UserActionType::Logout
+	}
+
+	fn new(
+		input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
+	) -> Result<Self, LogoutError> {
+		input
+			.map(|ok_input| Self(ok_input))
+			.map_err(|err| LogoutError::UserError(err))
+	}
+
+	fn run_inner(self) -> Result<(), LogoutError> {
+		println!("logout");
+		Ok(())
 	}
 }
 
