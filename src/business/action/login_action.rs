@@ -128,8 +128,8 @@ mod tests {
 
 			let result = LoginAction::test_request(
 				LoginData {
-					name: "User 01".to_owned(),
-					pass: "p4$$w0rd".to_owned(),
+					name: "User 02".to_owned(),
+					pass: "p4$$w0rd2".to_owned(),
 				},
 				context.clone(),
 			);
@@ -139,7 +139,7 @@ mod tests {
 				result,
 				Ok(LoginResult {
 					id: 1,
-					name: "User 01".to_string(),
+					name: "User 02".to_string(),
 				}),
 			);
 		});
