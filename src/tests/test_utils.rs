@@ -32,7 +32,6 @@ pub mod tests {
 
 		fn log(&self, record: &Record) {
 			if self.enabled(record.metadata()) {
-				println!("log: {}", record.args());
 				self.0.lock().unwrap().insert(
 					0,
 					format!(

@@ -25,8 +25,8 @@ impl ActionType for UserActionType {
 		}
 	}
 
-	fn from_id(id: u32) -> Option<&'static Self> {
-		ID_ACTION_MAP.get(&id)
+	fn from_id(id: u32) -> Option<Self> {
+		ID_ACTION_MAP.get(&id).map(|item| item.clone())
 	}
 }
 

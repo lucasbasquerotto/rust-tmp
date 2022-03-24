@@ -5,7 +5,7 @@ use crate::business::data::action_data::ActionScope;
 pub trait ActionType: Clone + Debug + Eq + PartialEq {
 	fn scope() -> ActionScope;
 	fn id(&self) -> u32;
-	fn from_id(id: u32) -> Option<&'static Self>;
+	fn from_id(id: u32) -> Option<Self>;
 }
 
 #[cfg(test)]
@@ -37,7 +37,7 @@ pub mod tests {
 		let count = T::iter()
 			.filter(|item| {
 				let mapped_item = T::from_id(item.id());
-				let valid = mapped_item == Some(&item);
+				let valid = mapped_item == Some(item.clone());
 				valid
 			})
 			.count();
