@@ -135,6 +135,10 @@ pub mod tests {
 		pub fn pop_log(&self) -> Option<String> {
 			MY_LOGGER.0.lock().unwrap().pop()
 		}
+
+		fn clear_log(&self) {
+			MY_LOGGER.0.lock().unwrap().clear();
+		}
 	}
 
 	pub fn init() {
@@ -144,11 +148,7 @@ pub mod tests {
 
 	pub fn run_test<F: Fn(&TestHelper)>(function: F) {
 		let helper = TestHelper;
-		assert_eq!(
-			helper.pop_log(),
-			None,
-			"Verify that there isn't any log yet"
-		);
+		helper.clear_log();
 		function(&helper);
 		assert_eq!(helper.pop_log(), None, "Verify that no log remained");
 	}
