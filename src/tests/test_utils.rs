@@ -19,6 +19,10 @@ pub mod tests {
 
 	use log::{Level, LevelFilter, Metadata, Record};
 
+	use crate::business::action_type::automatic_action_type::AutomaticActionType;
+	use crate::business::data::automatic_action_data::{AutomaticRequest, AutomaticRequestContext};
+	use crate::business::definition::action::AutomaticAction;
+
 	lazy_static::lazy_static! {
 		static ref MY_LOGGER: MyLogger = MyLogger(Arc::new(Mutex::new(vec![])));
 	}
@@ -56,10 +60,18 @@ pub mod tests {
 
 	#[derive(Debug, Clone)]
 	pub struct ModeratorOptions {
+		pub admin: bool,
 		pub allowed_actions: Vec<ModeratorActionType>,
 	}
 
 	impl TestRequestOptions for ModeratorOptions {}
+
+	#[derive(Debug, Clone)]
+	pub struct AutomaticOptions {
+		pub internal: bool,
+	}
+
+	impl TestRequestOptions for AutomaticOptions {}
 
 	pub trait TestRequest<
 		T: ActionType,
@@ -107,6 +119,7 @@ pub mod tests {
 			},
 			session: ModeratorSession {
 				user_id: 123,
+				admin: options.admin,
 				allowed_actions: options.allowed_actions,
 			},
 			request: Request {
@@ -124,6 +137,35 @@ pub mod tests {
 		A: ModeratorAction<I, O, E>,
 	{
 		fn test_request(data: I, context: ModeratorRequestContext) -> Result<O, E> {
+			let input = RequestInput { context, data };
+			Self::run(input)
+		}
+	}
+
+	pub fn automatic_context(options: AutomaticOptions) -> AutomaticRequestContext {
+		AutomaticRequestContext {
+			application: Application {
+				request_timeout: 1000,
+			},
+			request: if options.internal {
+				AutomaticRequest::Internal
+			} else {
+				AutomaticRequest::Hook(Request {
+					ip: "0.1.2.3".to_string(),
+				})
+			},
+		}
+	}
+
+	impl<I, O, E, A>
+		TestRequest<AutomaticActionType, AutomaticRequestContext, I, O, E, AutomaticActionType> for A
+	where
+		I: ActionInput,
+		O: ActionOutput,
+		E: ActionError<AutomaticActionType, AutomaticRequestContext>,
+		A: AutomaticAction<I, O, E>,
+	{
+		fn test_request(data: I, context: AutomaticRequestContext) -> Result<O, E> {
 			let input = RequestInput { context, data };
 			Self::run(input)
 		}

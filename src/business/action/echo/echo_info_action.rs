@@ -73,6 +73,7 @@ pub mod tests {
 	fn test_not_allowed() {
 		run_test(|_| {
 			let context = moderator_context(ModeratorOptions {
+				admin: false,
 				allowed_actions: vec![],
 			});
 
@@ -96,6 +97,24 @@ pub mod tests {
 	fn test_ok() {
 		run_test(|helper| {
 			let context = moderator_context(ModeratorOptions {
+				admin: false,
+				allowed_actions: vec![EchoInfoAction::action_type()],
+			});
+
+			let result = EchoInfoAction::test_request((), context.clone());
+			assert_eq!(result, Ok(()));
+			assert_eq!(
+				helper.pop_log(),
+				Some("INFO - echo info action".to_string())
+			);
+		});
+	}
+
+	#[test]
+	fn test_ok_admin() {
+		run_test(|helper| {
+			let context = moderator_context(ModeratorOptions {
+				admin: true,
 				allowed_actions: vec![EchoInfoAction::action_type()],
 			});
 

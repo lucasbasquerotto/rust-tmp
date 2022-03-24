@@ -5,7 +5,6 @@ use crate::business::action_type::action_type::ActionType;
 pub enum ActionScope {
 	User,
 	Moderator,
-	#[allow(dead_code)]
 	Automatic,
 }
 

@@ -2,11 +2,12 @@ use std::fmt::Debug;
 
 use crate::business::{
 	action_type::{
-		action_type::ActionType, moderator_action_type::ModeratorActionType,
-		user_action_type::UserActionType,
+		action_type::ActionType, automatic_action_type::AutomaticActionType,
+		moderator_action_type::ModeratorActionType, user_action_type::UserActionType,
 	},
 	data::{
 		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
+		automatic_action_data::{AutomaticActionError, AutomaticRequestContext},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 		user_action_data::{UserActionError, UserRequestContext},
 	},
@@ -71,6 +72,24 @@ where
 	fn action_type() -> ModeratorActionType;
 	fn new_inner(
 		input: Result<RequestInput<I, ModeratorRequestContext>, ModeratorActionError>,
+	) -> Result<Self, E>;
+	fn run_inner(self) -> Result<O, E>;
+}
+
+/////////////////////////////////////////////////////////
+// Automatic Action
+/////////////////////////////////////////////////////////
+
+pub trait AutomaticAction<I, O, E>: Action<RequestInput<I, AutomaticRequestContext>, O, E>
+where
+	I: ActionInput,
+	O: ActionOutput,
+	E: ActionError<AutomaticActionType, AutomaticRequestContext>,
+	Self: Sized,
+{
+	fn action_type() -> AutomaticActionType;
+	fn new_inner(
+		input: Result<RequestInput<I, AutomaticRequestContext>, AutomaticActionError>,
 	) -> Result<Self, E>;
 	fn run_inner(self) -> Result<O, E>;
 }

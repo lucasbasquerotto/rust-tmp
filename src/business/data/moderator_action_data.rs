@@ -5,6 +5,7 @@ use super::action_data::{Application, ErrorInput, Request, Session};
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ModeratorSession {
 	pub user_id: u64,
+	pub admin: bool,
 	pub allowed_actions: Vec<ModeratorActionType>,
 }
 

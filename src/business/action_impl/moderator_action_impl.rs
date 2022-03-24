@@ -56,8 +56,12 @@ where
 	fn run(input: RequestInput<I, ModeratorRequestContext>) -> Result<O, E> {
 		let context = &input.context;
 		let action_type = &Self::action_type();
+		let allowed =
+			context.session.admin || context.session.allowed_actions.contains(action_type);
 
-		let action = if !context.session.allowed_actions.contains(action_type) {
+		let action = if allowed {
+			Self::new_inner(Ok(input))?
+		} else {
 			let error_context = ErrorContext {
 				action_type: action_type.clone(),
 				context: context.clone(),
@@ -66,8 +70,6 @@ where
 				error_context,
 				data: action_type.id(),
 			})))?
-		} else {
-			Self::new_inner(Ok(input))?
 		};
 
 		action.run_inner()
@@ -118,6 +120,7 @@ pub mod tests {
 	fn test_not_allowed() {
 		run_test(|_| {
 			let context = moderator_context(ModeratorOptions {
+				admin: false,
 				allowed_actions: vec![],
 			});
 
@@ -139,7 +142,25 @@ pub mod tests {
 	fn test_ok() {
 		run_test(|helper| {
 			let context = moderator_context(ModeratorOptions {
+				admin: false,
 				allowed_actions: vec![TestAction::action_type()],
+			});
+
+			let result = TestAction::test_request((), context.clone());
+			assert_eq!(result, Ok(()));
+			assert_eq!(
+				helper.pop_log(),
+				Some("INFO - moderator action test".to_string())
+			);
+		});
+	}
+
+	#[test]
+	fn test_ok_admin() {
+		run_test(|helper| {
+			let context = moderator_context(ModeratorOptions {
+				admin: true,
+				allowed_actions: vec![],
 			});
 
 			let result = TestAction::test_request((), context.clone());

@@ -2,7 +2,10 @@ use std::fmt::Debug;
 
 use crate::business::{
 	action_type::action_type::ActionType,
-	data::{action_data::ErrorData, user_action_data::UserRequestContext},
+	data::{
+		action_data::ErrorData, automatic_action_data::AutomaticRequestContext,
+		user_action_data::UserRequestContext,
+	},
 };
 
 pub trait DescriptiveRequestContext: Debug + Clone {
@@ -11,6 +14,10 @@ pub trait DescriptiveRequestContext: Debug + Clone {
 
 pub trait UserRequestContextLike {
 	fn user_context(&self) -> UserRequestContext;
+}
+
+pub trait AutomaticRequestContextLike {
+	fn automatic_context(&self) -> AutomaticRequestContext;
 }
 
 pub trait ActionErrorHelper<T: ActionType, C: DescriptiveRequestContext>: Debug
