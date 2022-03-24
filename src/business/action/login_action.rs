@@ -94,7 +94,7 @@ mod tests {
 	use crate::tests::test_utils::tests::{run_test, user_context, TestRequest, UserOptions};
 
 	#[test]
-	fn test_1() {
+	fn test_error_auth() {
 		run_test(|_| {
 			let context = user_context(UserOptions { user_id: Some(1) });
 
@@ -122,7 +122,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_2() {
+	fn test_ok_no_auth() {
 		run_test(|_| {
 			let context = user_context(UserOptions { user_id: None });
 
