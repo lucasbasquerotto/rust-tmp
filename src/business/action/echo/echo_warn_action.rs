@@ -64,41 +64,47 @@ pub mod tests {
 	use crate::business::data::action_data::{ErrorContext, ErrorInput};
 	use crate::business::data::moderator_action_data::ModeratorActionError;
 	use crate::tests::test_utils::tests::{
-		moderator_context, pop_log, ModeratorOptions, TestRequest,
+		moderator_context, run_test, ModeratorOptions, TestRequest,
 	};
 	use business::action_type::action_type::ActionType;
 	use business::definition::action::ModeratorAction;
 
 	#[test]
-	fn main() {
-		assert_eq!(pop_log(), None);
+	fn test_not_allowed() {
+		run_test(|_| {
+			let context = moderator_context(ModeratorOptions {
+				allowed_actions: vec![],
+			});
 
-		let context = moderator_context(ModeratorOptions {
-			allowed_actions: vec![],
+			let result = EchoWarnAction::test_request((), context.clone());
+			assert_eq!(
+				result,
+				Err(EchoWarnError::ModeratorError(
+					ModeratorActionError::NotAllowed(ErrorInput {
+						error_context: ErrorContext {
+							action_type: ModeratorActionType::EchoWarn,
+							context: context.clone()
+						},
+						data: ModeratorActionType::EchoWarn.id()
+					})
+				))
+			);
 		});
+	}
 
-		let result = EchoWarnAction::test_request((), context.clone());
-		assert_eq!(
-			result,
-			Err(EchoWarnError::ModeratorError(
-				ModeratorActionError::NotAllowed(ErrorInput {
-					error_context: ErrorContext {
-						action_type: ModeratorActionType::EchoWarn,
-						context: context.clone()
-					},
-					data: ModeratorActionType::EchoWarn.id()
-				})
-			))
-		);
-		assert_eq!(pop_log(), None);
+	#[test]
+	fn test_ok() {
+		run_test(|helper| {
+			let context = moderator_context(ModeratorOptions {
+				allowed_actions: vec![EchoWarnAction::action_type().id()],
+			});
 
-		let context = moderator_context(ModeratorOptions {
-			allowed_actions: vec![EchoWarnAction::action_type().id()],
+			let result = EchoWarnAction::test_request((), context.clone());
+			assert_eq!(result, Ok(()));
+			assert_eq!(
+				helper.pop_log(),
+				Some("WARN - echo warn action".to_string())
+			);
 		});
-
-		let result = EchoWarnAction::test_request((), context.clone());
-		assert_eq!(result, Ok(()));
-		assert_eq!(pop_log(), Some("WARN - echo warn action".to_string()));
-		assert_eq!(pop_log(), None);
 	}
 }

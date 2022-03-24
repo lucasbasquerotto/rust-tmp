@@ -59,14 +59,14 @@ impl ActionError<UserActionType, UserRequestContext> for LogoutError {
 #[cfg(test)]
 mod tests {
 	use super::LogoutAction;
-	use crate::tests::test_utils::tests::{pop_log, user_context, TestRequest, UserOptions};
+	use crate::tests::test_utils::tests::{run_test, user_context, TestRequest, UserOptions};
 
 	#[test]
-	fn logout() {
-		assert_eq!(pop_log(), None);
-		let context = user_context(UserOptions { user_id: None });
-		let result = LogoutAction::test_request((), context);
-		assert_eq!(result, Ok(()));
-		assert_eq!(pop_log(), None);
+	fn main() {
+		run_test(|_| {
+			let context = user_context(UserOptions { user_id: None });
+			let result = LogoutAction::test_request((), context);
+			assert_eq!(result, Ok(()));
+		});
 	}
 }

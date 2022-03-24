@@ -68,7 +68,7 @@ mod tests {
 	use crate::business::{
 		action_type::action_type::ActionType, definition::action_helpers::DescriptiveRequestContext,
 	};
-	use crate::tests::test_utils::tests::pop_log;
+	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug, Clone)]
 	struct TestRequestContext(String);
@@ -92,7 +92,7 @@ mod tests {
 
 		fn public_error(&self) -> Option<ErrorData> {
 			let action_id = self.error_context().action_type.id();
-			self.error_msg(format!("Test error (action_id={action_id})"))
+			self.error_msg(format!("Test public error (action_id={action_id})"))
 		}
 
 		fn description(&self) -> String {
@@ -116,30 +116,62 @@ mod tests {
 	}
 
 	#[test]
-	fn main() {
-		let action_type = TestActionType(1);
-		let context = TestRequestContext("My error #01".to_string());
-		let error1 = TestActionError(ErrorContext {
-			action_type: action_type.clone(),
-			context: context.clone(),
+	fn test_1() {
+		run_test(|helper| {
+			let action_type = TestActionType(1);
+			let context = TestRequestContext("My error #01".to_string());
+			let error = TestActionError(ErrorContext {
+				action_type: action_type.clone(),
+				context: context.clone(),
+			});
+			let public_error = error.handle();
+			assert_eq!(
+				public_error,
+				Some(ErrorData {
+					msg: "Test public error (action_id=1)".to_string(),
+					params: None
+				})
+			);
+			assert_eq!(
+				helper.pop_log(),
+				Some(format!(
+					"ERROR - [action({action_id}: {action_type:?})] {public} [context={context}]",
+					action_id = 1,
+					action_type = action_type.clone(),
+					public = "Test public error (action_id=1)".to_string(),
+					context = "My error #01".to_string()
+				))
+			);
 		});
-		let public_error = error1.handle();
-		assert_eq!(
-			public_error,
-			Some(ErrorData {
-				msg: "Test error (action_id=1)".to_string(),
-				params: None
-			})
-		);
-		assert_eq!(
-			pop_log(),
-			Some(format!(
-				"ERROR - [action({action_id}: {action_type:?})] {public} [context={context}]",
-				action_id = action_type.id().clone(),
-				action_type = action_type.clone(),
-				public = "Test error (action_id=1)".to_string(),
-				context = context.description()
-			))
-		);
+	}
+
+	#[test]
+	fn test_2() {
+		run_test(|helper| {
+			let action_type = TestActionType(2);
+			let context = TestRequestContext("My error #02".to_string());
+			let error = TestActionError(ErrorContext {
+				action_type: action_type.clone(),
+				context: context.clone(),
+			});
+			let public_error = error.handle();
+			assert_eq!(
+				public_error,
+				Some(ErrorData {
+					msg: "Test public error (action_id=2)".to_string(),
+					params: None
+				})
+			);
+			assert_eq!(
+				helper.pop_log(),
+				Some(format!(
+					"ERROR - [action({action_id}: {action_type:?})] {public} [context={context}]",
+					action_id = 2,
+					action_type = action_type.clone(),
+					public = "Test public error (action_id=2)".to_string(),
+					context = "My error #02".to_string()
+				))
+			);
+		});
 	}
 }

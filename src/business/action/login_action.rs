@@ -91,54 +91,57 @@ mod tests {
 	use crate::business::action_type::user_action_type::UserActionType;
 	use crate::business::data::action_data::ErrorContext;
 	use crate::business::data::user_action_data::{UserActionError, UserErrorInput};
-	use crate::tests::test_utils::tests::{pop_log, user_context, TestRequest, UserOptions};
+	use crate::tests::test_utils::tests::{run_test, user_context, TestRequest, UserOptions};
 
 	#[test]
-	fn login() {
-		assert_eq!(pop_log(), None);
+	fn test_1() {
+		run_test(|_| {
+			let context = user_context(UserOptions { user_id: Some(1) });
 
-		let context = user_context(UserOptions { user_id: Some(1) });
+			let result = LoginAction::test_request(
+				LoginData {
+					name: "User 01".to_owned(),
+					pass: "p4$$w0rd".to_owned(),
+				},
+				context.clone(),
+			);
 
-		let result = LoginAction::test_request(
-			LoginData {
-				name: "User 01".to_owned(),
-				pass: "p4$$w0rd".to_owned(),
-			},
-			context.clone(),
-		);
+			assert_eq!(
+				&result,
+				&Err(LoginError::UserError(UserActionError::Authenticated(
+					UserErrorInput {
+						error_context: ErrorContext {
+							action_type: UserActionType::Login,
+							context: context.clone(),
+						},
+						data: (),
+					}
+				)))
+			);
+		});
+	}
 
-		assert_eq!(
-			&result,
-			&Err(LoginError::UserError(UserActionError::Authenticated(
-				UserErrorInput {
-					error_context: ErrorContext {
-						action_type: UserActionType::Login,
-						context: context.clone(),
-					},
-					data: (),
-				}
-			)))
-		);
-		assert_eq!(pop_log(), None);
+	#[test]
+	fn test_2() {
+		run_test(|_| {
+			let context = user_context(UserOptions { user_id: None });
 
-		let context = user_context(UserOptions { user_id: None });
+			let result = LoginAction::test_request(
+				LoginData {
+					name: "User 01".to_owned(),
+					pass: "p4$$w0rd".to_owned(),
+				},
+				context.clone(),
+			);
 
-		let result = LoginAction::test_request(
-			LoginData {
-				name: "User 01".to_owned(),
-				pass: "p4$$w0rd".to_owned(),
-			},
-			context.clone(),
-		);
-
-		assert!(result.as_ref().is_ok());
-		assert_eq!(
-			result,
-			Ok(LoginResult {
-				id: 1,
-				name: "User 01".to_string(),
-			}),
-		);
-		assert_eq!(pop_log(), None);
+			assert!(result.as_ref().is_ok());
+			assert_eq!(
+				result,
+				Ok(LoginResult {
+					id: 1,
+					name: "User 01".to_string(),
+				}),
+			);
+		});
 	}
 }

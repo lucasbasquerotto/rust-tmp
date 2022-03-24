@@ -45,10 +45,6 @@ pub mod tests {
 		fn flush(&self) {}
 	}
 
-	pub fn pop_log() -> Option<String> {
-		MY_LOGGER.0.lock().unwrap().pop()
-	}
-
 	pub trait TestRequestOptions {}
 
 	#[derive(Debug, Clone)]
@@ -133,8 +129,27 @@ pub mod tests {
 		}
 	}
 
+	pub struct TestHelper;
+
+	impl TestHelper {
+		pub fn pop_log(&self) -> Option<String> {
+			MY_LOGGER.0.lock().unwrap().pop()
+		}
+	}
+
 	pub fn init() {
 		log::set_logger(&*MY_LOGGER).unwrap();
 		log::set_max_level(LevelFilter::Info);
+	}
+
+	pub fn run_test<F: Fn(&TestHelper)>(function: F) {
+		let helper = TestHelper;
+		assert_eq!(
+			helper.pop_log(),
+			None,
+			"Verify that there isn't any log yet"
+		);
+		function(&helper);
+		assert_eq!(helper.pop_log(), None, "Verify that no log remained");
 	}
 }
