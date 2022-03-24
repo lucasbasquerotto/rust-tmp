@@ -24,6 +24,7 @@ impl ActionInput for AutoData {}
 #[derive(Debug, PartialEq)]
 pub struct AutoResult {
 	pub id: u64,
+	pub auto: String,
 	pub param1: String,
 	pub param2: u64,
 }
@@ -83,9 +84,9 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 	fn run_inner(self) -> Result<AutoResult, AutoError> {
 		let AutoActionInternal(input) = &self;
 		let AutoData { param1, param2 } = &input.data;
-		println!("auto: {param1} ({param2})");
 		let result = AutoResult {
 			id: 1,
+			auto: "internal".to_string(),
 			param1: param1.to_string(),
 			param2: param2.clone(),
 		};
@@ -117,9 +118,9 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 	fn run_inner(self) -> Result<AutoResult, AutoError> {
 		let AutoActionHook(input) = &self;
 		let AutoData { param1, param2 } = &input.data;
-		println!("auto: {param1} ({param2})");
 		let result = AutoResult {
 			id: 1,
+			auto: "hook".to_string(),
 			param1: param1.to_string(),
 			param2: param2.clone(),
 		};
@@ -183,6 +184,7 @@ mod tests {
 				result,
 				Ok(AutoResult {
 					id: 1,
+					auto: "internal".to_string(),
 					param1: "Param 01 (Ok)".to_owned(),
 					param2: 2,
 				}),
@@ -236,6 +238,7 @@ mod tests {
 				result,
 				Ok(AutoResult {
 					id: 1,
+					auto: "hook".to_string(),
 					param1: "Param 01 (Ok)".to_owned(),
 					param2: 4,
 				}),
