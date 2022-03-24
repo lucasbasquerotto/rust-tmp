@@ -5,6 +5,7 @@ use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(Clone, Debug, Eq, PartialEq, EnumIter)]
 pub enum ModeratorActionType {
+	Test,
 	EchoInfo,
 	EchoWarn,
 	EchoError,
@@ -21,6 +22,7 @@ impl ActionType for ModeratorActionType {
 
 	fn id(&self) -> u32 {
 		match self {
+			ModeratorActionType::Test => 0,
 			ModeratorActionType::EchoInfo => 1,
 			ModeratorActionType::EchoWarn => 2,
 			ModeratorActionType::EchoError => 3,

@@ -5,6 +5,7 @@ use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(Clone, Debug, Eq, PartialEq, EnumIter)]
 pub enum UserActionType {
+	Test,
 	Login,
 	Logout,
 }
@@ -20,6 +21,7 @@ impl ActionType for UserActionType {
 
 	fn id(&self) -> u32 {
 		match self {
+			UserActionType::Test => 0,
 			UserActionType::Login => 1,
 			UserActionType::Logout => 2,
 		}

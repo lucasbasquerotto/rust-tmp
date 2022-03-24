@@ -56,9 +56,8 @@ where
 	fn run(input: RequestInput<I, ModeratorRequestContext>) -> Result<O, E> {
 		let context = &input.context;
 		let action_type = &Self::action_type();
-		let action_id = &action_type.id();
 
-		let action = if !context.session.allowed_actions.contains(action_id) {
+		let action = if !context.session.allowed_actions.contains(action_type) {
 			let error_context = ErrorContext {
 				action_type: action_type.clone(),
 				context: context.clone(),
@@ -72,5 +71,83 @@ where
 		};
 
 		action.run_inner()
+	}
+}
+
+#[cfg(test)]
+pub mod tests {
+	use crate::business::action_type::moderator_action_type::ModeratorActionType;
+	use crate::business::data::action_data::{ErrorContext, ErrorInput};
+	use crate::business::data::moderator_action_data::ModeratorActionError;
+	use crate::business::{
+		data::{
+			action_data::{RequestContext, RequestInput},
+			moderator_action_data::ModeratorRequestContext,
+		},
+		definition::action::ModeratorAction,
+	};
+	use crate::tests::test_utils::tests::{
+		moderator_context, run_test, ModeratorOptions, TestRequest,
+	};
+	use business::action_type::action_type::ActionType;
+
+	#[derive(Debug)]
+	pub struct TestAction<T: RequestContext>(RequestInput<(), T>);
+
+	impl ModeratorAction<(), (), ModeratorActionError> for TestAction<ModeratorRequestContext> {
+		fn action_type() -> ModeratorActionType {
+			ModeratorActionType::Test
+		}
+
+		fn new_inner(
+			input: Result<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
+		) -> Result<Self, ModeratorActionError> {
+			match input {
+				Err(err) => Err(err),
+				Ok(ok_input) => Ok(Self(ok_input)),
+			}
+		}
+
+		fn run_inner(self) -> Result<(), ModeratorActionError> {
+			info!("moderator action test");
+			Ok(())
+		}
+	}
+
+	#[test]
+	fn test_not_allowed() {
+		run_test(|_| {
+			let context = moderator_context(ModeratorOptions {
+				allowed_actions: vec![],
+			});
+
+			let result = TestAction::test_request((), context.clone());
+			assert_eq!(
+				result,
+				Err(ModeratorActionError::NotAllowed(ErrorInput {
+					error_context: ErrorContext {
+						action_type: ModeratorActionType::Test,
+						context: context.clone()
+					},
+					data: ModeratorActionType::Test.id()
+				}))
+			);
+		});
+	}
+
+	#[test]
+	fn test_ok() {
+		run_test(|helper| {
+			let context = moderator_context(ModeratorOptions {
+				allowed_actions: vec![TestAction::action_type()],
+			});
+
+			let result = TestAction::test_request((), context.clone());
+			assert_eq!(result, Ok(()));
+			assert_eq!(
+				helper.pop_log(),
+				Some("INFO - moderator action test".to_string())
+			);
+		});
 	}
 }

@@ -56,7 +56,7 @@ pub mod tests {
 
 	#[derive(Debug, Clone)]
 	pub struct ModeratorOptions {
-		pub allowed_actions: Vec<u32>,
+		pub allowed_actions: Vec<ModeratorActionType>,
 	}
 
 	impl TestRequestOptions for ModeratorOptions {}

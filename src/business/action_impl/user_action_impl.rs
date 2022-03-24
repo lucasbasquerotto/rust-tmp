@@ -228,3 +228,146 @@ where
 		action.run_inner()
 	}
 }
+
+#[cfg(test)]
+pub mod tests {
+	use crate::business::action_type::user_action_type::UserActionType;
+	use crate::business::data::action_data::{ErrorContext, ErrorInput};
+	use crate::business::data::user_action_data::{
+		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext,
+	};
+	use crate::business::{
+		data::{action_data::RequestInput, user_action_data::UserRequestContext},
+		definition::action::UserAction,
+	};
+	use crate::tests::test_utils::tests::{run_test, user_context, TestRequest, UserOptions};
+
+	#[derive(Debug)]
+	pub struct TestActionNoAuth(RequestInput<(), UserNoAuthRequestContext>);
+
+	#[derive(Debug)]
+	pub struct TestActionAuth(RequestInput<(), UserAuthRequestContext>);
+
+	impl UserAction<(), (), UserActionError> for TestActionNoAuth {
+		fn action_type() -> UserActionType {
+			UserActionType::Test
+		}
+
+		fn new_inner(
+			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
+		) -> Result<Self, UserActionError> {
+			match input {
+				Err(err) => Err(err),
+				Ok(ok_input) => {
+					let real_input = ok_input.to_no_auth(Self::action_type());
+
+					match real_input {
+						Err(err) => Err(err),
+						Ok(real_ok_input) => Ok(Self(real_ok_input)),
+					}
+				}
+			}
+		}
+
+		fn run_inner(self) -> Result<(), UserActionError> {
+			info!("user action test (no auth)");
+			Ok(())
+		}
+	}
+
+	impl UserAction<(), (), UserActionError> for TestActionAuth {
+		fn action_type() -> UserActionType {
+			UserActionType::Test
+		}
+
+		fn new_inner(
+			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
+		) -> Result<Self, UserActionError> {
+			match input {
+				Err(err) => Err(err),
+				Ok(ok_input) => {
+					let real_input = ok_input.to_auth(Self::action_type());
+
+					match real_input {
+						Err(err) => Err(err),
+						Ok(real_ok_input) => Ok(Self(real_ok_input)),
+					}
+				}
+			}
+		}
+
+		fn run_inner(self) -> Result<(), UserActionError> {
+			info!(
+				"user action test (auth): {user_id}",
+				user_id = self.0.context.session.user_id
+			);
+			Ok(())
+		}
+	}
+
+	#[test]
+	fn test_no_auth_not_allowed() {
+		run_test(|_| {
+			let context = user_context(UserOptions { user_id: Some(1) });
+
+			let result = TestActionNoAuth::test_request((), context.clone());
+			assert_eq!(
+				result,
+				Err(UserActionError::Authenticated(ErrorInput {
+					error_context: ErrorContext {
+						action_type: UserActionType::Test,
+						context: context.clone()
+					},
+					data: ()
+				}))
+			);
+		});
+	}
+
+	#[test]
+	fn test_no_auth_ok() {
+		run_test(|helper| {
+			let context = user_context(UserOptions { user_id: None });
+
+			let result = TestActionNoAuth::test_request((), context.clone());
+			assert_eq!(result, Ok(()));
+			assert_eq!(
+				helper.pop_log(),
+				Some("INFO - user action test (no auth)".to_string())
+			);
+		});
+	}
+
+	#[test]
+	fn test_auth_not_allowed() {
+		run_test(|_| {
+			let context = user_context(UserOptions { user_id: None });
+
+			let result = TestActionAuth::test_request((), context.clone());
+			assert_eq!(
+				result,
+				Err(UserActionError::Unauthenticated(ErrorInput {
+					error_context: ErrorContext {
+						action_type: UserActionType::Test,
+						context: context.clone()
+					},
+					data: ()
+				}))
+			);
+		});
+	}
+
+	#[test]
+	fn test_auth_ok() {
+		run_test(|helper| {
+			let context = user_context(UserOptions { user_id: Some(2) });
+
+			let result = TestActionAuth::test_request((), context.clone());
+			assert_eq!(result, Ok(()));
+			assert_eq!(
+				helper.pop_log(),
+				Some("INFO - user action test (auth): 2".to_string())
+			);
+		});
+	}
+}

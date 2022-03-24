@@ -96,7 +96,7 @@ pub mod tests {
 	fn test_ok() {
 		run_test(|helper| {
 			let context = moderator_context(ModeratorOptions {
-				allowed_actions: vec![EchoErrorAction::action_type().id()],
+				allowed_actions: vec![EchoErrorAction::action_type()],
 			});
 
 			let result = EchoErrorAction::test_request((), context.clone());
