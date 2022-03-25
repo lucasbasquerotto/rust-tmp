@@ -3,8 +3,8 @@ use crate::business::{
 	data::{
 		action_data::{ErrorContext, ErrorData, RequestInput},
 		automatic_action_data::{
-			AutomaticActionError, AutomaticErrorInput, AutomaticRequest, AutomaticRequestContext,
-			HookRequestContext, InternalRequestContext,
+			AutomaticActionError, AutomaticRequest, AutomaticRequestContext, HookRequestContext,
+			InternalRequestContext,
 		},
 	},
 	definition::action::{ActionInput, ActionOutput},
@@ -57,14 +57,12 @@ impl AutomaticRequestContext {
 
 		match request {
 			AutomaticRequest::Internal => Ok(InternalRequestContext { application }),
-			_ => Err(AutomaticActionError::NotInternal(AutomaticErrorInput {
-				error_context: ErrorContext {
+			_ => Err(AutomaticActionError::NotInternal(
+				AutomaticActionError::input(ErrorContext {
 					action_type,
 					context: self.clone(),
-				},
-				data: (),
-				source: None,
-			})),
+				}),
+			)),
 		}
 	}
 
@@ -83,14 +81,12 @@ impl AutomaticRequestContext {
 				application,
 				request: hook_request,
 			}),
-			_ => Err(AutomaticActionError::NotHook(AutomaticErrorInput {
-				error_context: ErrorContext {
+			_ => Err(AutomaticActionError::NotHook(AutomaticActionError::input(
+				ErrorContext {
 					action_type,
 					context: self.clone(),
 				},
-				data: (),
-				source: None,
-			})),
+			))),
 		}
 	}
 }
@@ -217,7 +213,7 @@ where
 #[cfg(test)]
 pub mod tests {
 	use crate::business::action_type::automatic_action_type::AutomaticActionType;
-	use crate::business::data::action_data::{ErrorContext, ErrorInput};
+	use crate::business::data::action_data::ErrorContext;
 	use crate::business::data::automatic_action_data::tests::{
 		automatic_context, AutomaticTestOptions,
 	};
@@ -225,6 +221,7 @@ pub mod tests {
 		AutomaticActionError, AutomaticRequest, HookRequestContext, InternalRequestContext,
 	};
 	use crate::business::definition::action::Action;
+	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::business::{
 		data::{action_data::RequestInput, automatic_action_data::AutomaticRequestContext},
 		definition::action::AutomaticAction,
@@ -390,14 +387,12 @@ pub mod tests {
 			});
 			assert_eq!(
 				result,
-				Err(AutomaticActionError::NotHook(ErrorInput {
-					error_context: ErrorContext {
+				Err(AutomaticActionError::NotHook(AutomaticActionError::input(
+					ErrorContext {
 						action_type: AutomaticActionType::Test,
 						context: context.clone()
-					},
-					data: (),
-					source: None
-				}))
+					}
+				)))
 			);
 		});
 	}
@@ -430,14 +425,12 @@ pub mod tests {
 			});
 			assert_eq!(
 				result,
-				Err(AutomaticActionError::NotInternal(ErrorInput {
-					error_context: ErrorContext {
+				Err(AutomaticActionError::NotInternal(
+					AutomaticActionError::input(ErrorContext {
 						action_type: AutomaticActionType::Test,
 						context: context.clone()
-					},
-					data: (),
-					source: None
-				}))
+					})
+				))
 			);
 		});
 	}

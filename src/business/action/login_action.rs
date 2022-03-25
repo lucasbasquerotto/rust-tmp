@@ -97,8 +97,9 @@ mod tests {
 	use crate::business::action_type::user_action_type::UserActionType;
 	use crate::business::data::action_data::{ErrorContext, RequestInput};
 	use crate::business::data::user_action_data::tests::{user_context, UserTestOptions};
-	use crate::business::data::user_action_data::{UserActionError, UserErrorInput};
+	use crate::business::data::user_action_data::UserActionError;
 	use crate::business::definition::action::Action;
+	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
@@ -117,14 +118,10 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(LoginError::UserError(UserActionError::Authenticated(
-					UserErrorInput {
-						error_context: ErrorContext {
-							action_type: UserActionType::Login,
-							context: context.clone(),
-						},
-						data: (),
-						source: None,
-					}
+					UserActionError::input(ErrorContext {
+						action_type: UserActionType::Login,
+						context: context.clone(),
+					})
 				)))
 			);
 		});

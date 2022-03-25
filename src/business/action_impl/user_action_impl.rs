@@ -3,8 +3,8 @@ use crate::business::{
 	data::{
 		action_data::{ErrorContext, ErrorData, RequestInput},
 		user_action_data::{
-			UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInput,
-			UserNoAuthRequestContext, UserNoAuthSession, UserRequestContext, UserSession,
+			UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
+			UserNoAuthSession, UserRequestContext, UserSession,
 		},
 	},
 	definition::action::{ActionInput, ActionOutput},
@@ -64,14 +64,12 @@ impl UserRequestContext {
 				session: UserAuthSession { user_id },
 				request,
 			}),
-			None => Err(UserActionError::Unauthenticated(UserErrorInput {
-				error_context: ErrorContext {
+			None => Err(UserActionError::Unauthenticated(UserActionError::input(
+				ErrorContext {
 					action_type,
 					context: self.clone(),
 				},
-				data: (),
-				source: None,
-			})),
+			))),
 		}
 	}
 
@@ -86,14 +84,12 @@ impl UserRequestContext {
 		} = self.clone();
 
 		match session.user_id {
-			Some(_) => Err(UserActionError::Authenticated(UserErrorInput {
-				error_context: ErrorContext {
+			Some(_) => Err(UserActionError::Authenticated(UserActionError::input(
+				ErrorContext {
 					action_type,
 					context: self.clone(),
 				},
-				data: (),
-				source: None,
-			})),
+			))),
 			None => Ok(UserNoAuthRequestContext {
 				application,
 				session: UserNoAuthSession(),
@@ -232,12 +228,13 @@ where
 #[cfg(test)]
 pub mod tests {
 	use crate::business::action_type::user_action_type::UserActionType;
-	use crate::business::data::action_data::{ErrorContext, ErrorInput};
+	use crate::business::data::action_data::ErrorContext;
 	use crate::business::data::user_action_data::tests::{user_context, UserTestOptions};
 	use crate::business::data::user_action_data::{
 		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext,
 	};
 	use crate::business::definition::action::Action;
+	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::business::{
 		data::{action_data::RequestInput, user_action_data::UserRequestContext},
 		definition::action::UserAction,
@@ -422,14 +419,12 @@ pub mod tests {
 			});
 			assert_eq!(
 				result,
-				Err(UserActionError::Authenticated(ErrorInput {
-					error_context: ErrorContext {
+				Err(UserActionError::Authenticated(UserActionError::input(
+					ErrorContext {
 						action_type: UserActionType::Test,
 						context: context.clone()
-					},
-					data: (),
-					source: None
-				}))
+					}
+				)))
 			);
 			assert_eq!(
 				Ok(context.clone()),
@@ -478,14 +473,12 @@ pub mod tests {
 			});
 			assert_eq!(
 				result,
-				Err(UserActionError::Unauthenticated(ErrorInput {
-					error_context: ErrorContext {
+				Err(UserActionError::Unauthenticated(UserActionError::input(
+					ErrorContext {
 						action_type: UserActionType::Test,
 						context: context.clone()
-					},
-					data: (),
-					source: None
-				}))
+					}
+				)))
 			);
 			assert_eq!(
 				Ok(context.clone()),

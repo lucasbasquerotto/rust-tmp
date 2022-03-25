@@ -1,13 +1,21 @@
 use crate::business::{
 	action_type::action_type::ActionType,
-	data::action_data::{ErrorData, RequestContext},
+	data::action_data::{ErrorContext, ErrorData, ErrorInput, RequestContext},
 	definition::{
 		action::ActionError,
 		action_helpers::{ActionErrorHelper, DescriptiveRequestContext},
 	},
 };
 
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
 impl<T: DescriptiveRequestContext> RequestContext for T {}
+
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
 
 impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionErrorHelper<T, C>
 	for E
@@ -37,7 +45,19 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionEr
 			.unwrap_or("")
 			.to_string()
 	}
+
+	fn input(error_context: ErrorContext<T, C>) -> ErrorInput<(), T, C> {
+		ErrorInput {
+			error_context,
+			data: (),
+			source: None,
+		}
+	}
 }
+
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
 
 #[cfg(test)]
 mod tests {

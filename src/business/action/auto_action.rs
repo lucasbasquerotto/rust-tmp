@@ -150,8 +150,9 @@ mod tests {
 	use crate::business::data::automatic_action_data::tests::{
 		automatic_context, AutomaticTestOptions,
 	};
-	use crate::business::data::automatic_action_data::{AutomaticActionError, AutomaticErrorInput};
+	use crate::business::data::automatic_action_data::AutomaticActionError;
 	use crate::business::definition::action::Action;
+	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
@@ -170,14 +171,10 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(AutoError::AutomaticError(
-					AutomaticActionError::NotInternal(AutomaticErrorInput {
-						error_context: ErrorContext {
-							action_type: AutomaticActionType::Auto,
-							context: context.clone(),
-						},
-						data: (),
-						source: None
-					})
+					AutomaticActionError::NotInternal(AutomaticActionError::input(ErrorContext {
+						action_type: AutomaticActionType::Auto,
+						context: context.clone(),
+					}))
 				))
 			);
 		});
@@ -225,14 +222,10 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(AutoError::AutomaticError(AutomaticActionError::NotHook(
-					AutomaticErrorInput {
-						error_context: ErrorContext {
-							action_type: AutomaticActionType::Auto,
-							context: context.clone(),
-						},
-						data: (),
-						source: None,
-					}
+					AutomaticActionError::input(ErrorContext {
+						action_type: AutomaticActionType::Auto,
+						context: context.clone(),
+					})
 				)))
 			);
 		});
