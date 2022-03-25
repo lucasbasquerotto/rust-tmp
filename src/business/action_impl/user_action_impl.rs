@@ -70,6 +70,7 @@ impl UserRequestContext {
 					context: self.clone(),
 				},
 				data: (),
+				source: None,
 			})),
 		}
 	}
@@ -91,6 +92,7 @@ impl UserRequestContext {
 					context: self.clone(),
 				},
 				data: (),
+				source: None,
 			})),
 			None => Ok(UserNoAuthRequestContext {
 				application,
@@ -425,7 +427,8 @@ pub mod tests {
 						action_type: UserActionType::Test,
 						context: context.clone()
 					},
-					data: ()
+					data: (),
+					source: None
 				}))
 			);
 			assert_eq!(
@@ -480,7 +483,8 @@ pub mod tests {
 						action_type: UserActionType::Test,
 						context: context.clone()
 					},
-					data: ()
+					data: (),
+					source: None
 				}))
 			);
 			assert_eq!(

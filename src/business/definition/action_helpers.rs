@@ -5,7 +5,7 @@ use crate::business::{
 	data::action_data::{ErrorData, RequestContext},
 };
 
-pub trait DescriptiveRequestContext: Debug + Clone {
+pub trait DescriptiveRequestContext: Debug + Eq + PartialEq + Clone {
 	fn description(&self) -> String;
 }
 

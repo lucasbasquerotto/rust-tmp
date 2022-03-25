@@ -77,6 +77,7 @@ where
 			Self::new(Err(ModeratorActionError::NotAllowed(ModeratorErrorInput {
 				error_context,
 				data: action_type.clone(),
+				source: None,
 			})))?
 		};
 
@@ -148,7 +149,8 @@ pub mod tests {
 						action_type: ModeratorActionType::Test,
 						context: context.clone()
 					},
-					data: ModeratorActionType::Test
+					data: ModeratorActionType::Test,
+					source: None,
 				}))
 			);
 		});

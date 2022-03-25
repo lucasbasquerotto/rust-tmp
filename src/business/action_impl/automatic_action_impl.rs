@@ -63,6 +63,7 @@ impl AutomaticRequestContext {
 					context: self.clone(),
 				},
 				data: (),
+				source: None,
 			})),
 		}
 	}
@@ -88,6 +89,7 @@ impl AutomaticRequestContext {
 					context: self.clone(),
 				},
 				data: (),
+				source: None,
 			})),
 		}
 	}
@@ -393,7 +395,8 @@ pub mod tests {
 						action_type: AutomaticActionType::Test,
 						context: context.clone()
 					},
-					data: ()
+					data: (),
+					source: None
 				}))
 			);
 		});
@@ -432,7 +435,8 @@ pub mod tests {
 						action_type: AutomaticActionType::Test,
 						context: context.clone()
 					},
-					data: ()
+					data: (),
+					source: None
 				}))
 			);
 		});

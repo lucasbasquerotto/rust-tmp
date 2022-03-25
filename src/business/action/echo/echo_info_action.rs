@@ -95,7 +95,8 @@ pub mod tests {
 							action_type: ModeratorActionType::EchoInfo,
 							context: context.clone()
 						},
-						data: ModeratorActionType::EchoInfo
+						data: ModeratorActionType::EchoInfo,
+						source: None
 					})
 				))
 			);

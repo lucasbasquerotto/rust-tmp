@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, error::Error, fmt::Debug};
 
 use crate::business::action_type::action_type::ActionType;
 
@@ -6,7 +6,7 @@ use crate::business::action_type::action_type::ActionType;
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
 
-pub trait RequestContext {}
+pub trait RequestContext: Debug + Eq + PartialEq {}
 
 #[derive(Debug)]
 pub struct RequestInput<I, C: RequestContext> {
@@ -43,11 +43,22 @@ pub struct ErrorContext<T: ActionType, C: RequestContext> {
 	pub context: C,
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub struct ErrorInput<D, T: ActionType, C: RequestContext> {
+#[derive(Debug)]
+pub struct ErrorInput<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext> {
 	pub error_context: ErrorContext<T, C>,
 	pub data: D,
+	pub source: Option<Box<dyn Error>>,
 }
+
+impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext> PartialEq
+	for ErrorInput<D, T, C>
+{
+	fn eq(&self, other: &Self) -> bool {
+		self.error_context == other.error_context && self.data == other.data
+	}
+}
+
+impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext> Eq for ErrorInput<D, T, C> {}
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct ErrorData {

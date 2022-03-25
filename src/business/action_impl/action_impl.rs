@@ -49,7 +49,7 @@ mod tests {
 	};
 	use crate::tests::test_utils::tests::run_test;
 
-	#[derive(Debug, Clone)]
+	#[derive(Debug, Eq, PartialEq, Clone)]
 	struct TestRequestContext(String);
 
 	impl DescriptiveRequestContext for TestRequestContext {
