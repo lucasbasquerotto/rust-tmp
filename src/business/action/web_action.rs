@@ -3,8 +3,7 @@ use crate::business::{
 	data::{
 		action_data::{ErrorContext, ErrorData, ErrorInput, RequestInput},
 		automatic_action_data::{
-			AutomaticActionError, AutomaticErrorInput, AutomaticRequestContext, HookRequestContext,
-			InternalRequestContext,
+			AutomaticActionError, AutomaticErrorInput, AutomaticRequestContext,
 		},
 	},
 	definition::{
@@ -29,8 +28,12 @@ impl ActionInput for WebData {}
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq, Deserialize)]
+pub struct WebResultArgs {}
+
+#[derive(Debug, PartialEq, Deserialize)]
 pub struct WebResult {
 	pub url: String,
+	pub args: WebResultArgs,
 }
 
 impl ActionOutput for WebResult {}
@@ -66,9 +69,9 @@ impl ActionError<AutomaticActionType, AutomaticRequestContext> for WebError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct WebActionInternal(RequestInput<WebData, InternalRequestContext>);
+pub struct WebActionAutomatic(RequestInput<WebData, AutomaticRequestContext>);
 
-impl AutomaticAction<WebData, WebResult, WebError> for WebActionInternal {
+impl AutomaticAction<WebData, WebResult, WebError> for WebActionAutomatic {
 	fn action_type() -> AutomaticActionType {
 		AutomaticActionType::Auto
 	}
@@ -77,61 +80,17 @@ impl AutomaticAction<WebData, WebResult, WebError> for WebActionInternal {
 		input: Result<RequestInput<WebData, AutomaticRequestContext>, AutomaticActionError>,
 	) -> Result<Self, WebError> {
 		input
-			.and_then(|ok_input| ok_input.to_internal(Self::action_type()))
 			.map(|ok_input| Self(ok_input))
 			.map_err(|err| WebError::AutomaticError(err))
 	}
 
 	fn run_inner(self) -> Result<WebResult, WebError> {
-		let WebActionInternal(input) = &self;
-		run().map_err(|err| {
+		let WebActionAutomatic(input) = &self;
+		run(&input.data).map_err(|err| {
 			WebError::AutomaticWebError(ErrorInput {
 				error_context: ErrorContext {
 					action_type: Self::action_type(),
-					context: input.context.to_general(),
-				},
-				data: (),
-				source: Some(err),
-			})
-		})
-	}
-}
-
-////////////////////////////////////////////////
-/////////////////// ACTION /////////////////////
-////////////////////////////////////////////////
-
-#[derive(Debug)]
-pub struct AutoActionHook(RequestInput<WebData, HookRequestContext>);
-
-impl AutomaticAction<WebData, WebResult, WebError> for AutoActionHook {
-	fn action_type() -> AutomaticActionType {
-		AutomaticActionType::Auto
-	}
-
-	fn new(
-		input: Result<RequestInput<WebData, AutomaticRequestContext>, AutomaticActionError>,
-	) -> Result<Self, WebError> {
-		match input {
-			Err(err) => Err(WebError::AutomaticError(err)),
-			Ok(ok_input) => {
-				let real_input = ok_input.to_hook(Self::action_type());
-
-				match real_input {
-					Err(err) => Err(WebError::AutomaticError(err)),
-					Ok(real_ok_input) => Ok(Self(real_ok_input)),
-				}
-			}
-		}
-	}
-
-	fn run_inner(self) -> Result<WebResult, WebError> {
-		let AutoActionHook(input) = &self;
-		run().map_err(|err| {
-			WebError::AutomaticWebError(ErrorInput {
-				error_context: ErrorContext {
-					action_type: Self::action_type(),
-					context: input.context.to_general(),
+					context: input.context.clone(),
 				},
 				data: (),
 				source: Some(err),
@@ -144,8 +103,12 @@ impl AutomaticAction<WebData, WebResult, WebError> for AutoActionHook {
 ////////////////// FUNCTIONS ///////////////////
 ////////////////////////////////////////////////
 
-fn run() -> Result<WebResult, reqwest::Error> {
-	reqwest::blocking::get("http://httpbin.org/get")?.json::<WebResult>()
+fn run(data: &WebData) -> Result<WebResult, reqwest::Error> {
+	reqwest::blocking::get(format!(
+		"http://httpbin.org/get{error}",
+		error = if data.error { "/error" } else { "" }
+	))?
+	.json::<WebResult>()
 }
 
 ////////////////////////////////////////////////
@@ -156,12 +119,12 @@ fn run() -> Result<WebResult, reqwest::Error> {
 mod tests {
 	use crate::{
 		business::{
-			action::web_action::{WebActionInternal, WebData, WebResult},
+			action::web_action::{WebActionAutomatic, WebData, WebError, WebResult, WebResultArgs},
 			data::{
-				action_data::RequestInput,
+				action_data::{ErrorContext, ErrorInput, RequestInput},
 				automatic_action_data::tests::{automatic_context, AutomaticTestOptions},
 			},
-			definition::action::Action,
+			definition::action::{Action, AutomaticAction},
 		},
 		tests::test_utils::tests::run_test,
 	};
@@ -171,7 +134,7 @@ mod tests {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
 
-			let result = WebActionInternal::run(RequestInput {
+			let result = WebActionAutomatic::run(RequestInput {
 				data: WebData { error: false },
 				context: context.clone(),
 			});
@@ -180,7 +143,32 @@ mod tests {
 				&result,
 				&Ok(WebResult {
 					url: "http://httpbin.org/get".to_string(),
+					args: WebResultArgs {}
 				})
+			);
+		});
+	}
+
+	#[test]
+	fn test_internal_error() {
+		run_test(|_| {
+			let context = automatic_context(AutomaticTestOptions { internal: true });
+
+			let result = WebActionAutomatic::run(RequestInput {
+				data: WebData { error: true },
+				context: context.clone(),
+			});
+
+			assert_eq!(
+				&result,
+				&Err(WebError::AutomaticWebError(ErrorInput {
+					error_context: ErrorContext {
+						action_type: WebActionAutomatic::action_type(),
+						context: context.clone()
+					},
+					data: (),
+					source: None
+				}))
 			);
 		});
 	}
