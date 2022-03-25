@@ -13,6 +13,8 @@ use crate::business::{
 	},
 };
 
+use super::action_helpers::ActionErrorHelper;
+
 pub trait Action<I, O, E>: Debug
 where
 	Self: Sized,
@@ -32,12 +34,22 @@ pub trait ActionOutput: Debug {}
 
 impl ActionOutput for () {}
 
-pub trait ActionError<T: ActionType, C: RequestContext>: Debug {
+pub trait ActionError<T: ActionType, C: RequestContext>: ActionErrorHelper<T, C>
+where
+	Self: Sized,
+{
 	fn error_context(&self) -> &ErrorContext<T, C>;
 
 	fn public_error(&self) -> Option<ErrorData>;
 
-	fn description(&self) -> String;
+	fn description(&self) -> String {
+		self.default_description()
+	}
+
+	fn handle(self) -> Option<ErrorData> {
+		error!("{}", self.description());
+		self.public_error()
+	}
 }
 
 /////////////////////////////////////////////////////////

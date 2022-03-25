@@ -8,7 +8,7 @@ use crate::business::{
 		},
 	},
 	definition::action::{ActionInput, ActionOutput},
-	definition::action_helpers::{DescriptiveRequestContext, UserRequestContextLike},
+	definition::action_helpers::DescriptiveRequestContext,
 	definition::{
 		action::{Action, ActionError, UserAction},
 		action_helpers::ActionErrorHelper,
@@ -58,10 +58,6 @@ impl ActionError<UserActionType, UserRequestContext> for UserActionError {
 				self.error_msg("You must be authenticated to execute this action.".to_string())
 			}
 		}
-	}
-
-	fn description(&self) -> String {
-		self.default_description()
 	}
 }
 
@@ -144,7 +140,6 @@ impl<I> RequestInput<I, UserRequestContext> {
 	}
 }
 
-#[allow(dead_code)]
 impl UserAuthRequestContext {
 	pub fn to_general(&self) -> UserRequestContext {
 		let UserAuthRequestContext {
@@ -174,12 +169,6 @@ impl<T> RequestInput<T, UserAuthRequestContext> {
 	}
 }
 
-impl UserRequestContextLike for UserAuthRequestContext {
-	fn user_context(&self) -> UserRequestContext {
-		self.to_general()
-	}
-}
-
 #[allow(dead_code)]
 impl UserNoAuthRequestContext {
 	pub fn to_general(&self) -> UserRequestContext {
@@ -194,12 +183,6 @@ impl UserNoAuthRequestContext {
 			session: UserSession { user_id: None },
 			request,
 		}
-	}
-}
-
-impl UserRequestContextLike for UserNoAuthRequestContext {
-	fn user_context(&self) -> UserRequestContext {
-		self.to_general()
 	}
 }
 
@@ -236,11 +219,12 @@ pub mod tests {
 	use crate::business::data::user_action_data::{
 		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext,
 	};
+	use crate::business::definition::action::Action;
 	use crate::business::{
 		data::{action_data::RequestInput, user_action_data::UserRequestContext},
 		definition::action::UserAction,
 	};
-	use crate::tests::test_utils::tests::{run_test, user_context, TestRequest, UserOptions};
+	use crate::tests::test_utils::tests::{run_test, user_context, UserOptions};
 
 	#[derive(Debug)]
 	pub struct TestAction(RequestInput<(), UserRequestContext>);
@@ -330,15 +314,56 @@ pub mod tests {
 	}
 
 	#[test]
+	fn test_input_context_no_auth() {
+		run_test(|_| {
+			let context = user_context(UserOptions { user_id: None });
+			let input = RequestInput { context, data: () };
+			assert_eq!(
+				Ok(input.context.clone()),
+				input
+					.to_no_auth(TestAction::action_type())
+					.map(|ctx| ctx.to_general().context),
+				"Test input context reversible change"
+			);
+		});
+	}
+
+	#[test]
+	fn test_input_context_auth() {
+		run_test(|_| {
+			let context = user_context(UserOptions { user_id: Some(10) });
+			let input = RequestInput { context, data: () };
+			assert_eq!(
+				Ok(input.context.clone()),
+				input
+					.to_auth(TestAction::action_type())
+					.map(|ctx| ctx.to_general().context),
+				"Test input context reversible change"
+			);
+		});
+	}
+
+	#[test]
 	fn test_ok_no_auth() {
 		run_test(|helper| {
 			let context = user_context(UserOptions { user_id: None });
 
-			let result = TestAction::test_request((), context.clone());
+			let result = TestAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - user action test".to_string())
+			);
+			assert_eq!(
+				Ok(context.clone()),
+				context
+					.clone()
+					.to_no_auth(TestAction::action_type())
+					.map(|ctx| ctx.to_general()),
+				"Test context reversible change"
 			);
 		});
 	}
@@ -348,11 +373,22 @@ pub mod tests {
 		run_test(|helper| {
 			let context = user_context(UserOptions { user_id: Some(1) });
 
-			let result = TestAction::test_request((), context.clone());
+			let result = TestAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - user action test: 1".to_string())
+			);
+			assert_eq!(
+				Ok(context.clone()),
+				context
+					.clone()
+					.to_auth(TestAction::action_type())
+					.map(|ctx| ctx.to_general()),
+				"Test context reversible change"
 			);
 		});
 	}
@@ -362,7 +398,10 @@ pub mod tests {
 		run_test(|_| {
 			let context = user_context(UserOptions { user_id: Some(2) });
 
-			let result = TestActionNoAuth::test_request((), context.clone());
+			let result = TestActionNoAuth::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(
 				result,
 				Err(UserActionError::Authenticated(ErrorInput {
@@ -373,6 +412,14 @@ pub mod tests {
 					data: ()
 				}))
 			);
+			assert_eq!(
+				Ok(context.clone()),
+				context
+					.clone()
+					.to_auth(TestActionNoAuth::action_type())
+					.map(|ctx| ctx.to_general()),
+				"Test context reversible change"
+			);
 		});
 	}
 
@@ -381,11 +428,22 @@ pub mod tests {
 		run_test(|helper| {
 			let context = user_context(UserOptions { user_id: None });
 
-			let result = TestActionNoAuth::test_request((), context.clone());
+			let result = TestActionNoAuth::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - user action test (no auth)".to_string())
+			);
+			assert_eq!(
+				Ok(context.clone()),
+				context
+					.clone()
+					.to_no_auth(TestActionNoAuth::action_type())
+					.map(|ctx| ctx.to_general()),
+				"Test context reversible change"
 			);
 		});
 	}
@@ -395,7 +453,10 @@ pub mod tests {
 		run_test(|_| {
 			let context = user_context(UserOptions { user_id: None });
 
-			let result = TestActionAuth::test_request((), context.clone());
+			let result = TestActionAuth::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(
 				result,
 				Err(UserActionError::Unauthenticated(ErrorInput {
@@ -406,6 +467,14 @@ pub mod tests {
 					data: ()
 				}))
 			);
+			assert_eq!(
+				Ok(context.clone()),
+				context
+					.clone()
+					.to_no_auth(TestActionAuth::action_type())
+					.map(|ctx| ctx.to_general()),
+				"Test context reversible change"
+			);
 		});
 	}
 
@@ -414,11 +483,22 @@ pub mod tests {
 		run_test(|helper| {
 			let context = user_context(UserOptions { user_id: Some(3) });
 
-			let result = TestActionAuth::test_request((), context.clone());
+			let result = TestActionAuth::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - user action test (auth): 3".to_string())
+			);
+			assert_eq!(
+				Ok(context.clone()),
+				context
+					.clone()
+					.to_auth(TestActionAuth::action_type())
+					.map(|ctx| ctx.to_general()),
+				"Test context reversible change"
 			);
 		});
 	}

@@ -37,10 +37,6 @@ impl ActionError<ModeratorActionType, ModeratorRequestContext> for ModeratorActi
 			)),
 		}
 	}
-
-	fn description(&self) -> String {
-		self.default_description()
-	}
 }
 
 impl<I: ActionInput> ActionInput for RequestInput<I, ModeratorRequestContext> {}
@@ -81,6 +77,7 @@ pub mod tests {
 	use crate::business::action_type::moderator_action_type::ModeratorActionType;
 	use crate::business::data::action_data::{ErrorContext, ErrorInput};
 	use crate::business::data::moderator_action_data::ModeratorActionError;
+	use crate::business::definition::action::Action;
 	use crate::business::{
 		data::{
 			action_data::{RequestContext, RequestInput},
@@ -88,9 +85,7 @@ pub mod tests {
 		},
 		definition::action::ModeratorAction,
 	};
-	use crate::tests::test_utils::tests::{
-		moderator_context, run_test, ModeratorOptions, TestRequest,
-	};
+	use crate::tests::test_utils::tests::{moderator_context, run_test, ModeratorOptions};
 	use business::action_type::action_type::ActionType;
 
 	#[derive(Debug)]
@@ -124,7 +119,10 @@ pub mod tests {
 				allowed_actions: vec![],
 			});
 
-			let result = TestAction::test_request((), context.clone());
+			let result = TestAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(
 				result,
 				Err(ModeratorActionError::NotAllowed(ErrorInput {
@@ -146,7 +144,10 @@ pub mod tests {
 				allowed_actions: vec![TestAction::action_type()],
 			});
 
-			let result = TestAction::test_request((), context.clone());
+			let result = TestAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -163,7 +164,10 @@ pub mod tests {
 				allowed_actions: vec![],
 			});
 
-			let result = TestAction::test_request((), context.clone());
+			let result = TestAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),

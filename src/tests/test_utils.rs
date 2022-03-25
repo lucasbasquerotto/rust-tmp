@@ -1,27 +1,18 @@
 #[cfg(test)]
 pub mod tests {
-	extern crate lazy_static;
-	extern crate log;
 
 	use std::fmt::Debug;
 	use std::sync::{Arc, Mutex};
 
-	use business::action_type::action_type::ActionType;
 	use business::action_type::moderator_action_type::ModeratorActionType;
-	use business::action_type::user_action_type::UserActionType;
-	use business::data::action_data::{Application, Request, RequestInput};
+	use business::data::action_data::{Application, Request};
 
 	use business::data::moderator_action_data::{ModeratorRequestContext, ModeratorSession};
 	use business::data::user_action_data::{UserRequestContext, UserSession};
-	use business::definition::action::{ActionError, UserAction};
-	use business::definition::action::{ActionInput, ActionOutput, ModeratorAction};
-	use business::definition::action_helpers::DescriptiveRequestContext;
 
 	use log::{Level, LevelFilter, Metadata, Record};
 
-	use crate::business::action_type::automatic_action_type::AutomaticActionType;
 	use crate::business::data::automatic_action_data::{AutomaticRequest, AutomaticRequestContext};
-	use crate::business::definition::action::AutomaticAction;
 
 	lazy_static::lazy_static! {
 		static ref MY_LOGGER: MyLogger = MyLogger(Arc::new(Mutex::new(vec![])));
@@ -73,18 +64,6 @@ pub mod tests {
 
 	impl TestRequestOptions for AutomaticOptions {}
 
-	pub trait TestRequest<
-		T: ActionType,
-		C: DescriptiveRequestContext,
-		I: ActionInput,
-		O: ActionOutput,
-		E: ActionError<T, C>,
-		A: ActionType,
-	>
-	{
-		fn test_request(data: I, context: C) -> Result<O, E>;
-	}
-
 	pub fn user_context(options: UserOptions) -> UserRequestContext {
 		UserRequestContext {
 			application: Application {
@@ -96,19 +75,6 @@ pub mod tests {
 			request: Request {
 				ip: "1.2.3.4".to_string(),
 			},
-		}
-	}
-
-	impl<I, O, E, A> TestRequest<UserActionType, UserRequestContext, I, O, E, UserActionType> for A
-	where
-		I: ActionInput,
-		O: ActionOutput,
-		E: ActionError<UserActionType, UserRequestContext>,
-		A: UserAction<I, O, E>,
-	{
-		fn test_request(data: I, context: UserRequestContext) -> Result<O, E> {
-			let input = RequestInput { context, data };
-			Self::run(input)
 		}
 	}
 
@@ -128,20 +94,6 @@ pub mod tests {
 		}
 	}
 
-	impl<I, O, E, A>
-		TestRequest<ModeratorActionType, ModeratorRequestContext, I, O, E, ModeratorActionType> for A
-	where
-		I: ActionInput,
-		O: ActionOutput,
-		E: ActionError<ModeratorActionType, ModeratorRequestContext>,
-		A: ModeratorAction<I, O, E>,
-	{
-		fn test_request(data: I, context: ModeratorRequestContext) -> Result<O, E> {
-			let input = RequestInput { context, data };
-			Self::run(input)
-		}
-	}
-
 	pub fn automatic_context(options: AutomaticOptions) -> AutomaticRequestContext {
 		AutomaticRequestContext {
 			application: Application {
@@ -154,20 +106,6 @@ pub mod tests {
 					ip: "0.1.2.3".to_string(),
 				})
 			},
-		}
-	}
-
-	impl<I, O, E, A>
-		TestRequest<AutomaticActionType, AutomaticRequestContext, I, O, E, AutomaticActionType> for A
-	where
-		I: ActionInput,
-		O: ActionOutput,
-		E: ActionError<AutomaticActionType, AutomaticRequestContext>,
-		A: AutomaticAction<I, O, E>,
-	{
-		fn test_request(data: I, context: AutomaticRequestContext) -> Result<O, E> {
-			let input = RequestInput { context, data };
-			Self::run(input)
 		}
 	}
 

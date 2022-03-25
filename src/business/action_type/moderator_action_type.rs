@@ -37,10 +37,15 @@ impl ActionType for ModeratorActionType {
 #[cfg(test)]
 mod tests {
 	use super::ID_ACTION_MAP;
-	use crate::business::action_type::action_type::tests::test_enum_action_type;
+	use crate::{
+		business::action_type::action_type::tests::test_enum_action_type,
+		tests::test_utils::tests::run_test,
+	};
 
 	#[test]
 	fn main() {
-		test_enum_action_type(ID_ACTION_MAP.clone());
+		run_test(|_| {
+			test_enum_action_type(ID_ACTION_MAP.clone());
+		});
 	}
 }

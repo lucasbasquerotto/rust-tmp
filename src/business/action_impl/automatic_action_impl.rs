@@ -7,14 +7,11 @@ use crate::business::{
 			HookRequestContext, InternalRequestContext,
 		},
 	},
+	definition::action::{ActionInput, ActionOutput},
 	definition::action_helpers::DescriptiveRequestContext,
 	definition::{
 		action::{Action, ActionError, AutomaticAction},
 		action_helpers::ActionErrorHelper,
-	},
-	definition::{
-		action::{ActionInput, ActionOutput},
-		action_helpers::AutomaticRequestContextLike,
 	},
 };
 
@@ -58,10 +55,6 @@ impl ActionError<AutomaticActionType, AutomaticRequestContext> for AutomaticActi
 				self.error_msg("This is not a hook action.".to_string())
 			}
 		}
-	}
-
-	fn description(&self) -> String {
-		self.default_description()
 	}
 }
 
@@ -162,12 +155,6 @@ impl<T> RequestInput<T, InternalRequestContext> {
 	}
 }
 
-impl AutomaticRequestContextLike for InternalRequestContext {
-	fn automatic_context(&self) -> AutomaticRequestContext {
-		self.to_general()
-	}
-}
-
 impl HookRequestContext {
 	pub fn to_general(&self) -> AutomaticRequestContext {
 		let HookRequestContext {
@@ -180,12 +167,6 @@ impl HookRequestContext {
 			application,
 			request: AutomaticRequest::Hook(request),
 		}
-	}
-}
-
-impl AutomaticRequestContextLike for HookRequestContext {
-	fn automatic_context(&self) -> AutomaticRequestContext {
-		self.to_general()
 	}
 }
 
@@ -222,13 +203,12 @@ pub mod tests {
 	use crate::business::data::automatic_action_data::{
 		AutomaticActionError, AutomaticRequest, HookRequestContext, InternalRequestContext,
 	};
+	use crate::business::definition::action::Action;
 	use crate::business::{
 		data::{action_data::RequestInput, automatic_action_data::AutomaticRequestContext},
 		definition::action::AutomaticAction,
 	};
-	use crate::tests::test_utils::tests::{
-		automatic_context, run_test, AutomaticOptions, TestRequest,
-	};
+	use crate::tests::test_utils::tests::{automatic_context, run_test, AutomaticOptions};
 
 	#[derive(Debug)]
 	pub struct TestAction(RequestInput<(), AutomaticRequestContext>);
@@ -315,11 +295,44 @@ pub mod tests {
 	}
 
 	#[test]
+	fn test_input_context_internal() {
+		run_test(|_| {
+			let context = automatic_context(AutomaticOptions { internal: true });
+			let input = RequestInput { context, data: () };
+			assert_eq!(
+				Ok(input.context.clone()),
+				input
+					.to_internal(TestAction::action_type())
+					.map(|ctx| ctx.to_general().context),
+				"Test input context reversible change"
+			);
+		});
+	}
+
+	#[test]
+	fn test_input_context_hook() {
+		run_test(|_| {
+			let context = automatic_context(AutomaticOptions { internal: false });
+			let input = RequestInput { context, data: () };
+			assert_eq!(
+				Ok(input.context.clone()),
+				input
+					.to_hook(TestAction::action_type())
+					.map(|ctx| ctx.to_general().context),
+				"Test input context reversible change"
+			);
+		});
+	}
+
+	#[test]
 	fn test_ok_hook() {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticOptions { internal: false });
 
-			let result = TestAction::test_request((), context.clone());
+			let result = TestAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -333,7 +346,10 @@ pub mod tests {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticOptions { internal: true });
 
-			let result = TestAction::test_request((), context.clone());
+			let result = TestAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -347,7 +363,10 @@ pub mod tests {
 		run_test(|_| {
 			let context = automatic_context(AutomaticOptions { internal: true });
 
-			let result = TestActionHook::test_request((), context.clone());
+			let result = TestActionHook::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(
 				result,
 				Err(AutomaticActionError::NotHook(ErrorInput {
@@ -366,7 +385,10 @@ pub mod tests {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticOptions { internal: false });
 
-			let result = TestActionHook::test_request((), context.clone());
+			let result = TestActionHook::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -380,7 +402,10 @@ pub mod tests {
 		run_test(|_| {
 			let context = automatic_context(AutomaticOptions { internal: false });
 
-			let result = TestActionInternal::test_request((), context.clone());
+			let result = TestActionInternal::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(
 				result,
 				Err(AutomaticActionError::NotInternal(ErrorInput {
@@ -399,7 +424,10 @@ pub mod tests {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticOptions { internal: true });
 
-			let result = TestActionInternal::test_request((), context.clone());
+			let result = TestActionInternal::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),

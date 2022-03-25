@@ -4,10 +4,7 @@ use crate::business::{
 		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
 		user_action_data::{UserActionError, UserRequestContext},
 	},
-	definition::{
-		action::{ActionError, UserAction},
-		action_helpers::ActionErrorHelper,
-	},
+	definition::action::{ActionError, UserAction},
 };
 
 #[derive(Debug, PartialEq)]
@@ -26,10 +23,6 @@ impl ActionError<UserActionType, UserRequestContext> for LogoutError {
 		match &self {
 			&Self::UserError(error) => error.public_error(),
 		}
-	}
-
-	fn description(&self) -> String {
-		self.default_description()
 	}
 }
 
@@ -58,13 +51,19 @@ impl UserAction<(), (), LogoutError> for LogoutAction<UserRequestContext> {
 #[cfg(test)]
 mod tests {
 	use super::LogoutAction;
-	use crate::tests::test_utils::tests::{run_test, user_context, TestRequest, UserOptions};
+	use crate::{
+		business::{data::action_data::RequestInput, definition::action::Action},
+		tests::test_utils::tests::{run_test, user_context, UserOptions},
+	};
 
 	#[test]
 	fn main() {
 		run_test(|_| {
 			let context = user_context(UserOptions { user_id: None });
-			let result = LogoutAction::test_request((), context);
+			let result = LogoutAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 		});
 	}

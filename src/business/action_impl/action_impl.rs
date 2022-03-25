@@ -26,11 +26,6 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionEr
 		)
 	}
 
-	fn handle(self) -> Option<ErrorData> {
-		let _ = &self.error();
-		self.public_error()
-	}
-
 	fn error_msg(&self, msg: String) -> Option<ErrorData> {
 		Some(ErrorData { msg, params: None })
 	}
@@ -41,22 +36,6 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionEr
 			.last()
 			.unwrap_or("")
 			.to_string()
-	}
-
-	fn info(&self) {
-		info!("{}", self.description())
-	}
-
-	fn warn(&self) {
-		warn!("{}", self.description())
-	}
-
-	fn error(&self) {
-		error!("{}", self.description())
-	}
-
-	fn debug(&self) {
-		debug!("{}", self.description())
 	}
 }
 
@@ -93,10 +72,6 @@ mod tests {
 		fn public_error(&self) -> Option<ErrorData> {
 			let action_id = self.error_context().action_type.id();
 			self.error_msg(format!("Test public error (action_id={action_id})"))
-		}
-
-		fn description(&self) -> String {
-			self.default_description()
 		}
 	}
 

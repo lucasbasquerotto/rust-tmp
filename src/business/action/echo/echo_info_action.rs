@@ -4,10 +4,7 @@ use crate::business::{
 		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 	},
-	definition::{
-		action::{ActionError, ModeratorAction},
-		action_helpers::ActionErrorHelper,
-	},
+	definition::action::{ActionError, ModeratorAction},
 };
 
 #[derive(Debug, PartialEq)]
@@ -26,10 +23,6 @@ impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoInfoError
 		match &self {
 			&Self::ModeratorError(error) => error.public_error(),
 		}
-	}
-
-	fn description(&self) -> String {
-		self.default_description()
 	}
 }
 
@@ -61,11 +54,10 @@ pub mod tests {
 	use super::EchoInfoAction;
 	use crate::business::action::echo::echo_info_action::EchoInfoError;
 	use crate::business::action_type::moderator_action_type::ModeratorActionType;
-	use crate::business::data::action_data::{ErrorContext, ErrorInput};
+	use crate::business::data::action_data::{ErrorContext, ErrorInput, RequestInput};
 	use crate::business::data::moderator_action_data::ModeratorActionError;
-	use crate::tests::test_utils::tests::{
-		moderator_context, run_test, ModeratorOptions, TestRequest,
-	};
+	use crate::business::definition::action::Action;
+	use crate::tests::test_utils::tests::{moderator_context, run_test, ModeratorOptions};
 	use business::action_type::action_type::ActionType;
 	use business::definition::action::ModeratorAction;
 
@@ -77,7 +69,10 @@ pub mod tests {
 				allowed_actions: vec![],
 			});
 
-			let result = EchoInfoAction::test_request((), context.clone());
+			let result = EchoInfoAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(
 				result,
 				Err(EchoInfoError::ModeratorError(
@@ -101,7 +96,10 @@ pub mod tests {
 				allowed_actions: vec![EchoInfoAction::action_type()],
 			});
 
-			let result = EchoInfoAction::test_request((), context.clone());
+			let result = EchoInfoAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -118,7 +116,10 @@ pub mod tests {
 				allowed_actions: vec![EchoInfoAction::action_type()],
 			});
 
-			let result = EchoInfoAction::test_request((), context.clone());
+			let result = EchoInfoAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),

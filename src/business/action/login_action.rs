@@ -4,10 +4,7 @@ use crate::business::{
 		action_data::{ErrorContext, ErrorData, RequestInput},
 		user_action_data::{UserActionError, UserNoAuthRequestContext, UserRequestContext},
 	},
-	definition::{
-		action::{ActionError, ActionInput, ActionOutput, UserAction},
-		action_helpers::ActionErrorHelper,
-	},
+	definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
 };
 
 #[derive(Debug, PartialEq)]
@@ -42,10 +39,6 @@ impl ActionError<UserActionType, UserRequestContext> for LoginError {
 		match &self {
 			&Self::UserError(error) => error.public_error(),
 		}
-	}
-
-	fn description(&self) -> String {
-		self.default_description()
 	}
 }
 
@@ -82,22 +75,23 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 mod tests {
 	use super::{LoginAction, LoginData, LoginError, LoginResult};
 	use crate::business::action_type::user_action_type::UserActionType;
-	use crate::business::data::action_data::ErrorContext;
+	use crate::business::data::action_data::{ErrorContext, RequestInput};
 	use crate::business::data::user_action_data::{UserActionError, UserErrorInput};
-	use crate::tests::test_utils::tests::{run_test, user_context, TestRequest, UserOptions};
+	use crate::business::definition::action::Action;
+	use crate::tests::test_utils::tests::{run_test, user_context, UserOptions};
 
 	#[test]
 	fn test_error_auth() {
 		run_test(|_| {
 			let context = user_context(UserOptions { user_id: Some(1) });
 
-			let result = LoginAction::test_request(
-				LoginData {
+			let result = LoginAction::run(RequestInput {
+				data: LoginData {
 					name: "User 01".to_owned(),
 					pass: "p4$$w0rd".to_owned(),
 				},
-				context.clone(),
-			);
+				context: context.clone(),
+			});
 
 			assert_eq!(
 				&result,
@@ -119,13 +113,13 @@ mod tests {
 		run_test(|_| {
 			let context = user_context(UserOptions { user_id: None });
 
-			let result = LoginAction::test_request(
-				LoginData {
+			let result = LoginAction::run(RequestInput {
+				data: LoginData {
 					name: "User 02".to_owned(),
 					pass: "p4$$w0rd2".to_owned(),
 				},
-				context.clone(),
-			);
+				context: context.clone(),
+			});
 
 			assert!(result.as_ref().is_ok());
 			assert_eq!(
