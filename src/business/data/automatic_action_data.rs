@@ -33,7 +33,8 @@ pub struct HookRequestContext {
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-pub type AutomaticErrorInput<T> = ErrorInput<T, AutomaticActionType, AutomaticRequestContext>;
+pub type AutomaticErrorInput<T, E = ()> =
+	ErrorInput<T, AutomaticActionType, AutomaticRequestContext, E>;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum AutomaticActionError {
@@ -47,7 +48,7 @@ pub enum AutomaticActionError {
 
 #[cfg(test)]
 pub mod tests {
-	use business::data::action_data::{Application, Request};
+	use crate::business::data::action_data::{Application, Request};
 
 	use super::{AutomaticRequest, AutomaticRequestContext};
 

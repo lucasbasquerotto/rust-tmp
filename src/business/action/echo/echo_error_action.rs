@@ -72,8 +72,8 @@ pub mod tests {
 	};
 	use crate::business::data::moderator_action_data::ModeratorActionError;
 	use crate::business::definition::action::Action;
+	use crate::business::definition::action::ModeratorAction;
 	use crate::tests::test_utils::tests::run_test;
-	use business::definition::action::ModeratorAction;
 
 	#[test]
 	fn test_not_allowed() {

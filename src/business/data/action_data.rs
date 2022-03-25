@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug};
 
 use crate::business::action_type::action_type::ActionType;
 
@@ -44,14 +44,14 @@ pub struct ErrorContext<T: ActionType, C: RequestContext> {
 }
 
 #[derive(Debug)]
-pub struct ErrorInput<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext> {
+pub struct ErrorInput<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E = ()> {
 	pub error_context: ErrorContext<T, C>,
 	pub data: D,
-	pub source: Option<Box<dyn Error>>,
+	pub source: Option<E>,
 }
 
-impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext> PartialEq
-	for ErrorInput<D, T, C>
+impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E> PartialEq
+	for ErrorInput<D, T, C, E>
 {
 	fn eq(&self, other: &Self) -> bool {
 		self.error_context == other.error_context && self.data == other.data
