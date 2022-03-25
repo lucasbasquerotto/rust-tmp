@@ -216,6 +216,7 @@ where
 pub mod tests {
 	use crate::business::action_type::user_action_type::UserActionType;
 	use crate::business::data::action_data::{ErrorContext, ErrorInput};
+	use crate::business::data::user_action_data::tests::{user_context, UserTestOptions};
 	use crate::business::data::user_action_data::{
 		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext,
 	};
@@ -224,7 +225,7 @@ pub mod tests {
 		data::{action_data::RequestInput, user_action_data::UserRequestContext},
 		definition::action::UserAction,
 	};
-	use crate::tests::test_utils::tests::{run_test, user_context, UserOptions};
+	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]
 	pub struct TestAction(RequestInput<(), UserRequestContext>);
@@ -316,7 +317,7 @@ pub mod tests {
 	#[test]
 	fn test_input_context_no_auth() {
 		run_test(|_| {
-			let context = user_context(UserOptions { user_id: None });
+			let context = user_context(UserTestOptions { user_id: None });
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
@@ -331,7 +332,7 @@ pub mod tests {
 	#[test]
 	fn test_input_context_auth() {
 		run_test(|_| {
-			let context = user_context(UserOptions { user_id: Some(10) });
+			let context = user_context(UserTestOptions { user_id: Some(10) });
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
@@ -346,7 +347,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_no_auth() {
 		run_test(|helper| {
-			let context = user_context(UserOptions { user_id: None });
+			let context = user_context(UserTestOptions { user_id: None });
 
 			let result = TestAction::run(RequestInput {
 				data: (),
@@ -371,7 +372,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_auth() {
 		run_test(|helper| {
-			let context = user_context(UserOptions { user_id: Some(1) });
+			let context = user_context(UserTestOptions { user_id: Some(1) });
 
 			let result = TestAction::run(RequestInput {
 				data: (),
@@ -396,7 +397,7 @@ pub mod tests {
 	#[test]
 	fn test_no_auth_not_allowed() {
 		run_test(|_| {
-			let context = user_context(UserOptions { user_id: Some(2) });
+			let context = user_context(UserTestOptions { user_id: Some(2) });
 
 			let result = TestActionNoAuth::run(RequestInput {
 				data: (),
@@ -426,7 +427,7 @@ pub mod tests {
 	#[test]
 	fn test_no_auth_ok() {
 		run_test(|helper| {
-			let context = user_context(UserOptions { user_id: None });
+			let context = user_context(UserTestOptions { user_id: None });
 
 			let result = TestActionNoAuth::run(RequestInput {
 				data: (),
@@ -451,7 +452,7 @@ pub mod tests {
 	#[test]
 	fn test_auth_not_allowed() {
 		run_test(|_| {
-			let context = user_context(UserOptions { user_id: None });
+			let context = user_context(UserTestOptions { user_id: None });
 
 			let result = TestActionAuth::run(RequestInput {
 				data: (),
@@ -481,7 +482,7 @@ pub mod tests {
 	#[test]
 	fn test_auth_ok() {
 		run_test(|helper| {
-			let context = user_context(UserOptions { user_id: Some(3) });
+			let context = user_context(UserTestOptions { user_id: Some(3) });
 
 			let result = TestActionAuth::run(RequestInput {
 				data: (),

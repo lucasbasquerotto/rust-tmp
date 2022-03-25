@@ -52,14 +52,20 @@ impl UserAction<(), (), LogoutError> for LogoutAction<UserRequestContext> {
 mod tests {
 	use super::LogoutAction;
 	use crate::{
-		business::{data::action_data::RequestInput, definition::action::Action},
-		tests::test_utils::tests::{run_test, user_context, UserOptions},
+		business::{
+			data::{
+				action_data::RequestInput,
+				user_action_data::tests::{user_context, UserTestOptions},
+			},
+			definition::action::Action,
+		},
+		tests::test_utils::tests::run_test,
 	};
 
 	#[test]
 	fn main() {
 		run_test(|_| {
-			let context = user_context(UserOptions { user_id: None });
+			let context = user_context(UserTestOptions { user_id: None });
 			let result = LogoutAction::run(RequestInput {
 				data: (),
 				context: context.clone(),

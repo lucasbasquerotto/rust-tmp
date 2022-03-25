@@ -200,6 +200,9 @@ where
 pub mod tests {
 	use crate::business::action_type::automatic_action_type::AutomaticActionType;
 	use crate::business::data::action_data::{ErrorContext, ErrorInput};
+	use crate::business::data::automatic_action_data::tests::{
+		automatic_context, AutomaticTestOptions,
+	};
 	use crate::business::data::automatic_action_data::{
 		AutomaticActionError, AutomaticRequest, HookRequestContext, InternalRequestContext,
 	};
@@ -208,7 +211,7 @@ pub mod tests {
 		data::{action_data::RequestInput, automatic_action_data::AutomaticRequestContext},
 		definition::action::AutomaticAction,
 	};
-	use crate::tests::test_utils::tests::{automatic_context, run_test, AutomaticOptions};
+	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]
 	pub struct TestAction(RequestInput<(), AutomaticRequestContext>);
@@ -297,7 +300,7 @@ pub mod tests {
 	#[test]
 	fn test_input_context_internal() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticOptions { internal: true });
+			let context = automatic_context(AutomaticTestOptions { internal: true });
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
@@ -312,7 +315,7 @@ pub mod tests {
 	#[test]
 	fn test_input_context_hook() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticOptions { internal: false });
+			let context = automatic_context(AutomaticTestOptions { internal: false });
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
@@ -327,7 +330,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_hook() {
 		run_test(|helper| {
-			let context = automatic_context(AutomaticOptions { internal: false });
+			let context = automatic_context(AutomaticTestOptions { internal: false });
 
 			let result = TestAction::run(RequestInput {
 				data: (),
@@ -344,7 +347,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_internal() {
 		run_test(|helper| {
-			let context = automatic_context(AutomaticOptions { internal: true });
+			let context = automatic_context(AutomaticTestOptions { internal: true });
 
 			let result = TestAction::run(RequestInput {
 				data: (),
@@ -361,7 +364,7 @@ pub mod tests {
 	#[test]
 	fn test_hook_not_allowed() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticOptions { internal: true });
+			let context = automatic_context(AutomaticTestOptions { internal: true });
 
 			let result = TestActionHook::run(RequestInput {
 				data: (),
@@ -383,7 +386,7 @@ pub mod tests {
 	#[test]
 	fn test_hook_ok() {
 		run_test(|helper| {
-			let context = automatic_context(AutomaticOptions { internal: false });
+			let context = automatic_context(AutomaticTestOptions { internal: false });
 
 			let result = TestActionHook::run(RequestInput {
 				data: (),
@@ -400,7 +403,7 @@ pub mod tests {
 	#[test]
 	fn test_internal_not_allowed() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticOptions { internal: false });
+			let context = automatic_context(AutomaticTestOptions { internal: false });
 
 			let result = TestActionInternal::run(RequestInput {
 				data: (),
@@ -422,7 +425,7 @@ pub mod tests {
 	#[test]
 	fn test_internal_ok() {
 		run_test(|helper| {
-			let context = automatic_context(AutomaticOptions { internal: true });
+			let context = automatic_context(AutomaticTestOptions { internal: true });
 
 			let result = TestActionInternal::run(RequestInput {
 				data: (),

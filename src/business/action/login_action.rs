@@ -76,14 +76,15 @@ mod tests {
 	use super::{LoginAction, LoginData, LoginError, LoginResult};
 	use crate::business::action_type::user_action_type::UserActionType;
 	use crate::business::data::action_data::{ErrorContext, RequestInput};
+	use crate::business::data::user_action_data::tests::{user_context, UserTestOptions};
 	use crate::business::data::user_action_data::{UserActionError, UserErrorInput};
 	use crate::business::definition::action::Action;
-	use crate::tests::test_utils::tests::{run_test, user_context, UserOptions};
+	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
 	fn test_error_auth() {
 		run_test(|_| {
-			let context = user_context(UserOptions { user_id: Some(1) });
+			let context = user_context(UserTestOptions { user_id: Some(1) });
 
 			let result = LoginAction::run(RequestInput {
 				data: LoginData {
@@ -111,7 +112,7 @@ mod tests {
 	#[test]
 	fn test_ok() {
 		run_test(|_| {
-			let context = user_context(UserOptions { user_id: None });
+			let context = user_context(UserTestOptions { user_id: None });
 
 			let result = LoginAction::run(RequestInput {
 				data: LoginData {

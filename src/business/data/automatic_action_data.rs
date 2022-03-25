@@ -32,3 +32,30 @@ pub enum AutomaticActionError {
 	NotInternal(AutomaticErrorInput<()>),
 	NotHook(AutomaticErrorInput<()>),
 }
+
+#[cfg(test)]
+pub mod tests {
+	use business::data::action_data::{Application, Request};
+
+	use super::{AutomaticRequest, AutomaticRequestContext};
+
+	#[derive(Debug, Clone)]
+	pub struct AutomaticTestOptions {
+		pub internal: bool,
+	}
+
+	pub fn automatic_context(options: AutomaticTestOptions) -> AutomaticRequestContext {
+		AutomaticRequestContext {
+			application: Application {
+				request_timeout: 1000,
+			},
+			request: if options.internal {
+				AutomaticRequest::Internal
+			} else {
+				AutomaticRequest::Hook(Request {
+					ip: "0.1.2.3".to_string(),
+				})
+			},
+		}
+	}
+}

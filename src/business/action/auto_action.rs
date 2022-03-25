@@ -119,14 +119,17 @@ mod tests {
 	use super::{AutoActionHook, AutoActionInternal, AutoData, AutoError, AutoResult};
 	use crate::business::action_type::automatic_action_type::AutomaticActionType;
 	use crate::business::data::action_data::{ErrorContext, RequestInput};
+	use crate::business::data::automatic_action_data::tests::{
+		automatic_context, AutomaticTestOptions,
+	};
 	use crate::business::data::automatic_action_data::{AutomaticActionError, AutomaticErrorInput};
 	use crate::business::definition::action::Action;
-	use crate::tests::test_utils::tests::{automatic_context, run_test, AutomaticOptions};
+	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
 	fn test_internal_error_hook() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticOptions { internal: false });
+			let context = automatic_context(AutomaticTestOptions { internal: false });
 
 			let result = AutoActionInternal::run(RequestInput {
 				data: AutoData {
@@ -154,7 +157,7 @@ mod tests {
 	#[test]
 	fn test_internal_ok() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticOptions { internal: true });
+			let context = automatic_context(AutomaticTestOptions { internal: true });
 
 			let result = AutoActionInternal::run(RequestInput {
 				data: AutoData {
@@ -180,7 +183,7 @@ mod tests {
 	#[test]
 	fn test_hook_error_internal() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticOptions { internal: true });
+			let context = automatic_context(AutomaticTestOptions { internal: true });
 
 			let result = AutoActionHook::run(RequestInput {
 				data: AutoData {
@@ -208,7 +211,7 @@ mod tests {
 	#[test]
 	fn test_hook_ok() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticOptions { internal: false });
+			let context = automatic_context(AutomaticTestOptions { internal: false });
 
 			let result = AutoActionHook::run(RequestInput {
 				data: AutoData {

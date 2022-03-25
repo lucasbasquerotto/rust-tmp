@@ -55,16 +55,19 @@ pub mod tests {
 	use crate::business::action::echo::echo_error_action::EchoErrorError;
 	use crate::business::action_type::moderator_action_type::ModeratorActionType;
 	use crate::business::data::action_data::{ErrorContext, ErrorInput, RequestInput};
+	use crate::business::data::moderator_action_data::tests::{
+		moderator_context, ModeratorTestOptions,
+	};
 	use crate::business::data::moderator_action_data::ModeratorActionError;
 	use crate::business::definition::action::Action;
-	use crate::tests::test_utils::tests::{moderator_context, run_test, ModeratorOptions};
+	use crate::tests::test_utils::tests::run_test;
 	use business::action_type::action_type::ActionType;
 	use business::definition::action::ModeratorAction;
 
 	#[test]
 	fn test_not_allowed() {
 		run_test(|_| {
-			let context = moderator_context(ModeratorOptions {
+			let context = moderator_context(ModeratorTestOptions {
 				admin: false,
 				allowed_actions: vec![],
 			});
@@ -91,7 +94,7 @@ pub mod tests {
 	#[test]
 	fn test_ok() {
 		run_test(|helper| {
-			let context = moderator_context(ModeratorOptions {
+			let context = moderator_context(ModeratorTestOptions {
 				admin: false,
 				allowed_actions: vec![EchoErrorAction::action_type()],
 			});
@@ -111,7 +114,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_admin() {
 		run_test(|helper| {
-			let context = moderator_context(ModeratorOptions {
+			let context = moderator_context(ModeratorTestOptions {
 				admin: true,
 				allowed_actions: vec![EchoErrorAction::action_type()],
 			});

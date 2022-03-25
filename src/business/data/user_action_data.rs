@@ -49,3 +49,28 @@ pub enum UserActionError {
 	Authenticated(UserErrorInput<()>),
 	Unauthenticated(UserErrorInput<()>),
 }
+
+#[cfg(test)]
+pub mod tests {
+	use business::data::action_data::{Application, Request};
+	use business::data::user_action_data::{UserRequestContext, UserSession};
+
+	#[derive(Debug, Clone)]
+	pub struct UserTestOptions {
+		pub user_id: Option<u64>,
+	}
+
+	pub fn user_context(options: UserTestOptions) -> UserRequestContext {
+		UserRequestContext {
+			application: Application {
+				request_timeout: 1000,
+			},
+			session: UserSession {
+				user_id: options.user_id,
+			},
+			request: Request {
+				ip: "1.2.3.4".to_string(),
+			},
+		}
+	}
+}

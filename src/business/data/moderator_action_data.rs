@@ -24,3 +24,33 @@ pub type ModeratorErrorInput<T> = ErrorInput<ModeratorActionType, ModeratorReque
 pub enum ModeratorActionError {
 	NotAllowed(ModeratorErrorInput<u32>),
 }
+
+#[cfg(test)]
+pub mod tests {
+	use crate::business::action_type::moderator_action_type::ModeratorActionType;
+	use business::data::action_data::{Application, Request};
+
+	use super::{ModeratorRequestContext, ModeratorSession};
+
+	#[derive(Debug, Clone)]
+	pub struct ModeratorTestOptions {
+		pub admin: bool,
+		pub allowed_actions: Vec<ModeratorActionType>,
+	}
+
+	pub fn moderator_context(options: ModeratorTestOptions) -> ModeratorRequestContext {
+		ModeratorRequestContext {
+			application: Application {
+				request_timeout: 1000,
+			},
+			session: ModeratorSession {
+				user_id: 123,
+				admin: options.admin,
+				allowed_actions: options.allowed_actions,
+			},
+			request: Request {
+				ip: "5.6.7.8".to_string(),
+			},
+		}
+	}
+}
