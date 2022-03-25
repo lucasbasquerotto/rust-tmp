@@ -21,16 +21,19 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionEr
 	for E
 {
 	fn default_description(&self) -> String {
-		let error_context = self.error_context();
+		let error_input = self.error_input();
+		let error_context = error_input.error_context;
 		format!(
-			"[action({action_id}: {action_type:?})] {public} [context={context}]",
+			"[action({action_id}: {action_type:?})] {public} [context={context}] [data={data}], [source={source}]",
 			action_id = error_context.action_type.id(),
 			action_type = error_context.action_type,
 			public = self
 				.public_error()
 				.map(|data| data.msg)
 				.unwrap_or("".to_string()),
-			context = error_context.context.description()
+			context = error_context.context.description(),
+			data = error_input.data,
+			source = error_input.source
 		)
 	}
 
@@ -61,7 +64,9 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionEr
 
 #[cfg(test)]
 mod tests {
-	use crate::business::data::action_data::{ActionScope, ErrorContext, ErrorData};
+	use crate::business::data::action_data::{
+		ActionScope, DescriptiveErrorInput, ErrorContext, ErrorData,
+	};
 	use crate::business::definition::action::ActionError;
 	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::business::{
@@ -85,12 +90,12 @@ mod tests {
 	struct TestActionError(ErrorContext<TestActionType, TestRequestContext>);
 
 	impl ActionError<TestActionType, TestRequestContext> for TestActionError {
-		fn error_context(&self) -> &ErrorContext<TestActionType, TestRequestContext> {
-			&self.0
+		fn error_input(&self) -> DescriptiveErrorInput<TestActionType, TestRequestContext> {
+			self.0.to_descriptive()
 		}
 
 		fn public_error(&self) -> Option<ErrorData> {
-			let action_id = self.error_context().action_type.id();
+			let action_id = self.error_input().error_context.action_type.id();
 			self.error_msg(format!("Test public error (action_id={action_id})"))
 		}
 	}
@@ -130,7 +135,7 @@ mod tests {
 			assert_eq!(
 				helper.pop_log(),
 				Some(format!(
-					"ERROR - [action({action_id}: {action_type:?})] {public} [context={context}]",
+					"ERROR - [action({action_id}: {action_type:?})] {public} [context={context}] [data=], [source=]",
 					action_id = 1,
 					action_type = action_type.clone(),
 					public = "Test public error (action_id=1)".to_string(),
@@ -160,7 +165,7 @@ mod tests {
 			assert_eq!(
 				helper.pop_log(),
 				Some(format!(
-					"ERROR - [action({action_id}: {action_type:?})] {public} [context={context}]",
+					"ERROR - [action({action_id}: {action_type:?})] {public} [context={context}] [data=], [source=]",
 					action_id = 2,
 					action_type = action_type.clone(),
 					public = "Test public error (action_id=2)".to_string(),

@@ -6,7 +6,7 @@ use crate::business::{
 		moderator_action_type::ModeratorActionType, user_action_type::UserActionType,
 	},
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
+		action_data::{DescriptiveErrorInput, ErrorData, RequestContext, RequestInput},
 		automatic_action_data::{AutomaticActionError, AutomaticRequestContext},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 		user_action_data::{UserActionError, UserRequestContext},
@@ -39,7 +39,7 @@ pub trait ActionError<T: ActionType, C: RequestContext>: ActionErrorHelper<T, C>
 where
 	Self: Sized,
 {
-	fn error_context(&self) -> &ErrorContext<T, C>;
+	fn error_input(&self) -> DescriptiveErrorInput<T, C>;
 
 	fn public_error(&self) -> Option<ErrorData>;
 

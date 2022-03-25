@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::user_action_type::UserActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestInput},
+		action_data::{DescriptiveErrorInput, ErrorData, RequestInput},
 		user_action_data::{UserActionError, UserNoAuthRequestContext, UserRequestContext},
 	},
 	definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
@@ -41,9 +41,9 @@ pub enum LoginError {
 }
 
 impl ActionError<UserActionType, UserRequestContext> for LoginError {
-	fn error_context(&self) -> &ErrorContext<UserActionType, UserRequestContext> {
+	fn error_input(&self) -> DescriptiveErrorInput<UserActionType, UserRequestContext> {
 		match &self {
-			&Self::UserError(error) => error.error_context(),
+			&Self::UserError(error) => error.error_input(),
 		}
 	}
 

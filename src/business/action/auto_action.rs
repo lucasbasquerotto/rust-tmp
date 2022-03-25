@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::automatic_action_type::AutomaticActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
+		action_data::{DescriptiveErrorInput, ErrorData, RequestContext, RequestInput},
 		automatic_action_data::{
 			AutomaticActionError, AutomaticRequestContext, HookRequestContext,
 			InternalRequestContext,
@@ -46,9 +46,9 @@ pub enum AutoError {
 }
 
 impl ActionError<AutomaticActionType, AutomaticRequestContext> for AutoError {
-	fn error_context(&self) -> &ErrorContext<AutomaticActionType, AutomaticRequestContext> {
+	fn error_input(&self) -> DescriptiveErrorInput<AutomaticActionType, AutomaticRequestContext> {
 		match &self {
-			&Self::AutomaticError(error) => error.error_context(),
+			&Self::AutomaticError(error) => error.error_input(),
 		}
 	}
 

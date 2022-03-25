@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::moderator_action_type::ModeratorActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestInput},
+		action_data::{DescriptiveErrorInput, ErrorData, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 	},
 	definition::action::{ActionError, ModeratorAction},
@@ -17,9 +17,9 @@ pub enum EchoWarnError {
 }
 
 impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoWarnError {
-	fn error_context(&self) -> &ErrorContext<ModeratorActionType, ModeratorRequestContext> {
+	fn error_input(&self) -> DescriptiveErrorInput<ModeratorActionType, ModeratorRequestContext> {
 		match &self {
-			&Self::ModeratorError(error) => error.error_context(),
+			&Self::ModeratorError(error) => error.error_input(),
 		}
 	}
 

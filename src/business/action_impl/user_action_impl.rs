@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::user_action_type::UserActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestInput},
+		action_data::{DescriptiveErrorInput, ErrorContext, ErrorData, RequestInput},
 		user_action_data::{
 			UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
 			UserNoAuthSession, UserRequestContext, UserSession,
@@ -185,10 +185,10 @@ impl<T> RequestInput<T, UserNoAuthRequestContext> {
 ////////////////////////////////////////////////
 
 impl ActionError<UserActionType, UserRequestContext> for UserActionError {
-	fn error_context(&self) -> &ErrorContext<UserActionType, UserRequestContext> {
+	fn error_input(&self) -> DescriptiveErrorInput<UserActionType, UserRequestContext> {
 		match self {
-			UserActionError::Authenticated(input) => &input.error_context,
-			UserActionError::Unauthenticated(input) => &input.error_context,
+			UserActionError::Authenticated(input) => input.to_descriptive(),
+			UserActionError::Unauthenticated(input) => input.to_descriptive(),
 		}
 	}
 

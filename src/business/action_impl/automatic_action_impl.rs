@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::automatic_action_type::AutomaticActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestInput},
+		action_data::{DescriptiveErrorInput, ErrorContext, ErrorData, RequestInput},
 		automatic_action_data::{
 			AutomaticActionError, AutomaticRequest, AutomaticRequestContext, HookRequestContext,
 			InternalRequestContext,
@@ -170,10 +170,10 @@ impl<T> RequestInput<T, HookRequestContext> {
 ////////////////////////////////////////////////
 
 impl ActionError<AutomaticActionType, AutomaticRequestContext> for AutomaticActionError {
-	fn error_context(&self) -> &ErrorContext<AutomaticActionType, AutomaticRequestContext> {
+	fn error_input(&self) -> DescriptiveErrorInput<AutomaticActionType, AutomaticRequestContext> {
 		match self {
-			AutomaticActionError::NotInternal(input) => &input.error_context,
-			AutomaticActionError::NotHook(input) => &input.error_context,
+			AutomaticActionError::NotInternal(input) => input.to_descriptive(),
+			AutomaticActionError::NotHook(input) => input.to_descriptive(),
 		}
 	}
 

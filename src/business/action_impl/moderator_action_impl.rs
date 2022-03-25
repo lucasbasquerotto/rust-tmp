@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::{action_type::ActionType, moderator_action_type::ModeratorActionType},
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestInput},
+		action_data::{DescriptiveErrorInput, ErrorContext, ErrorData, RequestInput},
 		moderator_action_data::{
 			ModeratorActionError, ModeratorErrorInput, ModeratorRequestContext, ModeratorSession,
 		},
@@ -33,9 +33,9 @@ impl DescriptiveRequestContext for ModeratorRequestContext {
 ////////////////////////////////////////////////
 
 impl ActionError<ModeratorActionType, ModeratorRequestContext> for ModeratorActionError {
-	fn error_context(&self) -> &ErrorContext<ModeratorActionType, ModeratorRequestContext> {
+	fn error_input(&self) -> DescriptiveErrorInput<ModeratorActionType, ModeratorRequestContext> {
 		match self {
-			ModeratorActionError::NotAllowed(input) => &input.error_context,
+			ModeratorActionError::NotAllowed(input) => input.to_descriptive(),
 		}
 	}
 

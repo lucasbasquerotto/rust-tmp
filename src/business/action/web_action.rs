@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::automatic_action_type::AutomaticActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, ErrorInput, RequestInput},
+		action_data::{DescriptiveErrorInput, ErrorContext, ErrorData, ErrorInput, RequestInput},
 		automatic_action_data::{
 			AutomaticActionError, AutomaticErrorInput, AutomaticRequestContext,
 		},
@@ -49,10 +49,10 @@ pub enum WebError {
 }
 
 impl ActionError<AutomaticActionType, AutomaticRequestContext> for WebError {
-	fn error_context(&self) -> &ErrorContext<AutomaticActionType, AutomaticRequestContext> {
+	fn error_input(&self) -> DescriptiveErrorInput<AutomaticActionType, AutomaticRequestContext> {
 		match &self {
-			WebError::AutomaticError(error) => error.error_context(),
-			WebError::AutomaticWebError(error) => &error.error_context,
+			WebError::AutomaticError(error) => error.error_input(),
+			WebError::AutomaticWebError(error) => error.to_descriptive(),
 		}
 	}
 
@@ -124,7 +124,7 @@ mod tests {
 				action_data::{ErrorContext, ErrorInput, RequestInput},
 				automatic_action_data::tests::{automatic_context, AutomaticTestOptions},
 			},
-			definition::action::{Action, AutomaticAction},
+			definition::action::{Action, ActionError, AutomaticAction},
 		},
 		tests::test_utils::tests::run_test,
 	};
@@ -170,6 +170,9 @@ mod tests {
 					source: None
 				}))
 			);
+
+			let description = result.unwrap_err().description();
+			error!("description={description}");
 		});
 	}
 }

@@ -6,7 +6,7 @@ use crate::business::action_type::action_type::ActionType;
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
 
-pub trait RequestContext: Debug + Eq + PartialEq {}
+pub trait RequestContext: Clone + Debug + Eq + PartialEq {}
 
 #[derive(Debug)]
 pub struct RequestInput<I, C: RequestContext> {
@@ -44,13 +44,47 @@ pub struct ErrorContext<T: ActionType, C: RequestContext> {
 }
 
 #[derive(Debug)]
-pub struct ErrorInput<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E = ()> {
+pub struct ErrorInput<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E: Debug = ()> {
 	pub error_context: ErrorContext<T, C>,
 	pub data: D,
 	pub source: Option<E>,
 }
 
-impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E> PartialEq
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DescriptiveErrorInput<T: ActionType, C: RequestContext> {
+	pub error_context: ErrorContext<T, C>,
+	pub data: String,
+	pub source: String,
+}
+
+impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E: Debug> ErrorInput<D, T, C, E> {
+	pub fn to_descriptive(&self) -> DescriptiveErrorInput<T, C> {
+		let Self {
+			error_context,
+			data,
+			source,
+		} = self;
+
+		DescriptiveErrorInput {
+			error_context: error_context.clone(),
+			data: format!("{data:?}"),
+			source: format!("{source:?}"),
+		}
+	}
+}
+
+impl<T: ActionType, C: RequestContext> ErrorContext<T, C> {
+	#[allow(dead_code)]
+	pub fn to_descriptive(&self) -> DescriptiveErrorInput<T, C> {
+		DescriptiveErrorInput {
+			error_context: self.clone(),
+			data: "".to_string(),
+			source: "".to_string(),
+		}
+	}
+}
+
+impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E: Debug> PartialEq
 	for ErrorInput<D, T, C, E>
 {
 	fn eq(&self, other: &Self) -> bool {
