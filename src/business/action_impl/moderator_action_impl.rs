@@ -12,6 +12,12 @@ use crate::business::{
 	},
 };
 
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
+impl<I: ActionInput> ActionInput for RequestInput<I, ModeratorRequestContext> {}
+
 impl DescriptiveRequestContext for ModeratorRequestContext {
 	fn description(&self) -> String {
 		let ModeratorRequestContext {
@@ -21,6 +27,10 @@ impl DescriptiveRequestContext for ModeratorRequestContext {
 		format!("moderator({user_id:?})")
 	}
 }
+
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
 
 impl ActionError<ModeratorActionType, ModeratorRequestContext> for ModeratorActionError {
 	fn error_context(&self) -> &ErrorContext<ModeratorActionType, ModeratorRequestContext> {
@@ -33,13 +43,15 @@ impl ActionError<ModeratorActionType, ModeratorRequestContext> for ModeratorActi
 		match self {
 			ModeratorActionError::NotAllowed(input) => self.error_msg(format!(
 				"You are not allowed to execute this action ({action_id}).",
-				action_id = input.data
+				action_id = input.data.id()
 			)),
 		}
 	}
 }
 
-impl<I: ActionInput> ActionInput for RequestInput<I, ModeratorRequestContext> {}
+////////////////////////////////////////////////
+/////////////////// ACTION /////////////////////
+////////////////////////////////////////////////
 
 impl<I, O, E, T> Action<RequestInput<I, ModeratorRequestContext>, O, E> for T
 where
@@ -64,13 +76,17 @@ where
 			};
 			Self::new(Err(ModeratorActionError::NotAllowed(ModeratorErrorInput {
 				error_context,
-				data: action_type.id(),
+				data: action_type.clone(),
 			})))?
 		};
 
 		action.run_inner()
 	}
 }
+
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
 
 #[cfg(test)]
 pub mod tests {
@@ -89,7 +105,6 @@ pub mod tests {
 		definition::action::ModeratorAction,
 	};
 	use crate::tests::test_utils::tests::run_test;
-	use business::action_type::action_type::ActionType;
 
 	#[derive(Debug)]
 	pub struct TestAction<T: RequestContext>(RequestInput<(), T>);
@@ -133,7 +148,7 @@ pub mod tests {
 						action_type: ModeratorActionType::Test,
 						context: context.clone()
 					},
-					data: ModeratorActionType::Test.id()
+					data: ModeratorActionType::Test
 				}))
 			);
 		});

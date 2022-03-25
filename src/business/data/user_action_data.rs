@@ -2,6 +2,10 @@ use crate::business::action_type::user_action_type::UserActionType;
 
 use super::action_data::{Application, ErrorInput, Request, Session};
 
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UserSession {
 	pub user_id: Option<u64>,
@@ -42,13 +46,21 @@ pub struct UserNoAuthRequestContext {
 	pub request: Request,
 }
 
-pub type UserErrorInput<T> = ErrorInput<UserActionType, UserRequestContext, T>;
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
+
+pub type UserErrorInput<T> = ErrorInput<T, UserActionType, UserRequestContext>;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum UserActionError {
 	Authenticated(UserErrorInput<()>),
 	Unauthenticated(UserErrorInput<()>),
 }
+
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
 
 #[cfg(test)]
 pub mod tests {

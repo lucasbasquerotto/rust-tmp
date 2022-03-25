@@ -15,6 +15,12 @@ use crate::business::{
 	},
 };
 
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
+impl<I: ActionInput> ActionInput for RequestInput<I, AutomaticRequestContext> {}
+
 impl DescriptiveRequestContext for AutomaticRequestContext {
 	fn description(&self) -> String {
 		let AutomaticRequestContext { request, .. } = &self;
@@ -35,26 +41,6 @@ impl DescriptiveRequestContext for InternalRequestContext {
 impl DescriptiveRequestContext for HookRequestContext {
 	fn description(&self) -> String {
 		"automatic(hook)".to_string()
-	}
-}
-
-impl ActionError<AutomaticActionType, AutomaticRequestContext> for AutomaticActionError {
-	fn error_context(&self) -> &ErrorContext<AutomaticActionType, AutomaticRequestContext> {
-		match self {
-			AutomaticActionError::NotInternal(input) => &input.error_context,
-			AutomaticActionError::NotHook(input) => &input.error_context,
-		}
-	}
-
-	fn public_error(&self) -> Option<ErrorData> {
-		match self {
-			AutomaticActionError::NotInternal(_) => {
-				self.error_msg("This is not an internal action.".to_string())
-			}
-			AutomaticActionError::NotHook(_) => {
-				self.error_msg("This is not a hook action.".to_string())
-			}
-		}
 	}
 }
 
@@ -181,7 +167,33 @@ impl<T> RequestInput<T, HookRequestContext> {
 	}
 }
 
-impl<I: ActionInput> ActionInput for RequestInput<I, AutomaticRequestContext> {}
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
+
+impl ActionError<AutomaticActionType, AutomaticRequestContext> for AutomaticActionError {
+	fn error_context(&self) -> &ErrorContext<AutomaticActionType, AutomaticRequestContext> {
+		match self {
+			AutomaticActionError::NotInternal(input) => &input.error_context,
+			AutomaticActionError::NotHook(input) => &input.error_context,
+		}
+	}
+
+	fn public_error(&self) -> Option<ErrorData> {
+		match self {
+			AutomaticActionError::NotInternal(_) => {
+				self.error_msg("This is not an internal action.".to_string())
+			}
+			AutomaticActionError::NotHook(_) => {
+				self.error_msg("This is not a hook action.".to_string())
+			}
+		}
+	}
+}
+
+////////////////////////////////////////////////
+/////////////////// ACTION /////////////////////
+////////////////////////////////////////////////
 
 impl<I, O, E, T> Action<RequestInput<I, AutomaticRequestContext>, O, E> for T
 where
@@ -195,6 +207,10 @@ where
 		action.run_inner()
 	}
 }
+
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
 
 #[cfg(test)]
 pub mod tests {

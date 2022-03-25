@@ -1,11 +1,15 @@
 use crate::business::{
 	action_type::moderator_action_type::ModeratorActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
+		action_data::{ErrorContext, ErrorData, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 	},
 	definition::action::{ActionError, ModeratorAction},
 };
+
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
 pub enum EchoWarnError {
@@ -26,10 +30,14 @@ impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoWarnError
 	}
 }
 
-#[derive(Debug)]
-pub struct EchoWarnAction<T: RequestContext>(RequestInput<(), T>);
+////////////////////////////////////////////////
+/////////////////// ACTION /////////////////////
+////////////////////////////////////////////////
 
-impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction<ModeratorRequestContext> {
+#[derive(Debug)]
+pub struct EchoWarnAction(RequestInput<(), ModeratorRequestContext>);
+
+impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction {
 	fn action_type() -> ModeratorActionType {
 		ModeratorActionType::EchoWarn
 	}
@@ -49,6 +57,10 @@ impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction<ModeratorRequestC
 	}
 }
 
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
+
 #[cfg(test)]
 pub mod tests {
 	use super::EchoWarnAction;
@@ -61,7 +73,6 @@ pub mod tests {
 	use crate::business::data::moderator_action_data::ModeratorActionError;
 	use crate::business::definition::action::Action;
 	use crate::tests::test_utils::tests::run_test;
-	use business::action_type::action_type::ActionType;
 	use business::definition::action::ModeratorAction;
 
 	#[test]
@@ -84,7 +95,7 @@ pub mod tests {
 							action_type: ModeratorActionType::EchoWarn,
 							context: context.clone()
 						},
-						data: ModeratorActionType::EchoWarn.id()
+						data: ModeratorActionType::EchoWarn
 					})
 				))
 			);

@@ -1,11 +1,15 @@
 use crate::business::{
 	action_type::moderator_action_type::ModeratorActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
+		action_data::{ErrorContext, ErrorData, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 	},
 	definition::action::{ActionError, ModeratorAction},
 };
+
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
 pub enum EchoInfoError {
@@ -26,10 +30,14 @@ impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoInfoError
 	}
 }
 
-#[derive(Debug)]
-pub struct EchoInfoAction<T: RequestContext>(RequestInput<(), T>);
+////////////////////////////////////////////////
+/////////////////// ACTION /////////////////////
+////////////////////////////////////////////////
 
-impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction<ModeratorRequestContext> {
+#[derive(Debug)]
+pub struct EchoInfoAction(RequestInput<(), ModeratorRequestContext>);
+
+impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction {
 	fn action_type() -> ModeratorActionType {
 		ModeratorActionType::EchoInfo
 	}
@@ -49,6 +57,10 @@ impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction<ModeratorRequestC
 	}
 }
 
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
+
 #[cfg(test)]
 pub mod tests {
 	use super::EchoInfoAction;
@@ -61,7 +73,6 @@ pub mod tests {
 	use crate::business::data::moderator_action_data::ModeratorActionError;
 	use crate::business::definition::action::Action;
 	use crate::tests::test_utils::tests::run_test;
-	use business::action_type::action_type::ActionType;
 	use business::definition::action::ModeratorAction;
 
 	#[test]
@@ -84,7 +95,7 @@ pub mod tests {
 							action_type: ModeratorActionType::EchoInfo,
 							context: context.clone()
 						},
-						data: ModeratorActionType::EchoInfo.id()
+						data: ModeratorActionType::EchoInfo
 					})
 				))
 			);

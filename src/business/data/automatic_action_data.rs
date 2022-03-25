@@ -2,6 +2,10 @@ use crate::business::action_type::automatic_action_type::AutomaticActionType;
 
 use super::action_data::{Application, ErrorInput, Request};
 
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AutomaticRequest {
 	Internal,
@@ -25,13 +29,21 @@ pub struct HookRequestContext {
 	pub request: Request,
 }
 
-pub type AutomaticErrorInput<T> = ErrorInput<AutomaticActionType, AutomaticRequestContext, T>;
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
+
+pub type AutomaticErrorInput<T> = ErrorInput<T, AutomaticActionType, AutomaticRequestContext>;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum AutomaticActionError {
 	NotInternal(AutomaticErrorInput<()>),
 	NotHook(AutomaticErrorInput<()>),
 }
+
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
 
 #[cfg(test)]
 pub mod tests {

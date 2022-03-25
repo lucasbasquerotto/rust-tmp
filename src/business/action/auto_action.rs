@@ -10,6 +10,10 @@ use crate::business::{
 	definition::action::{ActionError, ActionInput, ActionOutput, AutomaticAction},
 };
 
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
 #[derive(Debug, PartialEq)]
 pub struct AutoData {
 	pub param1: String,
@@ -17,6 +21,10 @@ pub struct AutoData {
 }
 
 impl ActionInput for AutoData {}
+
+////////////////////////////////////////////////
+//////////////////// OUTPUT ////////////////////
+////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
 pub struct AutoResult {
@@ -27,6 +35,10 @@ pub struct AutoResult {
 }
 
 impl ActionOutput for AutoResult {}
+
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
 pub enum AutoError {
@@ -47,11 +59,12 @@ impl ActionError<AutomaticActionType, AutomaticRequestContext> for AutoError {
 	}
 }
 
-#[derive(Debug)]
-pub struct AutoActionInternal(RequestInput<AutoData, InternalRequestContext>);
+////////////////////////////////////////////////
+/////////////////// ACTION /////////////////////
+////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct AutoActionHook(RequestInput<AutoData, HookRequestContext>);
+pub struct AutoActionInternal(RequestInput<AutoData, InternalRequestContext>);
 
 impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 	fn action_type() -> AutomaticActionType {
@@ -72,6 +85,13 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 		run(input, "internal".to_string())
 	}
 }
+
+////////////////////////////////////////////////
+/////////////////// ACTION /////////////////////
+////////////////////////////////////////////////
+
+#[derive(Debug)]
+pub struct AutoActionHook(RequestInput<AutoData, HookRequestContext>);
 
 impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 	fn action_type() -> AutomaticActionType {
@@ -100,6 +120,10 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 	}
 }
 
+////////////////////////////////////////////////
+////////////////// FUNCTIONS ///////////////////
+////////////////////////////////////////////////
+
 fn run<C: RequestContext>(
 	input: &RequestInput<AutoData, C>,
 	type_name: String,
@@ -113,6 +137,10 @@ fn run<C: RequestContext>(
 	};
 	Ok(result)
 }
+
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
 
 #[cfg(test)]
 mod tests {

@@ -2,11 +2,9 @@ use std::{collections::HashMap, fmt::Debug};
 
 use crate::business::action_type::action_type::ActionType;
 
-pub enum ActionScope {
-	User,
-	Moderator,
-	Automatic,
-}
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
 
 pub trait RequestContext {}
 
@@ -28,6 +26,17 @@ pub struct Application {
 	pub request_timeout: u32,
 }
 
+////////////////////////////////////////////////
+//////////////////// OUTPUT ////////////////////
+////////////////////////////////////////////////
+
+#[allow(dead_code)]
+pub type ActionRequestResult<T> = Result<T, Option<ErrorData>>;
+
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ErrorContext<T: ActionType, C: RequestContext> {
 	pub action_type: T,
@@ -35,7 +44,7 @@ pub struct ErrorContext<T: ActionType, C: RequestContext> {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct ErrorInput<T: ActionType, C: RequestContext, D> {
+pub struct ErrorInput<D, T: ActionType, C: RequestContext> {
 	pub error_context: ErrorContext<T, C>,
 	pub data: D,
 }
@@ -46,5 +55,12 @@ pub struct ErrorData {
 	pub params: Option<HashMap<String, String>>,
 }
 
-#[allow(dead_code)]
-pub type ActionRequestResult<T> = Result<T, Option<ErrorData>>;
+////////////////////////////////////////////////
+/////////////////// ACTION /////////////////////
+////////////////////////////////////////////////
+
+pub enum ActionScope {
+	User,
+	Moderator,
+	Automatic,
+}

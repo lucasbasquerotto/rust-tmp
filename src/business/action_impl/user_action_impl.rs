@@ -15,6 +15,12 @@ use crate::business::{
 	},
 };
 
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
+impl<I: ActionInput> ActionInput for RequestInput<I, UserRequestContext> {}
+
 impl DescriptiveRequestContext for UserRequestContext {
 	fn description(&self) -> String {
 		let UserRequestContext {
@@ -38,26 +44,6 @@ impl DescriptiveRequestContext for UserAuthRequestContext {
 impl DescriptiveRequestContext for UserNoAuthRequestContext {
 	fn description(&self) -> String {
 		"unauthenticated".to_string()
-	}
-}
-
-impl ActionError<UserActionType, UserRequestContext> for UserActionError {
-	fn error_context(&self) -> &ErrorContext<UserActionType, UserRequestContext> {
-		match self {
-			UserActionError::Authenticated(input) => &input.error_context,
-			UserActionError::Unauthenticated(input) => &input.error_context,
-		}
-	}
-
-	fn public_error(&self) -> Option<ErrorData> {
-		match self {
-			UserActionError::Authenticated(_) => {
-				self.error_msg("You can't execute this action while authenticated.".to_string())
-			}
-			UserActionError::Unauthenticated(_) => {
-				self.error_msg("You must be authenticated to execute this action.".to_string())
-			}
-		}
 	}
 }
 
@@ -169,7 +155,6 @@ impl<T> RequestInput<T, UserAuthRequestContext> {
 	}
 }
 
-#[allow(dead_code)]
 impl UserNoAuthRequestContext {
 	pub fn to_general(&self) -> UserRequestContext {
 		let UserNoAuthRequestContext {
@@ -197,7 +182,33 @@ impl<T> RequestInput<T, UserNoAuthRequestContext> {
 	}
 }
 
-impl<I: ActionInput> ActionInput for RequestInput<I, UserRequestContext> {}
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
+
+impl ActionError<UserActionType, UserRequestContext> for UserActionError {
+	fn error_context(&self) -> &ErrorContext<UserActionType, UserRequestContext> {
+		match self {
+			UserActionError::Authenticated(input) => &input.error_context,
+			UserActionError::Unauthenticated(input) => &input.error_context,
+		}
+	}
+
+	fn public_error(&self) -> Option<ErrorData> {
+		match self {
+			UserActionError::Authenticated(_) => {
+				self.error_msg("You can't execute this action while authenticated.".to_string())
+			}
+			UserActionError::Unauthenticated(_) => {
+				self.error_msg("You must be authenticated to execute this action.".to_string())
+			}
+		}
+	}
+}
+
+////////////////////////////////////////////////
+/////////////////// ACTION /////////////////////
+////////////////////////////////////////////////
 
 impl<I, O, E, T> Action<RequestInput<I, UserRequestContext>, O, E> for T
 where
@@ -211,6 +222,10 @@ where
 		action.run_inner()
 	}
 }
+
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
 
 #[cfg(test)]
 pub mod tests {

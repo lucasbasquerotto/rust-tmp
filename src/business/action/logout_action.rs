@@ -1,11 +1,15 @@
 use crate::business::{
 	action_type::user_action_type::UserActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
+		action_data::{ErrorContext, ErrorData, RequestInput},
 		user_action_data::{UserActionError, UserRequestContext},
 	},
 	definition::action::{ActionError, UserAction},
 };
+
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
 pub enum LogoutError {
@@ -26,10 +30,14 @@ impl ActionError<UserActionType, UserRequestContext> for LogoutError {
 	}
 }
 
-#[derive(Debug)]
-pub struct LogoutAction<T: RequestContext>(RequestInput<(), T>);
+////////////////////////////////////////////////
+/////////////////// ACTION /////////////////////
+////////////////////////////////////////////////
 
-impl UserAction<(), (), LogoutError> for LogoutAction<UserRequestContext> {
+#[derive(Debug)]
+pub struct LogoutAction(RequestInput<(), UserRequestContext>);
+
+impl UserAction<(), (), LogoutError> for LogoutAction {
 	fn action_type() -> UserActionType {
 		UserActionType::Logout
 	}
@@ -47,6 +55,10 @@ impl UserAction<(), (), LogoutError> for LogoutAction<UserRequestContext> {
 		Ok(())
 	}
 }
+
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
 
 #[cfg(test)]
 mod tests {

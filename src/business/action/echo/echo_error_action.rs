@@ -1,11 +1,15 @@
 use crate::business::{
 	action_type::moderator_action_type::ModeratorActionType,
 	data::{
-		action_data::{ErrorContext, ErrorData, RequestContext, RequestInput},
+		action_data::{ErrorContext, ErrorData, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 	},
 	definition::action::{ActionError, ModeratorAction},
 };
+
+////////////////////////////////////////////////
+//////////////////// ERROR /////////////////////
+////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
 pub enum EchoErrorError {
@@ -26,10 +30,14 @@ impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoErrorErro
 	}
 }
 
-#[derive(Debug)]
-pub struct EchoErrorAction<T: RequestContext>(RequestInput<(), T>);
+////////////////////////////////////////////////
+/////////////////// ACTION /////////////////////
+////////////////////////////////////////////////
 
-impl ModeratorAction<(), (), EchoErrorError> for EchoErrorAction<ModeratorRequestContext> {
+#[derive(Debug)]
+pub struct EchoErrorAction(RequestInput<(), ModeratorRequestContext>);
+
+impl ModeratorAction<(), (), EchoErrorError> for EchoErrorAction {
 	fn action_type() -> ModeratorActionType {
 		ModeratorActionType::EchoError
 	}
@@ -49,6 +57,10 @@ impl ModeratorAction<(), (), EchoErrorError> for EchoErrorAction<ModeratorReques
 	}
 }
 
+////////////////////////////////////////////////
+//////////////////// TESTS /////////////////////
+////////////////////////////////////////////////
+
 #[cfg(test)]
 pub mod tests {
 	use super::EchoErrorAction;
@@ -61,7 +73,6 @@ pub mod tests {
 	use crate::business::data::moderator_action_data::ModeratorActionError;
 	use crate::business::definition::action::Action;
 	use crate::tests::test_utils::tests::run_test;
-	use business::action_type::action_type::ActionType;
 	use business::definition::action::ModeratorAction;
 
 	#[test]
@@ -84,7 +95,7 @@ pub mod tests {
 							action_type: ModeratorActionType::EchoError,
 							context: context.clone()
 						},
-						data: ModeratorActionType::EchoError.id()
+						data: ModeratorActionType::EchoError
 					})
 				))
 			);
