@@ -1,3 +1,5 @@
+use reqwest::StatusCode;
+
 use crate::business::{
 	action_type::automatic_action_type::AutomaticActionType,
 	data::{
@@ -19,6 +21,7 @@ use crate::business::{
 #[derive(Debug, PartialEq)]
 pub struct WebData {
 	pub error: bool,
+	pub status: Option<u16>,
 }
 
 impl ActionInput for WebData {}
@@ -45,7 +48,7 @@ impl ActionOutput for WebResult {}
 #[derive(Debug, PartialEq)]
 pub enum WebError {
 	AutomaticError(AutomaticActionError),
-	AutomaticWebError(AutomaticErrorInput<(), reqwest::Error>),
+	AutomaticWebError(AutomaticErrorInput<(), WebInternalError>),
 }
 
 impl ActionError<AutomaticActionType, AutomaticRequestContext> for WebError {
@@ -73,7 +76,7 @@ pub struct WebActionAutomatic(RequestInput<WebData, AutomaticRequestContext>);
 
 impl AutomaticAction<WebData, WebResult, WebError> for WebActionAutomatic {
 	fn action_type() -> AutomaticActionType {
-		AutomaticActionType::Auto
+		AutomaticActionType::Web
 	}
 
 	fn new(
@@ -100,15 +103,66 @@ impl AutomaticAction<WebData, WebResult, WebError> for WebActionAutomatic {
 }
 
 ////////////////////////////////////////////////
+/////////////////// INTERNAL ///////////////////
+////////////////////////////////////////////////
+
+#[derive(Debug, PartialEq)]
+pub struct UrlData {
+	url: String,
+	status: Option<StatusCode>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug)]
+pub struct ReqwestError {
+	data: UrlData,
+	error: reqwest::Error,
+}
+
+#[derive(Debug)]
+pub enum WebInternalError {
+	Reqwest(ReqwestError),
+}
+
+trait InternalErrorTrait<T> {
+	fn to_error(self, url: T) -> WebInternalError;
+}
+
+impl InternalErrorTrait<String> for reqwest::Error {
+	fn to_error(self, url: String) -> WebInternalError {
+		WebInternalError::Reqwest(ReqwestError {
+			data: UrlData {
+				url,
+				status: self.status(),
+			},
+			error: self,
+		})
+	}
+}
+
+////////////////////////////////////////////////
 ////////////////// FUNCTIONS ///////////////////
 ////////////////////////////////////////////////
 
-fn run(data: &WebData) -> Result<WebResult, reqwest::Error> {
-	reqwest::blocking::get(format!(
-		"http://httpbin.org/get{error}",
-		error = if data.error { "/error" } else { "" }
-	))?
-	.json::<WebResult>()
+fn run(data: &WebData) -> Result<WebResult, WebInternalError> {
+	let url = format!(
+		"http://httpbin.org{suffix}",
+		suffix = if data.error {
+			"/get/error".to_string()
+		} else {
+			if let Some(status) = data.status {
+				format!("/status/{status}")
+			} else {
+				"/get".to_string()
+			}
+		}
+	);
+	reqwest::blocking::get(url.to_string())
+		.map_err(|error| error.to_error(url.to_string()))?
+		.error_for_status()
+		.map_err(|error| error.to_error(url.to_string()))?
+		.json::<WebResult>()
+		.map_err(|error| error.to_error(url.to_string()))
 }
 
 ////////////////////////////////////////////////
@@ -135,7 +189,10 @@ mod tests {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
 
 			let result = WebActionAutomatic::run(RequestInput {
-				data: WebData { error: false },
+				data: WebData {
+					error: false,
+					status: None,
+				},
 				context: context.clone(),
 			});
 
@@ -150,12 +207,15 @@ mod tests {
 	}
 
 	#[test]
-	fn test_internal_error() {
+	fn test_decode_error() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
 
 			let result = WebActionAutomatic::run(RequestInput {
-				data: WebData { error: true },
+				data: WebData {
+					error: true,
+					status: None,
+				},
 				context: context.clone(),
 			});
 
@@ -172,7 +232,37 @@ mod tests {
 			);
 
 			let description = result.unwrap_err().description();
-			error!("description={description}");
+			error!("description1={description}");
+		});
+	}
+
+	#[test]
+	fn test_status_error() {
+		run_test(|_| {
+			let context = automatic_context(AutomaticTestOptions { internal: true });
+
+			let result = WebActionAutomatic::run(RequestInput {
+				data: WebData {
+					error: false,
+					status: Some(403),
+				},
+				context: context.clone(),
+			});
+
+			assert_eq!(
+				&result,
+				&Err(WebError::AutomaticWebError(ErrorInput {
+					error_context: ErrorContext {
+						action_type: WebActionAutomatic::action_type(),
+						context: context.clone()
+					},
+					data: (),
+					source: None
+				}))
+			);
+
+			let description = result.unwrap_err().description();
+			error!("description2={description}");
 		});
 	}
 }

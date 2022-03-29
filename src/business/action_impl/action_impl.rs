@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::business::{
 	action_type::action_type::ActionType,
 	data::action_data::{ErrorContext, ErrorData, ErrorInput, RequestContext},
@@ -17,6 +19,16 @@ impl<T: DescriptiveRequestContext> RequestContext for T {}
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
+struct ActionTypeWrapper<T: ActionType>(T);
+
+impl<T: ActionType> fmt::Display for ActionTypeWrapper<T> {
+	fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+		let debug = format!("{:?}", self.0);
+		let result = debug.split("(").next().unwrap_or(&debug);
+		fmt.write_str(result)
+	}
+}
+
 impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionErrorHelper<T, C>
 	for E
 {
@@ -24,9 +36,10 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionEr
 		let error_input = self.error_input();
 		let error_context = error_input.error_context;
 		format!(
-			"[action({action_id}: {action_type:?})] {public} [context={context}] [data={data}], [source={source}]",
+			"[action({action_scope:?}::{action_type} - {action_id})] {public} [context={context}] [data={data}], [source={source}]",
 			action_id = error_context.action_type.id(),
-			action_type = error_context.action_type,
+			action_type = ActionTypeWrapper(error_context.action_type),
+			action_scope = T::scope(),
 			public = self
 				.public_error()
 				.map(|data| data.msg)
@@ -135,9 +148,8 @@ mod tests {
 			assert_eq!(
 				helper.pop_log(),
 				Some(format!(
-					"ERROR - [action({action_id}: {action_type:?})] {public} [context={context}] [data=], [source=]",
-					action_id = 1,
-					action_type = action_type.clone(),
+					"ERROR - [{action}] {public} [context={context}] [data=], [source=]",
+					action = "action(Automatic::TestActionType - 1)".to_string(),
 					public = "Test public error (action_id=1)".to_string(),
 					context = "My error #01".to_string()
 				))
@@ -165,9 +177,8 @@ mod tests {
 			assert_eq!(
 				helper.pop_log(),
 				Some(format!(
-					"ERROR - [action({action_id}: {action_type:?})] {public} [context={context}] [data=], [source=]",
-					action_id = 2,
-					action_type = action_type.clone(),
+					"ERROR - [{action}] {public} [context={context}] [data=], [source=]",
+					action = "action(Automatic::TestActionType - 2)".to_string(),
 					public = "Test public error (action_id=2)".to_string(),
 					context = "My error #02".to_string()
 				))
