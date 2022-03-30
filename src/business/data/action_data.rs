@@ -44,19 +44,24 @@ pub struct ErrorContext<T: ActionType, C: RequestContext> {
 }
 
 #[derive(Debug)]
-pub struct ErrorInput<
+pub struct ErrorInfo<D: Debug + Eq + PartialEq, E: Debug = Option<()>> {
+	pub data: D,
+	pub source: E,
+}
+
+#[derive(Debug)]
+pub struct ErrorContextInfo<
 	D: Debug + Eq + PartialEq,
 	T: ActionType,
 	C: RequestContext,
 	E: Debug = Option<()>,
 > {
 	pub error_context: ErrorContext<T, C>,
-	pub data: D,
-	pub source: E,
+	pub error_info: ErrorInfo<D, E>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct DescriptiveErrorInput<T: ActionType, C: RequestContext> {
+pub struct DescriptiveError<T: ActionType, C: RequestContext> {
 	pub error_context: ErrorContext<T, C>,
 	pub data: String,
 	pub source: String,
