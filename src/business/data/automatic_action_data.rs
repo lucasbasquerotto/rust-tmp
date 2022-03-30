@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::business::action_type::automatic_action_type::AutomaticActionType;
 
 use super::action_data::{Application, ErrorInput, Request};
@@ -33,7 +35,7 @@ pub struct HookRequestContext {
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-pub type AutomaticErrorInput<T, E = ()> =
+pub type AutomaticErrorInput<T, E = Option<()>> =
 	ErrorInput<T, AutomaticActionType, AutomaticRequestContext, E>;
 
 #[derive(Debug, Eq, PartialEq)]

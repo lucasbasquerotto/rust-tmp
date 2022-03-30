@@ -3,7 +3,9 @@ use reqwest::StatusCode;
 use crate::business::{
 	action_type::automatic_action_type::AutomaticActionType,
 	data::{
-		action_data::{DescriptiveErrorInput, ErrorContext, ErrorData, ErrorInput, RequestInput},
+		action_data::{
+			DescriptiveErrorInput, ErrorBox, ErrorContext, ErrorData, ErrorInput, RequestInput,
+		},
 		automatic_action_data::{
 			AutomaticActionError, AutomaticErrorInput, AutomaticRequestContext,
 		},
@@ -62,19 +64,7 @@ impl ActionError<AutomaticActionType, AutomaticRequestContext> for WebError {
 	fn public_error(&self) -> Option<ErrorData> {
 		match &self {
 			WebError::AutomaticError(error) => error.public_error(),
-			WebError::AutomaticWebError(input) => self.error_msg(match &input.source {
-				Some(source) => match &source {
-					WebSharedError::Reqwest(info) => match &info.data.status {
-						Some(status_code) => match &status_code.as_u16() {
-							403 => "Web Action - Forbidden".to_string(),
-							404 => "Web Action - Not Found".to_string(),
-							status => format!("Web error -> Status: {status}"),
-						},
-						None => "Web error occured".to_string(),
-					},
-				},
-				None => "Unknown web error occured".to_string(),
-			}),
+			WebError::AutomaticWebError(input) => self.error_msg(input.source.error_msg()),
 		}
 	}
 }
@@ -108,7 +98,7 @@ impl AutomaticAction<WebData, WebResult, WebError> for WebActionAutomatic {
 					context: input.context.clone(),
 				},
 				data: (),
-				source: Some(err),
+				source: err,
 			})
 		})
 	}
@@ -124,16 +114,35 @@ pub struct UrlData {
 	status: Option<StatusCode>,
 }
 
-#[allow(dead_code)]
-#[derive(Debug)]
-pub struct ReqwestError {
-	data: UrlData,
-	error: reqwest::Error,
-}
-
 #[derive(Debug)]
 pub enum WebSharedError {
-	Reqwest(ReqwestError),
+	Reqwest(ErrorBox<UrlData, reqwest::Error>),
+}
+
+impl WebSharedError {
+	fn error_msg(&self) -> String {
+		match self {
+			WebSharedError::Reqwest(info) => {
+				#[cfg(not(test))]
+				let data = Some(&info.data);
+
+				#[cfg(test)]
+				let data = &info.data;
+
+				match data {
+					Some(url_data) => match url_data.status {
+						Some(status_code) => match &status_code.as_u16() {
+							403 => "Web Action - Forbidden".to_string(),
+							404 => "Web Action - Not Found".to_string(),
+							status => format!("Web error -> Status: {status}"),
+						},
+						None => "Web error occured".to_string(),
+					},
+					None => "Unknown web error occured".to_string(),
+				}
+			}
+		}
+	}
 }
 
 trait SharedErrorTrait<T> {
@@ -142,13 +151,21 @@ trait SharedErrorTrait<T> {
 
 impl SharedErrorTrait<String> for reqwest::Error {
 	fn to_error(self, url: String) -> WebSharedError {
-		WebSharedError::Reqwest(ReqwestError {
-			data: UrlData {
-				url,
-				status: self.status(),
-			},
-			error: self,
-		})
+		let data = UrlData {
+			url,
+			status: self.status(),
+		};
+
+		#[cfg(not(test))]
+		let input = ErrorBox { data, error: self };
+
+		#[cfg(test)]
+		let input = ErrorBox {
+			data: Some(data),
+			error: Some(self),
+		};
+
+		WebSharedError::Reqwest(input)
 	}
 }
 
@@ -160,7 +177,6 @@ fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
 	#[cfg(not(test))]
 	let host = "http://httpbin.org";
 
-	// The host to be used in test compilation
 	#[cfg(test)]
 	let host = &mockito::SERVER_URL;
 
@@ -202,9 +218,11 @@ mod tests {
 
 	use crate::{
 		business::{
-			action::web_action::{WebActionAutomatic, WebData, WebError, WebResult, WebResultArgs},
+			action::web_action::{
+				WebActionAutomatic, WebData, WebError, WebResult, WebResultArgs, WebSharedError,
+			},
 			data::{
-				action_data::{ErrorContext, ErrorInput, RequestInput},
+				action_data::{ErrorBox, ErrorContext, ErrorInput, RequestInput},
 				automatic_action_data::tests::{automatic_context, AutomaticTestOptions},
 			},
 			definition::action::{Action, ActionError, AutomaticAction},
@@ -249,40 +267,6 @@ mod tests {
 	}
 
 	#[test]
-	fn test_decode_error() {
-		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: true });
-
-			let result = WebActionAutomatic::run(RequestInput {
-				data: WebData {
-					error: true,
-					status: None,
-				},
-				context: context.clone(),
-			});
-
-			assert_eq!(
-				&result,
-				&Err(WebError::AutomaticWebError(ErrorInput {
-					error_context: ErrorContext {
-						action_type: WebActionAutomatic::action_type(),
-						context: context.clone()
-					},
-					data: (),
-					source: None
-				}))
-			);
-
-			let public_error = &result.unwrap_err().public_error();
-
-			assert_eq!(
-				public_error.as_ref().unwrap().msg,
-				"Web error occured".to_string()
-			);
-		});
-	}
-
-	#[test]
 	fn test_status_error() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
@@ -305,7 +289,7 @@ mod tests {
 						context: context.clone()
 					},
 					data: (),
-					source: None
+					source: WebSharedError::Reqwest(ErrorBox::mock())
 				}))
 			);
 
@@ -314,6 +298,40 @@ mod tests {
 			assert_eq!(
 				public_error.as_ref().unwrap().msg,
 				"Web Action - Forbidden".to_string()
+			);
+		});
+	}
+
+	#[test]
+	fn test_no_status_error() {
+		run_test(|_| {
+			let context = automatic_context(AutomaticTestOptions { internal: true });
+
+			let result = WebActionAutomatic::run(RequestInput {
+				data: WebData {
+					error: true,
+					status: None,
+				},
+				context: context.clone(),
+			});
+
+			assert_eq!(
+				&result,
+				&Err(WebError::AutomaticWebError(ErrorInput {
+					error_context: ErrorContext {
+						action_type: WebActionAutomatic::action_type(),
+						context: context.clone()
+					},
+					data: (),
+					source: WebSharedError::Reqwest(ErrorBox::mock())
+				}))
+			);
+
+			let public_error = &result.unwrap_err().public_error();
+
+			assert_eq!(
+				public_error.as_ref().unwrap().msg,
+				"Web error occured".to_string()
 			);
 		});
 	}

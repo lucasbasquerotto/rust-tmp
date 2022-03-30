@@ -44,10 +44,15 @@ pub struct ErrorContext<T: ActionType, C: RequestContext> {
 }
 
 #[derive(Debug)]
-pub struct ErrorInput<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E: Debug = ()> {
+pub struct ErrorInput<
+	D: Debug + Eq + PartialEq,
+	T: ActionType,
+	C: RequestContext,
+	E: Debug = Option<()>,
+> {
 	pub error_context: ErrorContext<T, C>,
 	pub data: D,
-	pub source: Option<E>,
+	pub source: E,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -57,47 +62,34 @@ pub struct DescriptiveErrorInput<T: ActionType, C: RequestContext> {
 	pub source: String,
 }
 
-impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E: Debug> ErrorInput<D, T, C, E> {
-	pub fn to_descriptive(&self) -> DescriptiveErrorInput<T, C> {
-		let Self {
-			error_context,
-			data,
-			source,
-		} = self;
-
-		DescriptiveErrorInput {
-			error_context: error_context.clone(),
-			data: format!("{data:?}"),
-			source: format!("{source:?}"),
-		}
-	}
-}
-
-impl<T: ActionType, C: RequestContext> ErrorContext<T, C> {
-	#[allow(dead_code)]
-	pub fn to_descriptive(&self) -> DescriptiveErrorInput<T, C> {
-		DescriptiveErrorInput {
-			error_context: self.clone(),
-			data: "".to_string(),
-			source: "".to_string(),
-		}
-	}
-}
-
-impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E: Debug> PartialEq
-	for ErrorInput<D, T, C, E>
-{
-	fn eq(&self, other: &Self) -> bool {
-		self.error_context == other.error_context && self.data == other.data
-	}
-}
-
-impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext> Eq for ErrorInput<D, T, C> {}
-
 #[derive(Debug, Eq, PartialEq)]
 pub struct ErrorData {
 	pub msg: String,
 	pub params: Option<HashMap<String, String>>,
+}
+
+#[cfg(not(test))]
+#[derive(Debug)]
+pub struct ErrorBox<T, E> {
+	pub data: T,
+	pub error: E,
+}
+
+#[cfg(test)]
+#[derive(Debug)]
+pub struct ErrorBox<T, E> {
+	pub data: Option<T>,
+	pub error: Option<E>,
+}
+
+#[cfg(test)]
+impl<T, E> ErrorBox<T, E> {
+	pub fn mock() -> Self {
+		Self {
+			data: None,
+			error: None,
+		}
+	}
 }
 
 ////////////////////////////////////////////////

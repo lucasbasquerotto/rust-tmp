@@ -1,8 +1,11 @@
 use core::fmt;
+use std::fmt::Debug;
 
 use crate::business::{
 	action_type::action_type::ActionType,
-	data::action_data::{ErrorContext, ErrorData, ErrorInput, RequestContext},
+	data::action_data::{
+		DescriptiveErrorInput, ErrorContext, ErrorData, ErrorInput, RequestContext,
+	},
 	definition::{
 		action::ActionError,
 		action_helpers::{ActionErrorHelper, DescriptiveRequestContext},
@@ -19,15 +22,42 @@ impl<T: DescriptiveRequestContext> RequestContext for T {}
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-struct ActionTypeWrapper<T: ActionType>(T);
+impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E: Debug> ErrorInput<D, T, C, E> {
+	pub fn to_descriptive(&self) -> DescriptiveErrorInput<T, C> {
+		let Self {
+			error_context,
+			data,
+			source,
+		} = self;
 
-impl<T: ActionType> fmt::Display for ActionTypeWrapper<T> {
-	fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-		let debug = format!("{:?}", self.0);
-		let result = debug.split("(").next().unwrap_or(&debug);
-		fmt.write_str(result)
+		DescriptiveErrorInput {
+			error_context: error_context.clone(),
+			data: format!("{data:?}"),
+			source: format!("{source:?}"),
+		}
 	}
 }
+
+impl<T: ActionType, C: RequestContext> ErrorContext<T, C> {
+	#[allow(dead_code)]
+	pub fn to_descriptive(&self) -> DescriptiveErrorInput<T, C> {
+		DescriptiveErrorInput {
+			error_context: self.clone(),
+			data: "".to_string(),
+			source: "".to_string(),
+		}
+	}
+}
+
+impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E: Debug> PartialEq
+	for ErrorInput<D, T, C, E>
+{
+	fn eq(&self, other: &Self) -> bool {
+		self.error_context == other.error_context && self.data == other.data
+	}
+}
+
+impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext> Eq for ErrorInput<D, T, C> {}
 
 impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionErrorHelper<T, C>
 	for E
@@ -68,6 +98,20 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionEr
 			data: (),
 			source: None,
 		}
+	}
+}
+
+////////////////////////////////////////////////
+//////////////////// ACTION ////////////////////
+////////////////////////////////////////////////
+
+struct ActionTypeWrapper<T: ActionType>(T);
+
+impl<T: ActionType> fmt::Display for ActionTypeWrapper<T> {
+	fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+		let debug = format!("{:?}", self.0);
+		let result = debug.split("(").next().unwrap_or(&debug);
+		fmt.write_str(result)
 	}
 }
 
