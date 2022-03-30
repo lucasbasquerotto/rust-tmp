@@ -48,7 +48,7 @@ impl ActionOutput for WebResult {}
 #[derive(Debug, PartialEq)]
 pub enum WebError {
 	AutomaticError(AutomaticActionError),
-	AutomaticWebError(AutomaticErrorInput<(), WebInternalError>),
+	AutomaticWebError(AutomaticErrorInput<(), WebSharedError>),
 }
 
 impl ActionError<AutomaticActionType, AutomaticRequestContext> for WebError {
@@ -120,17 +120,17 @@ pub struct ReqwestError {
 }
 
 #[derive(Debug)]
-pub enum WebInternalError {
+pub enum WebSharedError {
 	Reqwest(ReqwestError),
 }
 
-trait InternalErrorTrait<T> {
-	fn to_error(self, url: T) -> WebInternalError;
+trait SharedErrorTrait<T> {
+	fn to_error(self, url: T) -> WebSharedError;
 }
 
-impl InternalErrorTrait<String> for reqwest::Error {
-	fn to_error(self, url: String) -> WebInternalError {
-		WebInternalError::Reqwest(ReqwestError {
+impl SharedErrorTrait<String> for reqwest::Error {
+	fn to_error(self, url: String) -> WebSharedError {
+		WebSharedError::Reqwest(ReqwestError {
 			data: UrlData {
 				url,
 				status: self.status(),
@@ -144,7 +144,7 @@ impl InternalErrorTrait<String> for reqwest::Error {
 ////////////////// FUNCTIONS ///////////////////
 ////////////////////////////////////////////////
 
-fn run(data: &WebData) -> Result<WebResult, WebInternalError> {
+fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
 	let url = format!(
 		"http://httpbin.org{suffix}",
 		suffix = if data.error {
@@ -157,12 +157,20 @@ fn run(data: &WebData) -> Result<WebResult, WebInternalError> {
 			}
 		}
 	);
-	reqwest::blocking::get(url.to_string())
-		.map_err(|error| error.to_error(url.to_string()))?
-		.error_for_status()
-		.map_err(|error| error.to_error(url.to_string()))?
-		.json::<WebResult>()
-		.map_err(|error| error.to_error(url.to_string()))
+
+	if data.error {
+		reqwest::blocking::get(url.to_string())
+			.map_err(|error| error.to_error(url.to_string()))?
+			.json::<WebResult>()
+			.map_err(|error| error.to_error(url.to_string()))
+	} else {
+		reqwest::blocking::get(url.to_string())
+			.map_err(|error| error.to_error(url.to_string()))?
+			.error_for_status()
+			.map_err(|error| error.to_error(url.to_string()))?
+			.json::<WebResult>()
+			.map_err(|error| error.to_error(url.to_string()))
+	}
 }
 
 ////////////////////////////////////////////////
@@ -178,7 +186,7 @@ mod tests {
 				action_data::{ErrorContext, ErrorInput, RequestInput},
 				automatic_action_data::tests::{automatic_context, AutomaticTestOptions},
 			},
-			definition::action::{Action, ActionError, AutomaticAction},
+			definition::action::{Action, AutomaticAction},
 		},
 		tests::test_utils::tests::run_test,
 	};
@@ -230,9 +238,6 @@ mod tests {
 					source: None
 				}))
 			);
-
-			let description = result.unwrap_err().description();
-			error!("description1={description}");
 		});
 	}
 
@@ -260,9 +265,6 @@ mod tests {
 					source: None
 				}))
 			);
-
-			let description = result.unwrap_err().description();
-			error!("description2={description}");
 		});
 	}
 }
