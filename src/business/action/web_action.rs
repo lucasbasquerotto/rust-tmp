@@ -62,7 +62,19 @@ impl ActionError<AutomaticActionType, AutomaticRequestContext> for WebError {
 	fn public_error(&self) -> Option<ErrorData> {
 		match &self {
 			WebError::AutomaticError(error) => error.public_error(),
-			WebError::AutomaticWebError(_) => self.error_msg(format!("Web error occured")),
+			WebError::AutomaticWebError(input) => self.error_msg(match &input.source {
+				Some(source) => match &source {
+					WebSharedError::Reqwest(info) => match &info.data.status {
+						Some(status_code) => match &status_code.as_u16() {
+							403 => "Web Action - Forbidden".to_string(),
+							404 => "Web Action - Not Found".to_string(),
+							status => format!("Web error -> Status: {status}"),
+						},
+						None => "Web error occured".to_string(),
+					},
+				},
+				None => "Unknown web error occured".to_string(),
+			}),
 		}
 	}
 }
@@ -145,8 +157,15 @@ impl SharedErrorTrait<String> for reqwest::Error {
 ////////////////////////////////////////////////
 
 fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
+	#[cfg(not(test))]
+	let host = "http://httpbin.org";
+
+	// The host to be used in test compilation
+	#[cfg(test)]
+	let host = &mockito::SERVER_URL;
+
 	let url = format!(
-		"http://httpbin.org{suffix}",
+		"{host}{suffix}",
 		suffix = if data.error {
 			"/get/error".to_string()
 		} else {
@@ -179,6 +198,8 @@ fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
 
 #[cfg(test)]
 mod tests {
+	use mockito::mock;
+
 	use crate::{
 		business::{
 			action::web_action::{WebActionAutomatic, WebData, WebError, WebResult, WebResultArgs},
@@ -186,7 +207,7 @@ mod tests {
 				action_data::{ErrorContext, ErrorInput, RequestInput},
 				automatic_action_data::tests::{automatic_context, AutomaticTestOptions},
 			},
-			definition::action::{Action, AutomaticAction},
+			definition::action::{Action, ActionError, AutomaticAction},
 		},
 		tests::test_utils::tests::run_test,
 	};
@@ -195,6 +216,19 @@ mod tests {
 	fn test_internal_ok() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
+
+			let _m = mock("GET", "/get")
+				.with_status(200)
+				.with_body(
+					r##"
+					{
+						"args": {},
+						"origin": "localhost",
+						"url": "http://httpbin.org.mock/get"
+					}
+					"##,
+				)
+				.create();
 
 			let result = WebActionAutomatic::run(RequestInput {
 				data: WebData {
@@ -207,7 +241,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Ok(WebResult {
-					url: "http://httpbin.org/get".to_string(),
+					url: "http://httpbin.org.mock/get".to_string(),
 					args: WebResultArgs {}
 				})
 			);
@@ -238,6 +272,13 @@ mod tests {
 					source: None
 				}))
 			);
+
+			let public_error = &result.unwrap_err().public_error();
+
+			assert_eq!(
+				public_error.as_ref().unwrap().msg,
+				"Web error occured".to_string()
+			);
 		});
 	}
 
@@ -245,6 +286,8 @@ mod tests {
 	fn test_status_error() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
+
+			let _m = mock("GET", "/status/403").with_status(403).create();
 
 			let result = WebActionAutomatic::run(RequestInput {
 				data: WebData {
@@ -264,6 +307,13 @@ mod tests {
 					data: (),
 					source: None
 				}))
+			);
+
+			let public_error = &result.unwrap_err().public_error();
+
+			assert_eq!(
+				public_error.as_ref().unwrap().msg,
+				"Web Action - Forbidden".to_string()
 			);
 		});
 	}

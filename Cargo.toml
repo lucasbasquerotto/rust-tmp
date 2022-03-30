@@ -13,3 +13,4 @@ strum = { version = "0.24.0", features = ["derive"] }
 
 [dev-dependencies]
 lazy_static = "1.4.0"
+mockito = "0.7.0"
