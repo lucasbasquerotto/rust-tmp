@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::user_action_type::UserActionType,
 	data::{
-		action_data::{DescriptiveErrorInput, ErrorData, RequestInput},
+		action_data::{DescriptiveError, ErrorData, RequestInput},
 		user_action_data::{UserActionError, UserNoAuthRequestContext, UserRequestContext},
 	},
 	definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
@@ -40,16 +40,16 @@ pub enum LoginError {
 	UserError(UserActionError),
 }
 
-impl ActionError<UserActionType, UserRequestContext> for LoginError {
-	fn error_input(&self) -> DescriptiveErrorInput<UserActionType, UserRequestContext> {
-		match &self {
-			&Self::UserError(error) => error.error_input(),
+impl ActionError for LoginError {
+	fn private_error(&self) -> DescriptiveError {
+		match self {
+			LoginError::UserError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
-		match &self {
-			&Self::UserError(error) => error.public_error(),
+		match self {
+			LoginError::UserError(error) => error.public_error(),
 		}
 	}
 }
@@ -70,7 +70,7 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 		input: Result<RequestInput<LoginData, UserRequestContext>, UserActionError>,
 	) -> Result<Self, LoginError> {
 		input
-			.and_then(|ok_input| ok_input.to_no_auth(Self::action_type()))
+			.and_then(|ok_input| ok_input.to_no_auth())
 			.map(|ok_input| Self(ok_input))
 			.map_err(|err| LoginError::UserError(err))
 	}
@@ -94,12 +94,10 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 #[cfg(test)]
 mod tests {
 	use super::{LoginAction, LoginData, LoginError, LoginResult};
-	use crate::business::action_type::user_action_type::UserActionType;
-	use crate::business::data::action_data::{ErrorContext, RequestInput};
+	use crate::business::data::action_data::RequestInput;
 	use crate::business::data::user_action_data::tests::{user_context, UserTestOptions};
 	use crate::business::data::user_action_data::UserActionError;
 	use crate::business::definition::action::Action;
-	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
@@ -117,12 +115,7 @@ mod tests {
 
 			assert_eq!(
 				&result,
-				&Err(LoginError::UserError(UserActionError::Authenticated(
-					UserActionError::input(ErrorContext {
-						action_type: UserActionType::Login,
-						context: context.clone(),
-					})
-				)))
+				&Err(LoginError::UserError(UserActionError::Authenticated))
 			);
 		});
 	}

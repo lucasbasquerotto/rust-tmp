@@ -1,14 +1,12 @@
 use crate::business::{
-	action_type::{action_type::ActionType, moderator_action_type::ModeratorActionType},
+	action_type::action_type::ActionType,
 	data::{
-		action_data::{DescriptiveErrorInput, ErrorContext, ErrorData, RequestInput},
-		moderator_action_data::{
-			ModeratorActionError, ModeratorErrorInput, ModeratorRequestContext, ModeratorSession,
-		},
+		action_data::{DescriptiveError, ErrorData, RequestInput},
+		moderator_action_data::{ModeratorActionError, ModeratorRequestContext, ModeratorSession},
 	},
 	definition::{
 		action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
-		action_helpers::{ActionErrorHelper, DescriptiveRequestContext},
+		action_helpers::DescriptiveRequestContext,
 	},
 };
 
@@ -32,18 +30,18 @@ impl DescriptiveRequestContext for ModeratorRequestContext {
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-impl ActionError<ModeratorActionType, ModeratorRequestContext> for ModeratorActionError {
-	fn error_input(&self) -> DescriptiveErrorInput<ModeratorActionType, ModeratorRequestContext> {
+impl ActionError for ModeratorActionError {
+	fn private_error(&self) -> DescriptiveError {
 		match self {
-			ModeratorActionError::NotAllowed(input) => input.to_descriptive(),
+			ModeratorActionError::NotAllowed(data) => DescriptiveError::data(data),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			ModeratorActionError::NotAllowed(input) => self.error_msg(format!(
+			ModeratorActionError::NotAllowed(action_type) => Self::error_msg(format!(
 				"You are not allowed to execute this action ({action_id}).",
-				action_id = input.data.id()
+				action_id = action_type.id()
 			)),
 		}
 	}
@@ -57,7 +55,7 @@ impl<I, O, E, T> Action<RequestInput<I, ModeratorRequestContext>, O, E> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError<ModeratorActionType, ModeratorRequestContext>,
+	E: ActionError,
 	T: ModeratorAction<I, O, E>,
 	Self: Sized,
 {
@@ -70,15 +68,7 @@ where
 		let action = if allowed {
 			Self::new(Ok(input))?
 		} else {
-			let error_context = ErrorContext {
-				action_type: action_type.clone(),
-				context: context.clone(),
-			};
-			Self::new(Err(ModeratorActionError::NotAllowed(ModeratorErrorInput {
-				error_context,
-				data: action_type.clone(),
-				source: None,
-			})))?
+			Self::new(Err(ModeratorActionError::NotAllowed(action_type.clone())))?
 		};
 
 		action.run_inner()
@@ -92,7 +82,6 @@ where
 #[cfg(test)]
 pub mod tests {
 	use crate::business::action_type::moderator_action_type::ModeratorActionType;
-	use crate::business::data::action_data::{ErrorContext, ErrorInput};
 	use crate::business::data::moderator_action_data::tests::{
 		moderator_context, ModeratorTestOptions,
 	};
@@ -144,14 +133,7 @@ pub mod tests {
 			});
 			assert_eq!(
 				result,
-				Err(ModeratorActionError::NotAllowed(ErrorInput {
-					error_context: ErrorContext {
-						action_type: ModeratorActionType::Test,
-						context: context.clone()
-					},
-					data: ModeratorActionType::Test,
-					source: None,
-				}))
+				Err(ModeratorActionError::NotAllowed(ModeratorActionType::Test))
 			);
 		});
 	}

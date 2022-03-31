@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::moderator_action_type::ModeratorActionType,
 	data::{
-		action_data::{DescriptiveErrorInput, ErrorData, RequestInput},
+		action_data::{DescriptiveError, ErrorData, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 	},
 	definition::action::{ActionError, ModeratorAction},
@@ -16,16 +16,16 @@ pub enum EchoInfoError {
 	ModeratorError(ModeratorActionError),
 }
 
-impl ActionError<ModeratorActionType, ModeratorRequestContext> for EchoInfoError {
-	fn error_input(&self) -> DescriptiveErrorInput<ModeratorActionType, ModeratorRequestContext> {
-		match &self {
-			&Self::ModeratorError(error) => error.error_input(),
+impl ActionError for EchoInfoError {
+	fn private_error(&self) -> DescriptiveError {
+		match self {
+			EchoInfoError::ModeratorError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
-		match &self {
-			&Self::ModeratorError(error) => error.public_error(),
+		match self {
+			EchoInfoError::ModeratorError(error) => error.public_error(),
 		}
 	}
 }
@@ -66,7 +66,7 @@ pub mod tests {
 	use super::EchoInfoAction;
 	use crate::business::action::echo::echo_info_action::EchoInfoError;
 	use crate::business::action_type::moderator_action_type::ModeratorActionType;
-	use crate::business::data::action_data::{ErrorContext, ErrorInput, RequestInput};
+	use crate::business::data::action_data::RequestInput;
 	use crate::business::data::moderator_action_data::tests::{
 		moderator_context, ModeratorTestOptions,
 	};
@@ -90,14 +90,7 @@ pub mod tests {
 			assert_eq!(
 				result,
 				Err(EchoInfoError::ModeratorError(
-					ModeratorActionError::NotAllowed(ErrorInput {
-						error_context: ErrorContext {
-							action_type: ModeratorActionType::EchoInfo,
-							context: context.clone()
-						},
-						data: ModeratorActionType::EchoInfo,
-						source: None
-					})
+					ModeratorActionError::NotAllowed(ModeratorActionType::EchoInfo)
 				))
 			);
 		});

@@ -1,6 +1,6 @@
 use crate::business::action_type::moderator_action_type::ModeratorActionType;
 
-use super::action_data::{Application, ErrorInput, Request, Session};
+use super::action_data::{Application, Request, Session};
 
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
@@ -26,11 +26,9 @@ pub struct ModeratorRequestContext {
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-pub type ModeratorErrorInput<T> = ErrorInput<T, ModeratorActionType, ModeratorRequestContext>;
-
 #[derive(Debug, Eq, PartialEq)]
 pub enum ModeratorActionError {
-	NotAllowed(ModeratorErrorInput<ModeratorActionType>),
+	NotAllowed(ModeratorActionType),
 }
 
 ////////////////////////////////////////////////

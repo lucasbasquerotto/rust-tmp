@@ -1,6 +1,4 @@
-use crate::business::action_type::user_action_type::UserActionType;
-
-use super::action_data::{Application, ErrorInput, Request, Session};
+use super::action_data::{Application, Request, Session};
 
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
@@ -50,12 +48,10 @@ pub struct UserNoAuthRequestContext {
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-pub type UserErrorInput<T> = ErrorInput<T, UserActionType, UserRequestContext>;
-
 #[derive(Debug, Eq, PartialEq)]
 pub enum UserActionError {
-	Authenticated(UserErrorInput<()>),
-	Unauthenticated(UserErrorInput<()>),
+	Authenticated,
+	Unauthenticated,
 }
 
 ////////////////////////////////////////////////

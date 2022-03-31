@@ -1,18 +1,14 @@
 use crate::business::{
-	action_type::automatic_action_type::AutomaticActionType,
 	data::{
-		action_data::{DescriptiveErrorInput, ErrorContext, ErrorData, RequestInput},
+		action_data::{DescriptiveError, ErrorData, RequestInput},
 		automatic_action_data::{
 			AutomaticActionError, AutomaticRequest, AutomaticRequestContext, HookRequestContext,
 			InternalRequestContext,
 		},
 	},
+	definition::action::{Action, ActionError, AutomaticAction},
 	definition::action::{ActionInput, ActionOutput},
 	definition::action_helpers::DescriptiveRequestContext,
-	definition::{
-		action::{Action, ActionError, AutomaticAction},
-		action_helpers::ActionErrorHelper,
-	},
 };
 
 ////////////////////////////////////////////////
@@ -46,10 +42,7 @@ impl DescriptiveRequestContext for HookRequestContext {
 
 impl AutomaticRequestContext {
 	#[allow(dead_code)]
-	pub fn to_internal(
-		&self,
-		action_type: AutomaticActionType,
-	) -> Result<InternalRequestContext, AutomaticActionError> {
+	pub fn to_internal(&self) -> Result<InternalRequestContext, AutomaticActionError> {
 		let AutomaticRequestContext {
 			application,
 			request,
@@ -57,20 +50,12 @@ impl AutomaticRequestContext {
 
 		match request {
 			AutomaticRequest::Internal => Ok(InternalRequestContext { application }),
-			_ => Err(AutomaticActionError::NotInternal(
-				AutomaticActionError::input(ErrorContext {
-					action_type,
-					context: self.clone(),
-				}),
-			)),
+			_ => Err(AutomaticActionError::NotInternal),
 		}
 	}
 
 	#[allow(dead_code)]
-	pub fn to_hook(
-		&self,
-		action_type: AutomaticActionType,
-	) -> Result<HookRequestContext, AutomaticActionError> {
+	pub fn to_hook(&self) -> Result<HookRequestContext, AutomaticActionError> {
 		let AutomaticRequestContext {
 			application,
 			request,
@@ -81,12 +66,7 @@ impl AutomaticRequestContext {
 				application,
 				request: hook_request,
 			}),
-			_ => Err(AutomaticActionError::NotHook(AutomaticActionError::input(
-				ErrorContext {
-					action_type,
-					context: self.clone(),
-				},
-			))),
+			_ => Err(AutomaticActionError::NotHook),
 		}
 	}
 }
@@ -95,9 +75,8 @@ impl<I> RequestInput<I, AutomaticRequestContext> {
 	#[allow(dead_code)]
 	pub fn to_internal(
 		self,
-		action_type: AutomaticActionType,
 	) -> Result<RequestInput<I, InternalRequestContext>, AutomaticActionError> {
-		let context = self.context.to_internal(action_type)?;
+		let context = self.context.to_internal()?;
 		Ok(RequestInput {
 			context,
 			data: self.data,
@@ -105,11 +84,8 @@ impl<I> RequestInput<I, AutomaticRequestContext> {
 	}
 
 	#[allow(dead_code)]
-	pub fn to_hook(
-		self,
-		action_type: AutomaticActionType,
-	) -> Result<RequestInput<I, HookRequestContext>, AutomaticActionError> {
-		let context = self.context.to_hook(action_type)?;
+	pub fn to_hook(self) -> Result<RequestInput<I, HookRequestContext>, AutomaticActionError> {
+		let context = self.context.to_hook()?;
 		Ok(RequestInput {
 			context,
 			data: self.data,
@@ -169,21 +145,21 @@ impl<T> RequestInput<T, HookRequestContext> {
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-impl ActionError<AutomaticActionType, AutomaticRequestContext> for AutomaticActionError {
-	fn error_input(&self) -> DescriptiveErrorInput<AutomaticActionType, AutomaticRequestContext> {
+impl ActionError for AutomaticActionError {
+	fn private_error(&self) -> DescriptiveError {
 		match self {
-			AutomaticActionError::NotInternal(input) => input.to_descriptive(),
-			AutomaticActionError::NotHook(input) => input.to_descriptive(),
+			AutomaticActionError::NotInternal => DescriptiveError::empty(),
+			AutomaticActionError::NotHook => DescriptiveError::empty(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			AutomaticActionError::NotInternal(_) => {
-				self.error_msg("This is not an internal action.".to_string())
+			AutomaticActionError::NotInternal => {
+				Self::error_msg("This is not an internal action.".to_string())
 			}
-			AutomaticActionError::NotHook(_) => {
-				self.error_msg("This is not a hook action.".to_string())
+			AutomaticActionError::NotHook => {
+				Self::error_msg("This is not a hook action.".to_string())
 			}
 		}
 	}
@@ -197,7 +173,7 @@ impl<I, O, E, T> Action<RequestInput<I, AutomaticRequestContext>, O, E> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError<AutomaticActionType, AutomaticRequestContext>,
+	E: ActionError,
 	T: AutomaticAction<I, O, E>,
 {
 	fn run(input: RequestInput<I, AutomaticRequestContext>) -> Result<O, E> {
@@ -213,7 +189,6 @@ where
 #[cfg(test)]
 pub mod tests {
 	use crate::business::action_type::automatic_action_type::AutomaticActionType;
-	use crate::business::data::action_data::ErrorContext;
 	use crate::business::data::automatic_action_data::tests::{
 		automatic_context, AutomaticTestOptions,
 	};
@@ -221,7 +196,6 @@ pub mod tests {
 		AutomaticActionError, AutomaticRequest, HookRequestContext, InternalRequestContext,
 	};
 	use crate::business::definition::action::Action;
-	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::business::{
 		data::{action_data::RequestInput, automatic_action_data::AutomaticRequestContext},
 		definition::action::AutomaticAction,
@@ -269,7 +243,7 @@ pub mod tests {
 			match input {
 				Err(err) => Err(err),
 				Ok(ok_input) => {
-					let real_input = ok_input.to_hook(Self::action_type());
+					let real_input = ok_input.to_hook();
 
 					match real_input {
 						Err(err) => Err(err),
@@ -296,7 +270,7 @@ pub mod tests {
 			match input {
 				Err(err) => Err(err),
 				Ok(ok_input) => {
-					let real_input = ok_input.to_internal(Self::action_type());
+					let real_input = ok_input.to_internal();
 
 					match real_input {
 						Err(err) => Err(err),
@@ -319,9 +293,7 @@ pub mod tests {
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
-				input
-					.to_internal(TestAction::action_type())
-					.map(|ctx| ctx.to_general().context),
+				input.to_internal().map(|ctx| ctx.to_general().context),
 				"Test input context reversible change"
 			);
 		});
@@ -334,9 +306,7 @@ pub mod tests {
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
-				input
-					.to_hook(TestAction::action_type())
-					.map(|ctx| ctx.to_general().context),
+				input.to_hook().map(|ctx| ctx.to_general().context),
 				"Test input context reversible change"
 			);
 		});
@@ -385,15 +355,7 @@ pub mod tests {
 				data: (),
 				context: context.clone(),
 			});
-			assert_eq!(
-				result,
-				Err(AutomaticActionError::NotHook(AutomaticActionError::input(
-					ErrorContext {
-						action_type: AutomaticActionType::Test,
-						context: context.clone()
-					}
-				)))
-			);
+			assert_eq!(result, Err(AutomaticActionError::NotHook));
 		});
 	}
 
@@ -423,15 +385,7 @@ pub mod tests {
 				data: (),
 				context: context.clone(),
 			});
-			assert_eq!(
-				result,
-				Err(AutomaticActionError::NotInternal(
-					AutomaticActionError::input(ErrorContext {
-						action_type: AutomaticActionType::Test,
-						context: context.clone()
-					})
-				))
-			);
+			assert_eq!(result, Err(AutomaticActionError::NotInternal));
 		});
 	}
 

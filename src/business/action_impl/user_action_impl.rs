@@ -1,18 +1,14 @@
 use crate::business::{
-	action_type::user_action_type::UserActionType,
 	data::{
-		action_data::{DescriptiveErrorInput, ErrorContext, ErrorData, RequestInput},
+		action_data::{DescriptiveError, ErrorData, RequestInput},
 		user_action_data::{
 			UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
 			UserNoAuthSession, UserRequestContext, UserSession,
 		},
 	},
+	definition::action::{Action, ActionError, UserAction},
 	definition::action::{ActionInput, ActionOutput},
 	definition::action_helpers::DescriptiveRequestContext,
-	definition::{
-		action::{Action, ActionError, UserAction},
-		action_helpers::ActionErrorHelper,
-	},
 };
 
 ////////////////////////////////////////////////
@@ -48,10 +44,7 @@ impl DescriptiveRequestContext for UserNoAuthRequestContext {
 }
 
 impl UserRequestContext {
-	pub fn to_auth(
-		&self,
-		action_type: UserActionType,
-	) -> Result<UserAuthRequestContext, UserActionError> {
+	pub fn to_auth(&self) -> Result<UserAuthRequestContext, UserActionError> {
 		let UserRequestContext {
 			application,
 			session,
@@ -64,19 +57,11 @@ impl UserRequestContext {
 				session: UserAuthSession { user_id },
 				request,
 			}),
-			None => Err(UserActionError::Unauthenticated(UserActionError::input(
-				ErrorContext {
-					action_type,
-					context: self.clone(),
-				},
-			))),
+			None => Err(UserActionError::Unauthenticated),
 		}
 	}
 
-	pub fn to_no_auth(
-		&self,
-		action_type: UserActionType,
-	) -> Result<UserNoAuthRequestContext, UserActionError> {
+	pub fn to_no_auth(&self) -> Result<UserNoAuthRequestContext, UserActionError> {
 		let UserRequestContext {
 			application,
 			session,
@@ -84,12 +69,7 @@ impl UserRequestContext {
 		} = self.clone();
 
 		match session.user_id {
-			Some(_) => Err(UserActionError::Authenticated(UserActionError::input(
-				ErrorContext {
-					action_type,
-					context: self.clone(),
-				},
-			))),
+			Some(_) => Err(UserActionError::Authenticated),
 			None => Ok(UserNoAuthRequestContext {
 				application,
 				session: UserNoAuthSession(),
@@ -101,22 +81,16 @@ impl UserRequestContext {
 
 impl<I> RequestInput<I, UserRequestContext> {
 	#[allow(dead_code)]
-	pub fn to_auth(
-		self,
-		action_type: UserActionType,
-	) -> Result<RequestInput<I, UserAuthRequestContext>, UserActionError> {
-		let context = self.context.to_auth(action_type)?;
+	pub fn to_auth(self) -> Result<RequestInput<I, UserAuthRequestContext>, UserActionError> {
+		let context = self.context.to_auth()?;
 		Ok(RequestInput {
 			context,
 			data: self.data,
 		})
 	}
 
-	pub fn to_no_auth(
-		self,
-		action_type: UserActionType,
-	) -> Result<RequestInput<I, UserNoAuthRequestContext>, UserActionError> {
-		let context = self.context.to_no_auth(action_type)?;
+	pub fn to_no_auth(self) -> Result<RequestInput<I, UserNoAuthRequestContext>, UserActionError> {
+		let context = self.context.to_no_auth()?;
 		Ok(RequestInput {
 			context,
 			data: self.data,
@@ -184,21 +158,21 @@ impl<T> RequestInput<T, UserNoAuthRequestContext> {
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-impl ActionError<UserActionType, UserRequestContext> for UserActionError {
-	fn error_input(&self) -> DescriptiveErrorInput<UserActionType, UserRequestContext> {
+impl ActionError for UserActionError {
+	fn private_error(&self) -> DescriptiveError {
 		match self {
-			UserActionError::Authenticated(input) => input.to_descriptive(),
-			UserActionError::Unauthenticated(input) => input.to_descriptive(),
+			UserActionError::Authenticated => DescriptiveError::empty(),
+			UserActionError::Unauthenticated => DescriptiveError::empty(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			UserActionError::Authenticated(_) => {
-				self.error_msg("You can't execute this action while authenticated.".to_string())
+			UserActionError::Authenticated => {
+				Self::error_msg("You can't execute this action while authenticated.".to_string())
 			}
-			UserActionError::Unauthenticated(_) => {
-				self.error_msg("You must be authenticated to execute this action.".to_string())
+			UserActionError::Unauthenticated => {
+				Self::error_msg("You must be authenticated to execute this action.".to_string())
 			}
 		}
 	}
@@ -212,7 +186,7 @@ impl<I, O, E, T> Action<RequestInput<I, UserRequestContext>, O, E> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError<UserActionType, UserRequestContext>,
+	E: ActionError,
 	T: UserAction<I, O, E>,
 {
 	fn run(input: RequestInput<I, UserRequestContext>) -> Result<O, E> {
@@ -228,13 +202,11 @@ where
 #[cfg(test)]
 pub mod tests {
 	use crate::business::action_type::user_action_type::UserActionType;
-	use crate::business::data::action_data::ErrorContext;
 	use crate::business::data::user_action_data::tests::{user_context, UserTestOptions};
 	use crate::business::data::user_action_data::{
 		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext,
 	};
 	use crate::business::definition::action::Action;
-	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::business::{
 		data::{action_data::RequestInput, user_action_data::UserRequestContext},
 		definition::action::UserAction,
@@ -282,7 +254,7 @@ pub mod tests {
 			match input {
 				Err(err) => Err(err),
 				Ok(ok_input) => {
-					let real_input = ok_input.to_no_auth(Self::action_type());
+					let real_input = ok_input.to_no_auth();
 
 					match real_input {
 						Err(err) => Err(err),
@@ -309,7 +281,7 @@ pub mod tests {
 			match input {
 				Err(err) => Err(err),
 				Ok(ok_input) => {
-					let real_input = ok_input.to_auth(Self::action_type());
+					let real_input = ok_input.to_auth();
 
 					match real_input {
 						Err(err) => Err(err),
@@ -335,9 +307,7 @@ pub mod tests {
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
-				input
-					.to_no_auth(TestAction::action_type())
-					.map(|ctx| ctx.to_general().context),
+				input.to_no_auth().map(|ctx| ctx.to_general().context),
 				"Test input context reversible change"
 			);
 		});
@@ -350,9 +320,7 @@ pub mod tests {
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
-				input
-					.to_auth(TestAction::action_type())
-					.map(|ctx| ctx.to_general().context),
+				input.to_auth().map(|ctx| ctx.to_general().context),
 				"Test input context reversible change"
 			);
 		});
@@ -374,10 +342,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				Ok(context.clone()),
-				context
-					.clone()
-					.to_no_auth(TestAction::action_type())
-					.map(|ctx| ctx.to_general()),
+				context.clone().to_no_auth().map(|ctx| ctx.to_general()),
 				"Test context reversible change"
 			);
 		});
@@ -399,10 +364,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				Ok(context.clone()),
-				context
-					.clone()
-					.to_auth(TestAction::action_type())
-					.map(|ctx| ctx.to_general()),
+				context.clone().to_auth().map(|ctx| ctx.to_general()),
 				"Test context reversible change"
 			);
 		});
@@ -417,21 +379,10 @@ pub mod tests {
 				data: (),
 				context: context.clone(),
 			});
-			assert_eq!(
-				result,
-				Err(UserActionError::Authenticated(UserActionError::input(
-					ErrorContext {
-						action_type: UserActionType::Test,
-						context: context.clone()
-					}
-				)))
-			);
+			assert_eq!(result, Err(UserActionError::Authenticated));
 			assert_eq!(
 				Ok(context.clone()),
-				context
-					.clone()
-					.to_auth(TestActionNoAuth::action_type())
-					.map(|ctx| ctx.to_general()),
+				context.clone().to_auth().map(|ctx| ctx.to_general()),
 				"Test context reversible change"
 			);
 		});
@@ -453,10 +404,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				Ok(context.clone()),
-				context
-					.clone()
-					.to_no_auth(TestActionNoAuth::action_type())
-					.map(|ctx| ctx.to_general()),
+				context.clone().to_no_auth().map(|ctx| ctx.to_general()),
 				"Test context reversible change"
 			);
 		});
@@ -471,21 +419,10 @@ pub mod tests {
 				data: (),
 				context: context.clone(),
 			});
-			assert_eq!(
-				result,
-				Err(UserActionError::Unauthenticated(UserActionError::input(
-					ErrorContext {
-						action_type: UserActionType::Test,
-						context: context.clone()
-					}
-				)))
-			);
+			assert_eq!(result, Err(UserActionError::Unauthenticated));
 			assert_eq!(
 				Ok(context.clone()),
-				context
-					.clone()
-					.to_no_auth(TestActionAuth::action_type())
-					.map(|ctx| ctx.to_general()),
+				context.clone().to_no_auth().map(|ctx| ctx.to_general()),
 				"Test context reversible change"
 			);
 		});
@@ -507,10 +444,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				Ok(context.clone()),
-				context
-					.clone()
-					.to_auth(TestActionAuth::action_type())
-					.map(|ctx| ctx.to_general()),
+				context.clone().to_auth().map(|ctx| ctx.to_general()),
 				"Test context reversible change"
 			);
 		});

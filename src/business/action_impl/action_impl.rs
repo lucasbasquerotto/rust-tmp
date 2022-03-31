@@ -3,9 +3,7 @@ use std::fmt::Debug;
 
 use crate::business::{
 	action_type::action_type::ActionType,
-	data::action_data::{
-		DescriptiveErrorInput, ErrorContext, ErrorData, ErrorInput, RequestContext,
-	},
+	data::action_data::{ActionErrorInfo, ErrorData, ErrorInfo, RequestContext},
 	definition::{
 		action::ActionError,
 		action_helpers::{ActionErrorHelper, DescriptiveRequestContext},
@@ -22,66 +20,61 @@ impl<T: DescriptiveRequestContext> RequestContext for T {}
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E: Debug> ErrorInput<D, T, C, E> {
-	pub fn to_descriptive(&self) -> DescriptiveErrorInput<T, C> {
-		let Self {
-			error_context,
-			data,
-			source,
-		} = self;
+// impl<D: Debug + Eq + PartialEq, E: Debug> ErrorInfo<D, E> {
+// 	pub fn to_descriptive(&self) -> DescriptiveError {
+// 		let Self {
+// 			data,
+// 			source,
+// 		} = self;
 
-		DescriptiveErrorInput {
-			error_context: error_context.clone(),
-			data: format!("{data:?}"),
-			source: format!("{source:?}"),
-		}
-	}
-}
+// 		DescriptiveError {
+// 			data: format!("{data:?}"),
+// 			source: format!("{source:?}"),
+// 		}
+// 	}
+// }
 
-impl<T: ActionType, C: RequestContext> ErrorContext<T, C> {
-	#[allow(dead_code)]
-	pub fn to_descriptive(&self) -> DescriptiveErrorInput<T, C> {
-		DescriptiveErrorInput {
-			error_context: self.clone(),
-			data: "".to_string(),
-			source: "".to_string(),
-		}
-	}
-}
-
-impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext, E: Debug> PartialEq
-	for ErrorInput<D, T, C, E>
-{
+impl<D: Debug + Eq + PartialEq, E: Debug> PartialEq for ErrorInfo<D, E> {
 	fn eq(&self, other: &Self) -> bool {
-		self.error_context == other.error_context && self.data == other.data
+		self.data == other.data
 	}
 }
 
-impl<D: Debug + Eq + PartialEq, T: ActionType, C: RequestContext> Eq for ErrorInput<D, T, C> {}
+impl<D: Debug + Eq + PartialEq> Eq for ErrorInfo<D> {}
 
-impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionErrorHelper<T, C>
-	for E
+impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHelper<T, C, E>
+	for ActionErrorInfo<T, C, E>
 {
-	fn default_description(&self) -> String {
-		let error_input = self.error_input();
-		let error_context = error_input.error_context;
-		format!(
-			"[action({action_scope:?}::{action_type} - {action_id})] {public} [context={context}] [data={data}], [source={source}]",
-			action_id = error_context.action_type.id(),
-			action_type = ActionTypeWrapper(error_context.action_type),
+	fn description(&self) -> String {
+		let private_error = &self.error.private_error();
+		let error_context = &self.error_context;
+		let action = format!(
+			"[action({action_scope:?}::{action_type} - {action_id})]",
 			action_scope = T::scope(),
+			action_type = ActionTypeWrapper(error_context.action_type.clone()),
+			action_id = error_context.action_type.id(),
+		);
+		let private = format!("[private={private:?}]", private = private_error.msg);
+		let public = format!(
+			"[public={public}]",
 			public = self
+				.error
 				.public_error()
 				.map(|data| data.msg)
-				.unwrap_or("".to_string()),
+				.unwrap_or("".to_string())
+		);
+		let context = format!(
+			"[context={context}]",
 			context = error_context.context.description(),
-			data = error_input.data,
-			source = error_input.source
-		)
+		);
+		let data = format!("[data={data:?}]", data = private_error.data,);
+		let source = format!("[source={source:?}]", source = private_error.source,);
+		format!("{action} {private} {public} {context} {data} {source}",)
 	}
 
-	fn error_msg(&self, msg: String) -> Option<ErrorData> {
-		Some(ErrorData { msg, params: None })
+	fn handle(self) -> Option<ErrorData> {
+		error!("{}", self.description());
+		self.error.public_error()
 	}
 
 	fn type_of<K>(_: &K) -> String {
@@ -90,14 +83,6 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError<T, C>> ActionEr
 			.last()
 			.unwrap_or("")
 			.to_string()
-	}
-
-	fn input(error_context: ErrorContext<T, C>) -> ErrorInput<(), T, C> {
-		ErrorInput {
-			error_context,
-			data: (),
-			source: None,
-		}
 	}
 }
 
@@ -121,8 +106,9 @@ impl<T: ActionType> fmt::Display for ActionTypeWrapper<T> {
 
 #[cfg(test)]
 mod tests {
+	use crate::business::action_impl::action_impl::ActionTypeWrapper;
 	use crate::business::data::action_data::{
-		ActionScope, DescriptiveErrorInput, ErrorContext, ErrorData,
+		ActionErrorInfo, ActionScope, DescriptiveError, ErrorContext, ErrorData,
 	};
 	use crate::business::definition::action::ActionError;
 	use crate::business::definition::action_helpers::ActionErrorHelper;
@@ -144,16 +130,16 @@ mod tests {
 	struct TestActionType(u32);
 
 	#[derive(Debug)]
-	struct TestActionError(ErrorContext<TestActionType, TestRequestContext>);
+	struct TestActionError(TestActionType);
 
-	impl ActionError<TestActionType, TestRequestContext> for TestActionError {
-		fn error_input(&self) -> DescriptiveErrorInput<TestActionType, TestRequestContext> {
-			self.0.to_descriptive()
+	impl ActionError for TestActionError {
+		fn private_error(&self) -> DescriptiveError {
+			DescriptiveError::empty()
 		}
 
 		fn public_error(&self) -> Option<ErrorData> {
-			let action_id = self.error_input().error_context.action_type.id();
-			self.error_msg(format!("Test public error (action_id={action_id})"))
+			let action_id = self.0.id();
+			Self::error_msg(format!("Test public error (action_id={action_id})"))
 		}
 	}
 
@@ -177,11 +163,16 @@ mod tests {
 		run_test(|helper| {
 			let action_type = TestActionType(1);
 			let context = TestRequestContext("My error #01".to_string());
-			let error = TestActionError(ErrorContext {
+			let error = TestActionError(action_type.clone());
+			let error_context = &ErrorContext {
 				action_type: action_type.clone(),
-				context: context.clone(),
-			});
-			let public_error = error.handle();
+				context,
+			};
+			let error_info = ActionErrorInfo {
+				error_context: error_context.clone(),
+				error,
+			};
+			let public_error = error_info.handle();
 			assert_eq!(
 				public_error,
 				Some(ErrorData {
@@ -189,13 +180,26 @@ mod tests {
 					params: None
 				})
 			);
+
+			let action = format!(
+				"[action({action_scope:?}::{action_type} - {action_id})]",
+				action_scope = TestActionType::scope(),
+				action_type = ActionTypeWrapper(action_type.clone()),
+				action_id = action_type.id(),
+			);
+			let private = format!("[private=None]");
+			let public = format!(
+				"[public={public}]",
+				public = "Test public error (action_id=1)".to_string(),
+			);
+			let context = format!("[context={context}]", context = "My error #01".to_string());
+			let data = format!("[data=None]");
+			let source = format!("[source=None]");
+
 			assert_eq!(
 				helper.pop_log(),
 				Some(format!(
-					"ERROR - [{action}] {public} [context={context}] [data=], [source=]",
-					action = "action(Automatic::TestActionType - 1)".to_string(),
-					public = "Test public error (action_id=1)".to_string(),
-					context = "My error #01".to_string()
+					"ERROR - {action} {private} {public} {context} {data} {source}"
 				))
 			);
 		});
@@ -206,11 +210,16 @@ mod tests {
 		run_test(|helper| {
 			let action_type = TestActionType(2);
 			let context = TestRequestContext("My error #02".to_string());
-			let error = TestActionError(ErrorContext {
+			let error = TestActionError(action_type.clone());
+			let error_context = &ErrorContext {
 				action_type: action_type.clone(),
-				context: context.clone(),
-			});
-			let public_error = error.handle();
+				context,
+			};
+			let error_info = ActionErrorInfo {
+				error_context: error_context.clone(),
+				error,
+			};
+			let public_error = error_info.handle();
 			assert_eq!(
 				public_error,
 				Some(ErrorData {
@@ -218,13 +227,26 @@ mod tests {
 					params: None
 				})
 			);
+
+			let action = format!(
+				"[action({action_scope:?}::{action_type} - {action_id})]",
+				action_scope = TestActionType::scope(),
+				action_type = ActionTypeWrapper(action_type.clone()),
+				action_id = action_type.id(),
+			);
+			let private = format!("[private=None]");
+			let public = format!(
+				"[public={public}]",
+				public = "Test public error (action_id=2)".to_string(),
+			);
+			let context = format!("[context={context}]", context = "My error #02".to_string());
+			let data = format!("[data=None]");
+			let source = format!("[source=None]");
+
 			assert_eq!(
 				helper.pop_log(),
 				Some(format!(
-					"ERROR - [{action}] {public} [context={context}] [data=], [source=]",
-					action = "action(Automatic::TestActionType - 2)".to_string(),
-					public = "Test public error (action_id=2)".to_string(),
-					context = "My error #02".to_string()
+					"ERROR - {action} {private} {public} {context} {data} {source}"
 				))
 			);
 		});

@@ -2,18 +2,16 @@ use std::fmt::Debug;
 
 use crate::business::{
 	action_type::{
-		action_type::ActionType, automatic_action_type::AutomaticActionType,
-		moderator_action_type::ModeratorActionType, user_action_type::UserActionType,
+		automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
+		user_action_type::UserActionType,
 	},
 	data::{
-		action_data::{DescriptiveError, ErrorData, RequestContext, RequestInput},
+		action_data::{DescriptiveError, ErrorData, RequestInput},
 		automatic_action_data::{AutomaticActionError, AutomaticRequestContext},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 		user_action_data::{UserActionError, UserRequestContext},
 	},
 };
-
-use super::action_helpers::ActionErrorHelper;
 
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
@@ -35,21 +33,13 @@ impl ActionOutput for () {}
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-pub trait ActionError<T: ActionType, C: RequestContext>: ActionErrorHelper<T, C>
-where
-	Self: Sized,
-{
-	fn error_input(&self) -> DescriptiveError<T, C>;
+pub trait ActionError: Debug {
+	fn private_error(&self) -> DescriptiveError;
 
 	fn public_error(&self) -> Option<ErrorData>;
 
-	fn description(&self) -> String {
-		self.default_description()
-	}
-
-	fn handle(self) -> Option<ErrorData> {
-		error!("{}", self.description());
-		self.public_error()
+	fn error_msg(msg: String) -> Option<ErrorData> {
+		Some(ErrorData { msg, params: None })
 	}
 }
 
@@ -72,7 +62,7 @@ pub trait UserAction<I, O, E>: Action<RequestInput<I, UserRequestContext>, O, E>
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError<UserActionType, UserRequestContext>,
+	E: ActionError,
 	Self: Sized,
 {
 	fn action_type() -> UserActionType;
@@ -88,7 +78,7 @@ pub trait ModeratorAction<I, O, E>: Action<RequestInput<I, ModeratorRequestConte
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError<ModeratorActionType, ModeratorRequestContext>,
+	E: ActionError,
 	Self: Sized,
 {
 	fn action_type() -> ModeratorActionType;
@@ -106,7 +96,7 @@ pub trait AutomaticAction<I, O, E>: Action<RequestInput<I, AutomaticRequestConte
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError<AutomaticActionType, AutomaticRequestContext>,
+	E: ActionError,
 	Self: Sized,
 {
 	fn action_type() -> AutomaticActionType;

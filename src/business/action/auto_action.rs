@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::automatic_action_type::AutomaticActionType,
 	data::{
-		action_data::{DescriptiveErrorInput, ErrorData, RequestContext, RequestInput},
+		action_data::{DescriptiveError, ErrorData, RequestContext, RequestInput},
 		automatic_action_data::{
 			AutomaticActionError, AutomaticRequestContext, HookRequestContext,
 			InternalRequestContext,
@@ -45,16 +45,16 @@ pub enum AutoError {
 	AutomaticError(AutomaticActionError),
 }
 
-impl ActionError<AutomaticActionType, AutomaticRequestContext> for AutoError {
-	fn error_input(&self) -> DescriptiveErrorInput<AutomaticActionType, AutomaticRequestContext> {
-		match &self {
-			&Self::AutomaticError(error) => error.error_input(),
+impl ActionError for AutoError {
+	fn private_error(&self) -> DescriptiveError {
+		match self {
+			AutoError::AutomaticError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
-		match &self {
-			&Self::AutomaticError(error) => error.public_error(),
+		match self {
+			AutoError::AutomaticError(error) => error.public_error(),
 		}
 	}
 }
@@ -75,7 +75,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 		input: Result<RequestInput<AutoData, AutomaticRequestContext>, AutomaticActionError>,
 	) -> Result<Self, AutoError> {
 		input
-			.and_then(|ok_input| ok_input.to_internal(Self::action_type()))
+			.and_then(|ok_input| ok_input.to_internal())
 			.map(|ok_input| Self(ok_input))
 			.map_err(|err| AutoError::AutomaticError(err))
 	}
@@ -104,7 +104,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 		match input {
 			Err(err) => Err(AutoError::AutomaticError(err)),
 			Ok(ok_input) => {
-				let real_input = ok_input.to_hook(Self::action_type());
+				let real_input = ok_input.to_hook();
 
 				match real_input {
 					Err(err) => Err(AutoError::AutomaticError(err)),
@@ -145,14 +145,12 @@ fn run<C: RequestContext>(
 #[cfg(test)]
 mod tests {
 	use super::{AutoActionHook, AutoActionInternal, AutoData, AutoError, AutoResult};
-	use crate::business::action_type::automatic_action_type::AutomaticActionType;
-	use crate::business::data::action_data::{ErrorContext, RequestInput};
+	use crate::business::data::action_data::RequestInput;
 	use crate::business::data::automatic_action_data::tests::{
 		automatic_context, AutomaticTestOptions,
 	};
 	use crate::business::data::automatic_action_data::AutomaticActionError;
 	use crate::business::definition::action::Action;
-	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
@@ -170,12 +168,7 @@ mod tests {
 
 			assert_eq!(
 				&result,
-				&Err(AutoError::AutomaticError(
-					AutomaticActionError::NotInternal(AutomaticActionError::input(ErrorContext {
-						action_type: AutomaticActionType::Auto,
-						context: context.clone(),
-					}))
-				))
+				&Err(AutoError::AutomaticError(AutomaticActionError::NotInternal))
 			);
 		});
 	}
@@ -216,17 +209,12 @@ mod tests {
 					param1: "Param 01 (Error)".to_owned(),
 					param2: 3,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
 				&result,
-				&Err(AutoError::AutomaticError(AutomaticActionError::NotHook(
-					AutomaticActionError::input(ErrorContext {
-						action_type: AutomaticActionType::Auto,
-						context: context.clone(),
-					})
-				)))
+				&Err(AutoError::AutomaticError(AutomaticActionError::NotHook))
 			);
 		});
 	}

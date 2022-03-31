@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use crate::business::action_type::action_type::ActionType;
+use crate::business::{action_type::action_type::ActionType, definition::action::ActionError};
 
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
@@ -43,10 +43,25 @@ pub struct ErrorContext<T: ActionType, C: RequestContext> {
 	pub context: C,
 }
 
+#[cfg(not(test))]
 #[derive(Debug)]
 pub struct ErrorInfo<D: Debug + Eq + PartialEq, E: Debug = Option<()>> {
 	pub data: D,
 	pub source: E,
+}
+
+#[cfg(test)]
+#[derive(Debug)]
+pub struct ErrorInfo<D: Debug + Eq + PartialEq, E: Debug = ()> {
+	pub data: D,
+	pub source: Option<E>,
+}
+
+#[cfg(test)]
+impl<D: Debug + Eq + PartialEq, E: Debug> ErrorInfo<D, E> {
+	pub fn mock(data: D) -> Self {
+		Self { data, source: None }
+	}
 }
 
 #[derive(Debug)]
@@ -61,10 +76,36 @@ pub struct ErrorContextInfo<
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct DescriptiveError<T: ActionType, C: RequestContext> {
-	pub error_context: ErrorContext<T, C>,
-	pub data: String,
-	pub source: String,
+pub struct DescriptiveError {
+	pub msg: Option<String>,
+	pub data: Option<String>,
+	pub source: Option<String>,
+}
+
+impl DescriptiveError {
+	pub fn empty() -> Self {
+		Self {
+			msg: None,
+			data: None,
+			source: None,
+		}
+	}
+
+	pub fn data<T: Debug>(data: T) -> Self {
+		Self {
+			msg: None,
+			data: Some(format!("{data:?}")),
+			source: None,
+		}
+	}
+
+	pub fn source<T: Debug>(source: T) -> Self {
+		Self {
+			msg: None,
+			data: None,
+			source: Some(format!("{source:?}")),
+		}
+	}
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -73,28 +114,10 @@ pub struct ErrorData {
 	pub params: Option<HashMap<String, String>>,
 }
 
-#[cfg(not(test))]
 #[derive(Debug)]
-pub struct ErrorBox<T, E> {
-	pub data: T,
+pub struct ActionErrorInfo<T: ActionType, C: RequestContext, E: ActionError> {
+	pub error_context: ErrorContext<T, C>,
 	pub error: E,
-}
-
-#[cfg(test)]
-#[derive(Debug)]
-pub struct ErrorBox<T, E> {
-	pub data: Option<T>,
-	pub error: Option<E>,
-}
-
-#[cfg(test)]
-impl<T, E> ErrorBox<T, E> {
-	pub fn mock() -> Self {
-		Self {
-			data: None,
-			error: None,
-		}
-	}
 }
 
 ////////////////////////////////////////////////

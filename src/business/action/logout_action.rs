@@ -1,7 +1,7 @@
 use crate::business::{
 	action_type::user_action_type::UserActionType,
 	data::{
-		action_data::{DescriptiveErrorInput, ErrorData, RequestInput},
+		action_data::{DescriptiveError, ErrorData, RequestInput},
 		user_action_data::{UserActionError, UserRequestContext},
 	},
 	definition::action::{ActionError, UserAction},
@@ -16,16 +16,16 @@ pub enum LogoutError {
 	UserError(UserActionError),
 }
 
-impl ActionError<UserActionType, UserRequestContext> for LogoutError {
-	fn error_input(&self) -> DescriptiveErrorInput<UserActionType, UserRequestContext> {
-		match &self {
-			&Self::UserError(error) => error.error_input(),
+impl ActionError for LogoutError {
+	fn private_error(&self) -> DescriptiveError {
+		match self {
+			LogoutError::UserError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
-		match &self {
-			&Self::UserError(error) => error.public_error(),
+		match self {
+			LogoutError::UserError(error) => error.public_error(),
 		}
 	}
 }
