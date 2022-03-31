@@ -9,6 +9,7 @@ pub enum ModeratorActionType {
 	EchoInfo,
 	EchoWarn,
 	EchoError,
+	Web,
 }
 
 #[ctor::ctor]
@@ -26,6 +27,7 @@ impl ActionType for ModeratorActionType {
 			ModeratorActionType::EchoInfo => 1,
 			ModeratorActionType::EchoWarn => 2,
 			ModeratorActionType::EchoError => 3,
+			ModeratorActionType::Web => 4,
 		}
 	}
 

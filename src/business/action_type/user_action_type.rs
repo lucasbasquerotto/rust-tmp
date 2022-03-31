@@ -8,6 +8,7 @@ pub enum UserActionType {
 	Test,
 	Login,
 	Logout,
+	Web,
 }
 
 #[ctor::ctor]
@@ -24,6 +25,7 @@ impl ActionType for UserActionType {
 			UserActionType::Test => 0,
 			UserActionType::Login => 1,
 			UserActionType::Logout => 2,
+			UserActionType::Web => 3,
 		}
 	}
 
