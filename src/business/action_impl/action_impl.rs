@@ -20,20 +20,6 @@ impl<T: DescriptiveRequestContext> RequestContext for T {}
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-// impl<D: Debug + Eq + PartialEq, E: Debug> ErrorInfo<D, E> {
-// 	pub fn to_descriptive(&self) -> DescriptiveError {
-// 		let Self {
-// 			data,
-// 			source,
-// 		} = self;
-
-// 		DescriptiveError {
-// 			data: format!("{data:?}"),
-// 			source: format!("{source:?}"),
-// 		}
-// 	}
-// }
-
 impl<D: Debug + Eq + PartialEq, E: Debug> PartialEq for ErrorInfo<D, E> {
 	fn eq(&self, other: &Self) -> bool {
 		self.data == other.data
@@ -54,7 +40,11 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 			action_type = ActionTypeWrapper(error_context.action_type.clone()),
 			action_id = error_context.action_type.id(),
 		);
-		let private = format!("[private={private:?}]", private = private_error.msg);
+		let private = private_error
+			.msg
+			.as_ref()
+			.map(|private| format!("[private={private}]"))
+			.unwrap_or("".to_string());
 		let public = format!(
 			"[public={public}]",
 			public = self
@@ -67,22 +57,27 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 			"[context={context}]",
 			context = error_context.context.description(),
 		);
-		let data = format!("[data={data:?}]", data = private_error.data,);
-		let source = format!("[source={source:?}]", source = private_error.source,);
-		format!("{action} {private} {public} {context} {data} {source}",)
+		let data = private_error
+			.data
+			.as_ref()
+			.map(|data| format!("[data={data}]"))
+			.unwrap_or("".to_string());
+		let source = private_error
+			.source
+			.as_ref()
+			.map(|source| format!("[source={source}]"))
+			.unwrap_or("".to_string());
+
+		[action, private, public, context, data, source]
+			.into_iter()
+			.filter(|str| !str.is_empty())
+			.collect::<Vec<String>>()
+			.join(" ")
 	}
 
 	fn handle(self) -> Option<ErrorData> {
 		error!("{}", self.description());
 		self.error.public_error()
-	}
-
-	fn type_of<K>(_: &K) -> String {
-		format!("{}", std::any::type_name::<T>())
-			.split("::")
-			.last()
-			.unwrap_or("")
-			.to_string()
 	}
 }
 
@@ -134,7 +129,17 @@ mod tests {
 
 	impl ActionError for TestActionError {
 		fn private_error(&self) -> DescriptiveError {
-			DescriptiveError::empty()
+			let action_type = &self.0;
+
+			if action_type.0 == 1 {
+				DescriptiveError {
+					msg: Some("Private message 01".to_string()),
+					data: Some("Data 01".to_string()),
+					source: Some("Source 01".to_string()),
+				}
+			} else {
+				DescriptiveError::empty()
+			}
 		}
 
 		fn public_error(&self) -> Option<ErrorData> {
@@ -187,14 +192,14 @@ mod tests {
 				action_type = ActionTypeWrapper(action_type.clone()),
 				action_id = action_type.id(),
 			);
-			let private = format!("[private=None]");
+			let private = format!("[private={private}]", private = "Private message 01");
 			let public = format!(
 				"[public={public}]",
-				public = "Test public error (action_id=1)".to_string(),
+				public = "Test public error (action_id=1)",
 			);
-			let context = format!("[context={context}]", context = "My error #01".to_string());
-			let data = format!("[data=None]");
-			let source = format!("[source=None]");
+			let context = format!("[context={context}]", context = "My error #01");
+			let data = format!("[data={data}]", data = "Data 01");
+			let source = format!("[source={source}]", source = "Source 01");
 
 			assert_eq!(
 				helper.pop_log(),
@@ -234,20 +239,15 @@ mod tests {
 				action_type = ActionTypeWrapper(action_type.clone()),
 				action_id = action_type.id(),
 			);
-			let private = format!("[private=None]");
 			let public = format!(
 				"[public={public}]",
-				public = "Test public error (action_id=2)".to_string(),
+				public = "Test public error (action_id=2)",
 			);
-			let context = format!("[context={context}]", context = "My error #02".to_string());
-			let data = format!("[data=None]");
-			let source = format!("[source=None]");
+			let context = format!("[context={context}]", context = "My error #02");
 
 			assert_eq!(
 				helper.pop_log(),
-				Some(format!(
-					"ERROR - {action} {private} {public} {context} {data} {source}"
-				))
+				Some(format!("ERROR - {action} {public} {context}"))
 			);
 		});
 	}

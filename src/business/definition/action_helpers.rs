@@ -17,9 +17,5 @@ where
 {
 	fn description(&self) -> String;
 
-	fn type_of<K>(_: &K) -> String;
-
 	fn handle(self) -> Option<ErrorData>;
-
-	//fn info(error_context: ErrorContext<T, C>) -> ErrorInfo<(), T, C>;
 }
