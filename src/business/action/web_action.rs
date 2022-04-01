@@ -101,13 +101,13 @@ impl UserAction<WebData, WebResult, UserWebError> for WebActionUser {
 		input: Result<RequestInput<WebData, UserRequestContext>, UserActionError>,
 	) -> Result<Self, UserWebError> {
 		input
-			.map(|ok_input| Self(ok_input))
-			.map_err(|err| UserWebError::UserError(err))
+			.map(Self)
+			.map_err(UserWebError::UserError)
 	}
 
 	fn run_inner(self) -> Result<WebResult, UserWebError> {
 		let WebActionUser(input) = &self;
-		run(&input.data).map_err(|err| UserWebError::WebError(err))
+		run(&input.data).map_err(UserWebError::WebError)
 	}
 }
 
@@ -153,13 +153,13 @@ impl ModeratorAction<WebData, WebResult, ModeratorWebError> for WebActionModerat
 		input: Result<RequestInput<WebData, ModeratorRequestContext>, ModeratorActionError>,
 	) -> Result<Self, ModeratorWebError> {
 		input
-			.map(|ok_input| Self(ok_input))
-			.map_err(|err| ModeratorWebError::ModeratorError(err))
+			.map(Self)
+			.map_err(ModeratorWebError::ModeratorError)
 	}
 
 	fn run_inner(self) -> Result<WebResult, ModeratorWebError> {
 		let WebActionModerator(input) = &self;
-		run(&input.data).map_err(|err| ModeratorWebError::WebError(err))
+		run(&input.data).map_err(ModeratorWebError::WebError)
 	}
 }
 
@@ -205,13 +205,13 @@ impl AutomaticAction<WebData, WebResult, AutomaticWebError> for WebActionAutomat
 		input: Result<RequestInput<WebData, AutomaticRequestContext>, AutomaticActionError>,
 	) -> Result<Self, AutomaticWebError> {
 		input
-			.map(|ok_input| Self(ok_input))
-			.map_err(|err| AutomaticWebError::AutomaticError(err))
+			.map(Self)
+			.map_err(AutomaticWebError::AutomaticError)
 	}
 
 	fn run_inner(self) -> Result<WebResult, AutomaticWebError> {
 		let WebActionAutomatic(input) = &self;
-		run(&input.data).map_err(|err| AutomaticWebError::WebError(err))
+		run(&input.data).map_err(AutomaticWebError::WebError)
 	}
 }
 
@@ -294,13 +294,11 @@ fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
 		host = httpbin_base_url(),
 		suffix = if data.error {
 			"/get/error".to_string()
-		} else {
-			if let Some(status) = data.status {
-				format!("/status/{status}")
-			} else {
-				"/get".to_string()
-			}
-		}
+		} else if let Some(status) = data.status {
+  				format!("/status/{status}")
+  			} else {
+  				"/get".to_string()
+  			}
 	);
 
 	reqwest::blocking::get(url.to_string())

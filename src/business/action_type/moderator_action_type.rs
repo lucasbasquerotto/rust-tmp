@@ -32,7 +32,7 @@ impl ActionType for ModeratorActionType {
 	}
 
 	fn from_id(id: u32) -> Option<Self> {
-		ID_ACTION_MAP.get(&id).map(|item| *item)
+		ID_ACTION_MAP.get(&id).copied()
 	}
 }
 

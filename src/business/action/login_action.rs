@@ -71,8 +71,8 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 	) -> Result<Self, LoginError> {
 		input
 			.and_then(|ok_input| ok_input.to_no_auth())
-			.map(|ok_input| Self(ok_input))
-			.map_err(|err| LoginError::UserError(err))
+			.map(Self)
+			.map_err(LoginError::UserError)
 	}
 
 	fn run_inner(self) -> Result<LoginResult, LoginError> {

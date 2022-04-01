@@ -37,8 +37,8 @@ pub mod tests {
 		let count = T::iter()
 			.filter(|item| {
 				let mapped_item = T::from_id(item.id());
-				let valid = mapped_item == Some(item.clone());
-				valid
+				
+				mapped_item == Some(item.clone())
 			})
 			.count();
 		assert_eq!(

@@ -90,7 +90,7 @@ struct ActionTypeWrapper<T: ActionType>(T);
 impl<T: ActionType> fmt::Display for ActionTypeWrapper<T> {
 	fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
 		let debug = format!("{:?}", self.0);
-		let result = debug.split("(").next().unwrap_or(&debug);
+		let result = debug.split('(').next().unwrap_or(&debug);
 		fmt.write_str(result)
 	}
 }

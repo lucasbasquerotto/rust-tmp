@@ -46,8 +46,8 @@ impl UserAction<(), (), LogoutError> for LogoutAction {
 		input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
 	) -> Result<Self, LogoutError> {
 		input
-			.map(|ok_input| Self(ok_input))
-			.map_err(|err| LogoutError::UserError(err))
+			.map(Self)
+			.map_err(LogoutError::UserError)
 	}
 
 	fn run_inner(self) -> Result<(), LogoutError> {
