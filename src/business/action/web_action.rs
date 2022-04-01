@@ -100,9 +100,7 @@ impl UserAction<WebData, WebResult, UserWebError> for WebActionUser {
 	fn new(
 		input: Result<RequestInput<WebData, UserRequestContext>, UserActionError>,
 	) -> Result<Self, UserWebError> {
-		input
-			.map(Self)
-			.map_err(UserWebError::UserError)
+		input.map(Self).map_err(UserWebError::UserError)
 	}
 
 	fn run_inner(self) -> Result<WebResult, UserWebError> {
@@ -152,9 +150,7 @@ impl ModeratorAction<WebData, WebResult, ModeratorWebError> for WebActionModerat
 	fn new(
 		input: Result<RequestInput<WebData, ModeratorRequestContext>, ModeratorActionError>,
 	) -> Result<Self, ModeratorWebError> {
-		input
-			.map(Self)
-			.map_err(ModeratorWebError::ModeratorError)
+		input.map(Self).map_err(ModeratorWebError::ModeratorError)
 	}
 
 	fn run_inner(self) -> Result<WebResult, ModeratorWebError> {
@@ -204,9 +200,7 @@ impl AutomaticAction<WebData, WebResult, AutomaticWebError> for WebActionAutomat
 	fn new(
 		input: Result<RequestInput<WebData, AutomaticRequestContext>, AutomaticActionError>,
 	) -> Result<Self, AutomaticWebError> {
-		input
-			.map(Self)
-			.map_err(AutomaticWebError::AutomaticError)
+		input.map(Self).map_err(AutomaticWebError::AutomaticError)
 	}
 
 	fn run_inner(self) -> Result<WebResult, AutomaticWebError> {
@@ -295,10 +289,10 @@ fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
 		suffix = if data.error {
 			"/get/error".to_string()
 		} else if let Some(status) = data.status {
-  				format!("/status/{status}")
-  			} else {
-  				"/get".to_string()
-  			}
+			format!("/status/{status}")
+		} else {
+			"/get".to_string()
+		}
 	);
 
 	reqwest::blocking::get(url.to_string())
