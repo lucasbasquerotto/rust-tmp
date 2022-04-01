@@ -70,7 +70,7 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 		input: Result<RequestInput<LoginData, UserRequestContext>, UserActionError>,
 	) -> Result<Self, LoginError> {
 		input
-			.and_then(|ok_input| ok_input.to_no_auth())
+			.and_then(|ok_input| ok_input.into_no_auth())
 			.map(Self)
 			.map_err(LoginError::UserError)
 	}

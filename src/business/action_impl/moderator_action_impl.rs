@@ -1,5 +1,5 @@
 use crate::business::{
-	action_type::action_type::ActionType,
+	action_type::general_action_type::ActionType,
 	data::{
 		action_data::{DescriptiveError, ErrorData, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext, ModeratorSession},

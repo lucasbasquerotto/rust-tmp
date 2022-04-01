@@ -44,7 +44,7 @@ impl DescriptiveRequestContext for UserNoAuthRequestContext {
 }
 
 impl UserRequestContext {
-	pub fn to_auth(self) -> Result<UserAuthRequestContext, UserActionError> {
+	pub fn into_auth(self) -> Result<UserAuthRequestContext, UserActionError> {
 		let UserRequestContext {
 			application,
 			session,
@@ -61,7 +61,7 @@ impl UserRequestContext {
 		}
 	}
 
-	pub fn to_no_auth(self) -> Result<UserNoAuthRequestContext, UserActionError> {
+	pub fn into_no_auth(self) -> Result<UserNoAuthRequestContext, UserActionError> {
 		let UserRequestContext {
 			application,
 			session,
@@ -81,16 +81,18 @@ impl UserRequestContext {
 
 impl<I> RequestInput<I, UserRequestContext> {
 	#[allow(dead_code)]
-	pub fn to_auth(self) -> Result<RequestInput<I, UserAuthRequestContext>, UserActionError> {
-		let context = self.context.to_auth()?;
+	pub fn into_auth(self) -> Result<RequestInput<I, UserAuthRequestContext>, UserActionError> {
+		let context = self.context.into_auth()?;
 		Ok(RequestInput {
 			context,
 			data: self.data,
 		})
 	}
 
-	pub fn to_no_auth(self) -> Result<RequestInput<I, UserNoAuthRequestContext>, UserActionError> {
-		let context = self.context.to_no_auth()?;
+	pub fn into_no_auth(
+		self,
+	) -> Result<RequestInput<I, UserNoAuthRequestContext>, UserActionError> {
+		let context = self.context.into_no_auth()?;
 		Ok(RequestInput {
 			context,
 			data: self.data,
@@ -99,7 +101,7 @@ impl<I> RequestInput<I, UserRequestContext> {
 }
 
 impl UserAuthRequestContext {
-	pub fn to_general(self) -> UserRequestContext {
+	pub fn into_general(self) -> UserRequestContext {
 		let UserAuthRequestContext {
 			application,
 			session,
@@ -118,8 +120,8 @@ impl UserAuthRequestContext {
 
 impl<T> RequestInput<T, UserAuthRequestContext> {
 	#[allow(dead_code)]
-	pub fn to_general(self) -> RequestInput<T, UserRequestContext> {
-		let context = self.context.to_general();
+	pub fn into_general(self) -> RequestInput<T, UserRequestContext> {
+		let context = self.context.into_general();
 		RequestInput {
 			context,
 			data: self.data,
@@ -128,7 +130,7 @@ impl<T> RequestInput<T, UserAuthRequestContext> {
 }
 
 impl UserNoAuthRequestContext {
-	pub fn to_general(self) -> UserRequestContext {
+	pub fn into_general(self) -> UserRequestContext {
 		let UserNoAuthRequestContext {
 			application,
 			request,
@@ -145,8 +147,8 @@ impl UserNoAuthRequestContext {
 
 impl<T> RequestInput<T, UserNoAuthRequestContext> {
 	#[allow(dead_code)]
-	pub fn to_general(self) -> RequestInput<T, UserRequestContext> {
-		let context = self.context.to_general();
+	pub fn into_general(self) -> RequestInput<T, UserRequestContext> {
+		let context = self.context.into_general();
 		RequestInput {
 			context,
 			data: self.data,
@@ -254,7 +256,7 @@ pub mod tests {
 			match input {
 				Err(err) => Err(err),
 				Ok(ok_input) => {
-					let real_input = ok_input.to_no_auth();
+					let real_input = ok_input.into_no_auth();
 
 					match real_input {
 						Err(err) => Err(err),
@@ -281,7 +283,7 @@ pub mod tests {
 			match input {
 				Err(err) => Err(err),
 				Ok(ok_input) => {
-					let real_input = ok_input.to_auth();
+					let real_input = ok_input.into_auth();
 
 					match real_input {
 						Err(err) => Err(err),
@@ -307,7 +309,7 @@ pub mod tests {
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
-				input.to_no_auth().map(|ctx| ctx.to_general().context),
+				input.into_no_auth().map(|ctx| ctx.into_general().context),
 				"Test input context reversible change"
 			);
 		});
@@ -320,7 +322,7 @@ pub mod tests {
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
-				input.to_auth().map(|ctx| ctx.to_general().context),
+				input.into_auth().map(|ctx| ctx.into_general().context),
 				"Test input context reversible change"
 			);
 		});
@@ -335,8 +337,8 @@ pub mod tests {
 				Ok(&context),
 				context
 					.clone()
-					.to_no_auth()
-					.map(|ctx| ctx.to_general())
+					.into_no_auth()
+					.map(|ctx| ctx.into_general())
 					.as_ref(),
 				"Test context reversible change"
 			);
@@ -359,8 +361,8 @@ pub mod tests {
 				Ok(&context),
 				context
 					.clone()
-					.to_auth()
-					.map(|ctx| ctx.to_general())
+					.into_auth()
+					.map(|ctx| ctx.into_general())
 					.as_ref(),
 				"Test context reversible change"
 			);
@@ -383,8 +385,8 @@ pub mod tests {
 				Ok(&context),
 				context
 					.clone()
-					.to_auth()
-					.map(|ctx| ctx.to_general())
+					.into_auth()
+					.map(|ctx| ctx.into_general())
 					.as_ref(),
 				"Test context reversible change"
 			);
@@ -403,8 +405,8 @@ pub mod tests {
 				Ok(&context),
 				context
 					.clone()
-					.to_no_auth()
-					.map(|ctx| ctx.to_general())
+					.into_no_auth()
+					.map(|ctx| ctx.into_general())
 					.as_ref(),
 				"Test context reversible change"
 			);
@@ -427,8 +429,8 @@ pub mod tests {
 				Ok(&context),
 				context
 					.clone()
-					.to_no_auth()
-					.map(|ctx| ctx.to_general())
+					.into_no_auth()
+					.map(|ctx| ctx.into_general())
 					.as_ref(),
 				"Test context reversible change"
 			);
@@ -447,8 +449,8 @@ pub mod tests {
 				Ok(&context),
 				context
 					.clone()
-					.to_auth()
-					.map(|ctx| ctx.to_general())
+					.into_auth()
+					.map(|ctx| ctx.into_general())
 					.as_ref(),
 				"Test context reversible change"
 			);

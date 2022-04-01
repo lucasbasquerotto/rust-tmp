@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use crate::business::{
-	action_type::action_type::ActionType,
+	action_type::general_action_type::ActionType,
 	data::action_data::{ErrorData, RequestContext},
 };
 

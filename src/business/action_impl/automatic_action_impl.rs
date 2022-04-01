@@ -42,7 +42,7 @@ impl DescriptiveRequestContext for HookRequestContext {
 
 impl AutomaticRequestContext {
 	#[allow(dead_code)]
-	pub fn to_internal(self) -> Result<InternalRequestContext, AutomaticActionError> {
+	pub fn into_internal(self) -> Result<InternalRequestContext, AutomaticActionError> {
 		let AutomaticRequestContext {
 			application,
 			request,
@@ -55,7 +55,7 @@ impl AutomaticRequestContext {
 	}
 
 	#[allow(dead_code)]
-	pub fn to_hook(self) -> Result<HookRequestContext, AutomaticActionError> {
+	pub fn into_hook(self) -> Result<HookRequestContext, AutomaticActionError> {
 		let AutomaticRequestContext {
 			application,
 			request,
@@ -73,10 +73,10 @@ impl AutomaticRequestContext {
 
 impl<I> RequestInput<I, AutomaticRequestContext> {
 	#[allow(dead_code)]
-	pub fn to_internal(
+	pub fn into_internal(
 		self,
 	) -> Result<RequestInput<I, InternalRequestContext>, AutomaticActionError> {
-		let context = self.context.to_internal()?;
+		let context = self.context.into_internal()?;
 		Ok(RequestInput {
 			context,
 			data: self.data,
@@ -84,8 +84,8 @@ impl<I> RequestInput<I, AutomaticRequestContext> {
 	}
 
 	#[allow(dead_code)]
-	pub fn to_hook(self) -> Result<RequestInput<I, HookRequestContext>, AutomaticActionError> {
-		let context = self.context.to_hook()?;
+	pub fn into_hook(self) -> Result<RequestInput<I, HookRequestContext>, AutomaticActionError> {
+		let context = self.context.into_hook()?;
 		Ok(RequestInput {
 			context,
 			data: self.data,
@@ -94,7 +94,7 @@ impl<I> RequestInput<I, AutomaticRequestContext> {
 }
 
 impl InternalRequestContext {
-	pub fn to_general(self) -> AutomaticRequestContext {
+	pub fn into_general(self) -> AutomaticRequestContext {
 		let InternalRequestContext { application } = self;
 
 		AutomaticRequestContext {
@@ -106,8 +106,8 @@ impl InternalRequestContext {
 
 impl<T> RequestInput<T, InternalRequestContext> {
 	#[allow(dead_code)]
-	pub fn to_general(self) -> RequestInput<T, AutomaticRequestContext> {
-		let context = self.context.to_general();
+	pub fn into_general(self) -> RequestInput<T, AutomaticRequestContext> {
+		let context = self.context.into_general();
 		RequestInput {
 			context,
 			data: self.data,
@@ -116,7 +116,7 @@ impl<T> RequestInput<T, InternalRequestContext> {
 }
 
 impl HookRequestContext {
-	pub fn to_general(self) -> AutomaticRequestContext {
+	pub fn into_general(self) -> AutomaticRequestContext {
 		let HookRequestContext {
 			application,
 			request,
@@ -132,8 +132,8 @@ impl HookRequestContext {
 
 impl<T> RequestInput<T, HookRequestContext> {
 	#[allow(dead_code)]
-	pub fn to_general(self) -> RequestInput<T, AutomaticRequestContext> {
-		let context = self.context.to_general();
+	pub fn into_general(self) -> RequestInput<T, AutomaticRequestContext> {
+		let context = self.context.into_general();
 		RequestInput {
 			context,
 			data: self.data,
@@ -243,7 +243,7 @@ pub mod tests {
 			match input {
 				Err(err) => Err(err),
 				Ok(ok_input) => {
-					let real_input = ok_input.to_hook();
+					let real_input = ok_input.into_hook();
 
 					match real_input {
 						Err(err) => Err(err),
@@ -270,7 +270,7 @@ pub mod tests {
 			match input {
 				Err(err) => Err(err),
 				Ok(ok_input) => {
-					let real_input = ok_input.to_internal();
+					let real_input = ok_input.into_internal();
 
 					match real_input {
 						Err(err) => Err(err),
@@ -293,7 +293,7 @@ pub mod tests {
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
-				input.to_internal().map(|ctx| ctx.to_general().context),
+				input.into_internal().map(|ctx| ctx.into_general().context),
 				"Test input context reversible change"
 			);
 		});
@@ -306,7 +306,7 @@ pub mod tests {
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
-				input.to_hook().map(|ctx| ctx.to_general().context),
+				input.into_hook().map(|ctx| ctx.into_general().context),
 				"Test input context reversible change"
 			);
 		});

@@ -2,7 +2,7 @@ use core::fmt;
 use std::fmt::Debug;
 
 use crate::business::{
-	action_type::action_type::ActionType,
+	action_type::general_action_type::ActionType,
 	data::action_data::{ActionErrorInfo, ErrorData, ErrorInfo, RequestContext},
 	definition::{
 		action::ActionError,
@@ -44,14 +44,14 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 			.msg
 			.as_ref()
 			.map(|private| format!("[private={private}]"))
-			.unwrap_or("".to_string());
+			.unwrap_or_else(|| "".to_string());
 		let public = format!(
 			"[public={public}]",
 			public = self
 				.error
 				.public_error()
 				.map(|data| data.msg)
-				.unwrap_or("".to_string())
+				.unwrap_or_else(|| "".to_string())
 		);
 		let context = format!(
 			"[context={context}]",
@@ -61,12 +61,12 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 			.data
 			.as_ref()
 			.map(|data| format!("[data={data}]"))
-			.unwrap_or("".to_string());
+			.unwrap_or_else(|| "".to_string());
 		let source = private_error
 			.source
 			.as_ref()
 			.map(|source| format!("[source={source}]"))
-			.unwrap_or("".to_string());
+			.unwrap_or_else(|| "".to_string());
 
 		[action, private, public, context, data, source]
 			.into_iter()
@@ -101,14 +101,14 @@ impl<T: ActionType> fmt::Display for ActionTypeWrapper<T> {
 
 #[cfg(test)]
 mod tests {
-	use crate::business::action_impl::action_impl::ActionTypeWrapper;
+	use crate::business::action_impl::general_action_impl::ActionTypeWrapper;
 	use crate::business::data::action_data::{
 		ActionErrorInfo, ActionScope, DescriptiveError, ErrorContext, ErrorData,
 	};
 	use crate::business::definition::action::ActionError;
 	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::business::{
-		action_type::action_type::ActionType, definition::action_helpers::DescriptiveRequestContext,
+		action_type::general_action_type::ActionType, definition::action_helpers::DescriptiveRequestContext,
 	};
 	use crate::tests::test_utils::tests::run_test;
 

@@ -16,7 +16,7 @@ pub mod tests {
 
 	use strum::IntoEnumIterator;
 
-	use crate::business::action_type::action_type::ActionType;
+	use crate::business::action_type::general_action_type::ActionType;
 
 	pub fn test_enum_action_type<T: 'static + ActionType + IntoEnumIterator>(
 		id_action_map: &HashMap<u32, T>,
@@ -37,7 +37,7 @@ pub mod tests {
 		let count = T::iter()
 			.filter(|item| {
 				let mapped_item = T::from_id(item.id());
-				
+
 				mapped_item == Some(item.clone())
 			})
 			.count();

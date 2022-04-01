@@ -1,6 +1,8 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use crate::business::{action_type::action_type::ActionType, definition::action::ActionError};
+use crate::business::{
+	action_type::general_action_type::ActionType, definition::action::ActionError,
+};
 
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////

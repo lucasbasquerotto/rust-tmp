@@ -75,7 +75,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 		input: Result<RequestInput<AutoData, AutomaticRequestContext>, AutomaticActionError>,
 	) -> Result<Self, AutoError> {
 		input
-			.and_then(|ok_input| ok_input.to_internal())
+			.and_then(|ok_input| ok_input.into_internal())
 			.map(Self)
 			.map_err(AutoError::AutomaticError)
 	}
@@ -104,7 +104,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 		match input {
 			Err(err) => Err(AutoError::AutomaticError(err)),
 			Ok(ok_input) => {
-				let real_input = ok_input.to_hook();
+				let real_input = ok_input.into_hook();
 
 				match real_input {
 					Err(err) => Err(AutoError::AutomaticError(err)),

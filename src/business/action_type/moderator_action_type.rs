@@ -1,4 +1,4 @@
-use super::action_type::ActionType;
+use super::general_action_type::ActionType;
 use crate::business::data::action_data::ActionScope;
 use std::{collections::HashMap, iter::FromIterator};
 use strum::{EnumIter, IntoEnumIterator};
@@ -40,7 +40,7 @@ impl ActionType for ModeratorActionType {
 mod tests {
 	use super::ID_ACTION_MAP;
 	use crate::{
-		business::action_type::action_type::tests::test_enum_action_type,
+		business::action_type::general_action_type::tests::test_enum_action_type,
 		tests::test_utils::tests::run_test,
 	};
 
