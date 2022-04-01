@@ -6,6 +6,7 @@ authors = ["lucas"]
 
 [dependencies]
 ctor = "0.1.20"
+chrono = "0.4.0"
 log = { version = "0.4", features = ["std", "serde"] }
 reqwest = { version = "0.11.2", features = ["blocking", "json"] }
 serde = { version = "1.0", features = ["derive"] }

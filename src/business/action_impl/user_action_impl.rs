@@ -20,7 +20,7 @@ impl<I: ActionInput> ActionInput for RequestInput<I, UserRequestContext> {}
 impl DescriptiveRequestContext for UserRequestContext {
 	fn description(&self) -> String {
 		let UserRequestContext {
-			session: UserSession { user_id },
+			session: UserSession { user_id, .. },
 			..
 		} = &self;
 		format!("user({user_id:?})")
@@ -30,7 +30,7 @@ impl DescriptiveRequestContext for UserRequestContext {
 impl DescriptiveRequestContext for UserAuthRequestContext {
 	fn description(&self) -> String {
 		let UserAuthRequestContext {
-			session: UserAuthSession { user_id },
+			session: UserAuthSession { user_id, .. },
 			..
 		} = &self;
 		format!("user({user_id:?})")
@@ -54,7 +54,10 @@ impl UserRequestContext {
 		match session.user_id {
 			Some(user_id) => Ok(UserAuthRequestContext {
 				application,
-				session: UserAuthSession { user_id },
+				session: UserAuthSession {
+					created_at: session.created_at,
+					user_id,
+				},
 				request,
 			}),
 			None => Err(UserActionError::Unauthenticated),
@@ -72,7 +75,9 @@ impl UserRequestContext {
 			Some(_) => Err(UserActionError::Authenticated),
 			None => Ok(UserNoAuthRequestContext {
 				application,
-				session: UserNoAuthSession(),
+				session: UserNoAuthSession {
+					created_at: session.created_at,
+				},
 				request,
 			}),
 		}
@@ -111,6 +116,7 @@ impl UserAuthRequestContext {
 		UserRequestContext {
 			application,
 			session: UserSession {
+				created_at: session.created_at,
 				user_id: Some(session.user_id),
 			},
 			request,
@@ -134,12 +140,15 @@ impl UserNoAuthRequestContext {
 		let UserNoAuthRequestContext {
 			application,
 			request,
-			..
+			session,
 		} = self;
 
 		UserRequestContext {
 			application,
-			session: UserSession { user_id: None },
+			session: UserSession {
+				created_at: session.created_at,
+				user_id: None,
+			},
 			request,
 		}
 	}

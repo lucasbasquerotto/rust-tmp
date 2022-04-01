@@ -37,7 +37,7 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 		let action = format!(
 			"[action({action_scope:?}::{action_type} - {action_id})]",
 			action_scope = T::scope(),
-			action_type = ActionTypeWrapper(error_context.action_type.clone()),
+			action_type = ActionTypeWrapper(error_context.action_type),
 			action_id = error_context.action_type.id(),
 		);
 		let private = private_error
@@ -108,7 +108,8 @@ mod tests {
 	use crate::business::definition::action::ActionError;
 	use crate::business::definition::action_helpers::ActionErrorHelper;
 	use crate::business::{
-		action_type::general_action_type::ActionType, definition::action_helpers::DescriptiveRequestContext,
+		action_type::general_action_type::ActionType,
+		definition::action_helpers::DescriptiveRequestContext,
 	};
 	use crate::tests::test_utils::tests::run_test;
 
@@ -121,7 +122,7 @@ mod tests {
 		}
 	}
 
-	#[derive(Debug, Clone, Eq, PartialEq)]
+	#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 	struct TestActionType(u32);
 
 	#[derive(Debug)]
@@ -168,13 +169,13 @@ mod tests {
 		run_test(|helper| {
 			let action_type = TestActionType(1);
 			let context = TestRequestContext("My error #01".to_string());
-			let error = TestActionError(action_type.clone());
-			let error_context = &ErrorContext {
-				action_type: action_type.clone(),
+			let error = TestActionError(action_type);
+			let error_context = ErrorContext {
+				action_type,
 				context,
 			};
 			let error_info = ActionErrorInfo {
-				error_context: error_context.clone(),
+				error_context,
 				error,
 			};
 			let public_error = error_info.handle();
@@ -189,7 +190,7 @@ mod tests {
 			let action = format!(
 				"[action({action_scope:?}::{action_type} - {action_id})]",
 				action_scope = TestActionType::scope(),
-				action_type = ActionTypeWrapper(action_type.clone()),
+				action_type = ActionTypeWrapper(action_type),
 				action_id = action_type.id(),
 			);
 			let private = format!("[private={private}]", private = "Private message 01");
@@ -215,13 +216,13 @@ mod tests {
 		run_test(|helper| {
 			let action_type = TestActionType(2);
 			let context = TestRequestContext("My error #02".to_string());
-			let error = TestActionError(action_type.clone());
-			let error_context = &ErrorContext {
-				action_type: action_type.clone(),
+			let error = TestActionError(action_type);
+			let error_context = ErrorContext {
+				action_type,
 				context,
 			};
 			let error_info = ActionErrorInfo {
-				error_context: error_context.clone(),
+				error_context,
 				error,
 			};
 			let public_error = error_info.handle();
@@ -236,7 +237,7 @@ mod tests {
 			let action = format!(
 				"[action({action_scope:?}::{action_type} - {action_id})]",
 				action_scope = TestActionType::scope(),
-				action_type = ActionTypeWrapper(action_type.clone()),
+				action_type = ActionTypeWrapper(action_type),
 				action_id = action_type.id(),
 			);
 			let public = format!(

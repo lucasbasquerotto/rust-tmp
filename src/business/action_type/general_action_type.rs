@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::business::data::action_data::ActionScope;
 
-pub trait ActionType: Clone + Debug + Eq + PartialEq {
+pub trait ActionType: Clone + Copy + Debug + Eq + PartialEq {
 	fn scope() -> ActionScope;
 	fn id(&self) -> u32;
 	fn from_id(id: u32) -> Option<Self>;
@@ -38,7 +38,7 @@ pub mod tests {
 			.filter(|item| {
 				let mapped_item = T::from_id(item.id());
 
-				mapped_item == Some(item.clone())
+				mapped_item == Some(item).copied()
 			})
 			.count();
 		assert_eq!(

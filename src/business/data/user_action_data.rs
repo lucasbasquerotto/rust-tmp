@@ -1,3 +1,5 @@
+use chrono::{DateTime, Utc};
+
 use super::action_data::{Application, Request, Session};
 
 ////////////////////////////////////////////////
@@ -6,6 +8,7 @@ use super::action_data::{Application, Request, Session};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UserSession {
+	pub created_at: DateTime<Utc>,
 	pub user_id: Option<u64>,
 }
 
@@ -13,13 +16,16 @@ impl Session for UserSession {}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UserAuthSession {
+	pub created_at: DateTime<Utc>,
 	pub user_id: u64,
 }
 
 impl Session for UserAuthSession {}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UserNoAuthSession();
+pub struct UserNoAuthSession {
+	pub created_at: DateTime<Utc>,
+}
 
 impl Session for UserNoAuthSession {}
 
@@ -60,6 +66,8 @@ pub enum UserActionError {
 
 #[cfg(test)]
 pub mod tests {
+	use chrono::Utc;
+
 	use crate::business::data::action_data::{Application, Request};
 	use crate::business::data::user_action_data::{UserRequestContext, UserSession};
 
@@ -74,6 +82,7 @@ pub mod tests {
 				request_timeout: 1000,
 			},
 			session: UserSession {
+				created_at: Utc::now(),
 				user_id: options.user_id,
 			},
 			request: Request {
