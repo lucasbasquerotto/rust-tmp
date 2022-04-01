@@ -155,7 +155,7 @@ mod tests {
 
 		fn id(&self) -> u32 {
 			let TestActionType(id) = self;
-			id.clone()
+			*id
 		}
 
 		fn from_id(id: u32) -> Option<Self> {

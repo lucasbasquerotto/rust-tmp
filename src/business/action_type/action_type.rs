@@ -19,7 +19,7 @@ pub mod tests {
 	use crate::business::action_type::action_type::ActionType;
 
 	pub fn test_enum_action_type<T: 'static + ActionType + IntoEnumIterator>(
-		id_action_map: HashMap<u32, T>,
+		id_action_map: &HashMap<u32, T>,
 	) {
 		let unique_ids_count = HashSet::<u32>::from_iter(T::iter().map(|item| item.id())).len();
 		assert_eq!(

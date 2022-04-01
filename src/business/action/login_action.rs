@@ -110,7 +110,7 @@ mod tests {
 					name: "User 01".to_owned(),
 					pass: "p4$$w0rd".to_owned(),
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -130,7 +130,7 @@ mod tests {
 					name: "User 02".to_owned(),
 					pass: "p4$$w0rd2".to_owned(),
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert!(result.as_ref().is_ok());

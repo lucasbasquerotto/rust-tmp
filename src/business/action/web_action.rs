@@ -365,7 +365,7 @@ mod tests {
 					error: false,
 					status: None,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -401,7 +401,7 @@ mod tests {
 					error: false,
 					status: None,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -428,7 +428,7 @@ mod tests {
 					error: false,
 					status: Some(403),
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -464,7 +464,7 @@ mod tests {
 					error: true,
 					status: None,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -516,7 +516,7 @@ mod tests {
 					error: false,
 					status: None,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -546,7 +546,7 @@ mod tests {
 					error: false,
 					status: Some(403),
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -585,7 +585,7 @@ mod tests {
 					error: true,
 					status: None,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -634,7 +634,7 @@ mod tests {
 					error: false,
 					status: None,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -661,7 +661,7 @@ mod tests {
 					error: false,
 					status: Some(403),
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -697,7 +697,7 @@ mod tests {
 					error: true,
 					status: None,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(

@@ -83,10 +83,7 @@ pub mod tests {
 				allowed_actions: vec![],
 			});
 
-			let result = EchoWarnAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = EchoWarnAction::run(RequestInput { data: (), context });
 			assert_eq!(
 				result,
 				Err(EchoWarnError::ModeratorError(
@@ -104,10 +101,7 @@ pub mod tests {
 				allowed_actions: vec![EchoWarnAction::action_type()],
 			});
 
-			let result = EchoWarnAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = EchoWarnAction::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -124,10 +118,7 @@ pub mod tests {
 				allowed_actions: vec![],
 			});
 
-			let result = EchoWarnAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = EchoWarnAction::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),

@@ -81,7 +81,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 	}
 
 	fn run_inner(self) -> Result<AutoResult, AutoError> {
-		let AutoActionInternal(input) = &self;
+		let AutoActionInternal(input) = self;
 		run(input, "internal".to_string())
 	}
 }
@@ -115,7 +115,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 	}
 
 	fn run_inner(self) -> Result<AutoResult, AutoError> {
-		let AutoActionHook(input) = &self;
+		let AutoActionHook(input) = self;
 		run(input, "hook".to_string())
 	}
 }
@@ -125,15 +125,15 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 ////////////////////////////////////////////////
 
 fn run<C: RequestContext>(
-	input: &RequestInput<AutoData, C>,
+	input: RequestInput<AutoData, C>,
 	type_name: String,
 ) -> Result<AutoResult, AutoError> {
-	let AutoData { param1, param2 } = &input.data;
+	let AutoData { param1, param2 } = input.data;
 	let result = AutoResult {
 		id: 1,
 		auto: type_name,
-		param1: param1.to_string(),
-		param2: param2.clone(),
+		param1,
+		param2,
 	};
 	Ok(result)
 }
@@ -163,7 +163,7 @@ mod tests {
 					param1: "Param 01 (Error)".to_owned(),
 					param2: 1,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -183,7 +183,7 @@ mod tests {
 					param1: "Param 01 (Ok)".to_owned(),
 					param2: 2,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert!(result.as_ref().is_ok());
@@ -229,7 +229,7 @@ mod tests {
 					param1: "Param 01 (Ok)".to_owned(),
 					param2: 4,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert!(result.as_ref().is_ok());

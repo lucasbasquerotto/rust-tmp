@@ -83,10 +83,7 @@ pub mod tests {
 				allowed_actions: vec![],
 			});
 
-			let result = EchoInfoAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = EchoInfoAction::run(RequestInput { data: (), context });
 			assert_eq!(
 				result,
 				Err(EchoInfoError::ModeratorError(
@@ -104,10 +101,7 @@ pub mod tests {
 				allowed_actions: vec![EchoInfoAction::action_type()],
 			});
 
-			let result = EchoInfoAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = EchoInfoAction::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -124,10 +118,7 @@ pub mod tests {
 				allowed_actions: vec![EchoInfoAction::action_type()],
 			});
 
-			let result = EchoInfoAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = EchoInfoAction::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),

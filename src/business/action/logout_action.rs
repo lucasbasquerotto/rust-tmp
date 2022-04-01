@@ -78,10 +78,7 @@ mod tests {
 	fn main() {
 		run_test(|_| {
 			let context = user_context(UserTestOptions { user_id: None });
-			let result = LogoutAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = LogoutAction::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 		});
 	}

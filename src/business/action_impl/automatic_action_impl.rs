@@ -42,11 +42,11 @@ impl DescriptiveRequestContext for HookRequestContext {
 
 impl AutomaticRequestContext {
 	#[allow(dead_code)]
-	pub fn to_internal(&self) -> Result<InternalRequestContext, AutomaticActionError> {
+	pub fn to_internal(self) -> Result<InternalRequestContext, AutomaticActionError> {
 		let AutomaticRequestContext {
 			application,
 			request,
-		} = self.clone();
+		} = self;
 
 		match request {
 			AutomaticRequest::Internal => Ok(InternalRequestContext { application }),
@@ -55,11 +55,11 @@ impl AutomaticRequestContext {
 	}
 
 	#[allow(dead_code)]
-	pub fn to_hook(&self) -> Result<HookRequestContext, AutomaticActionError> {
+	pub fn to_hook(self) -> Result<HookRequestContext, AutomaticActionError> {
 		let AutomaticRequestContext {
 			application,
 			request,
-		} = self.clone();
+		} = self;
 
 		match request {
 			AutomaticRequest::Hook(hook_request) => Ok(HookRequestContext {
@@ -94,8 +94,8 @@ impl<I> RequestInput<I, AutomaticRequestContext> {
 }
 
 impl InternalRequestContext {
-	pub fn to_general(&self) -> AutomaticRequestContext {
-		let InternalRequestContext { application } = self.clone();
+	pub fn to_general(self) -> AutomaticRequestContext {
+		let InternalRequestContext { application } = self;
 
 		AutomaticRequestContext {
 			application,
@@ -116,12 +116,12 @@ impl<T> RequestInput<T, InternalRequestContext> {
 }
 
 impl HookRequestContext {
-	pub fn to_general(&self) -> AutomaticRequestContext {
+	pub fn to_general(self) -> AutomaticRequestContext {
 		let HookRequestContext {
 			application,
 			request,
 			..
-		} = self.clone();
+		} = self;
 
 		AutomaticRequestContext {
 			application,
@@ -317,10 +317,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticTestOptions { internal: false });
 
-			let result = TestAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestAction::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -334,10 +331,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
 
-			let result = TestAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestAction::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -351,10 +345,7 @@ pub mod tests {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
 
-			let result = TestActionHook::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestActionHook::run(RequestInput { data: (), context });
 			assert_eq!(result, Err(AutomaticActionError::NotHook));
 		});
 	}
@@ -364,10 +355,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticTestOptions { internal: false });
 
-			let result = TestActionHook::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestActionHook::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -381,10 +369,7 @@ pub mod tests {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: false });
 
-			let result = TestActionInternal::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestActionInternal::run(RequestInput { data: (), context });
 			assert_eq!(result, Err(AutomaticActionError::NotInternal));
 		});
 	}
@@ -394,10 +379,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
 
-			let result = TestActionInternal::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestActionInternal::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),

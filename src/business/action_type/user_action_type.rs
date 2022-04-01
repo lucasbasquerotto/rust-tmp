@@ -3,7 +3,7 @@ use crate::business::data::action_data::ActionScope;
 use std::{collections::HashMap, iter::FromIterator};
 use strum::{EnumIter, IntoEnumIterator};
 
-#[derive(Clone, Debug, Eq, PartialEq, EnumIter)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, EnumIter)]
 pub enum UserActionType {
 	Test,
 	Login,
@@ -30,7 +30,7 @@ impl ActionType for UserActionType {
 	}
 
 	fn from_id(id: u32) -> Option<Self> {
-		ID_ACTION_MAP.get(&id).map(|item| item.clone())
+		ID_ACTION_MAP.get(&id).map(|item| *item)
 	}
 }
 
@@ -45,7 +45,7 @@ mod tests {
 	#[test]
 	fn main() {
 		run_test(|_| {
-			test_enum_action_type(ID_ACTION_MAP.clone());
+			test_enum_action_type(&ID_ACTION_MAP);
 		});
 	}
 }

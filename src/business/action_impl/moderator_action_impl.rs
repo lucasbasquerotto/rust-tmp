@@ -61,14 +61,14 @@ where
 {
 	fn run(input: RequestInput<I, ModeratorRequestContext>) -> Result<O, E> {
 		let context = &input.context;
-		let action_type = &Self::action_type();
+		let action_type = Self::action_type();
 		let allowed =
-			context.session.admin || context.session.allowed_actions.contains(action_type);
+			context.session.admin || context.session.allowed_actions.contains(&action_type);
 
 		let action = if allowed {
 			Self::new(Ok(input))?
 		} else {
-			Self::new(Err(ModeratorActionError::NotAllowed(action_type.clone())))?
+			Self::new(Err(ModeratorActionError::NotAllowed(action_type)))?
 		};
 
 		action.run_inner()
@@ -127,10 +127,7 @@ pub mod tests {
 				allowed_actions: vec![],
 			});
 
-			let result = TestAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestAction::run(RequestInput { data: (), context });
 			assert_eq!(
 				result,
 				Err(ModeratorActionError::NotAllowed(ModeratorActionType::Test))
@@ -146,10 +143,7 @@ pub mod tests {
 				allowed_actions: vec![TestAction::action_type()],
 			});
 
-			let result = TestAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestAction::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -166,10 +160,7 @@ pub mod tests {
 				allowed_actions: vec![],
 			});
 
-			let result = TestAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestAction::run(RequestInput { data: (), context });
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
