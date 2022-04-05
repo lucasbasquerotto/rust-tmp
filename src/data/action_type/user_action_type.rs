@@ -3,26 +3,28 @@ use std::{collections::HashMap, iter::FromIterator};
 use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, EnumIter)]
-pub enum AutomaticActionType {
+pub enum UserActionType {
 	Test,
-	Auto,
+	Login,
+	Logout,
 	Web,
 }
 
 #[ctor::ctor]
-static ID_ACTION_MAP: HashMap<u32, AutomaticActionType> =
-	HashMap::from_iter(AutomaticActionType::iter().map(|item| (item.id(), item)));
+static ID_ACTION_MAP: HashMap<u32, UserActionType> =
+	HashMap::from_iter(UserActionType::iter().map(|item| (item.id(), item)));
 
-impl ActionType for AutomaticActionType {
+impl ActionType for UserActionType {
 	fn scope() -> ActionScope {
-		ActionScope::Automatic
+		ActionScope::User
 	}
 
 	fn id(&self) -> u32 {
 		match self {
-			AutomaticActionType::Test => 0,
-			AutomaticActionType::Auto => 1,
-			AutomaticActionType::Web => 2,
+			UserActionType::Test => 0,
+			UserActionType::Login => 1,
+			UserActionType::Logout => 2,
+			UserActionType::Web => 3,
 		}
 	}
 
@@ -35,7 +37,7 @@ impl ActionType for AutomaticActionType {
 mod tests {
 	use super::ID_ACTION_MAP;
 	use crate::{
-		business::action_type::general_action_type::tests::test_enum_action_type,
+		data::action_type::general_action_type::tests::test_enum_action_type,
 		tests::test_utils::tests::run_test,
 	};
 

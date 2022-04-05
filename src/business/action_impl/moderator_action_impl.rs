@@ -1,13 +1,13 @@
-use crate::business::{
-	action_type::general_action_type::ActionType,
-	data::{
+use crate::business::definition::{
+	action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
+	action_helpers::DescriptiveRequestContext,
+};
+use crate::data::{
+	action::{
 		action_data::{DescriptiveError, ErrorData, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext, ModeratorSession},
 	},
-	definition::{
-		action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
-		action_helpers::DescriptiveRequestContext,
-	},
+	action_type::general_action_type::ActionType,
 };
 
 ////////////////////////////////////////////////
@@ -81,19 +81,17 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use crate::business::action_type::moderator_action_type::ModeratorActionType;
-	use crate::business::data::moderator_action_data::tests::{
+	use crate::business::definition::action::Action;
+	use crate::business::definition::action::ModeratorAction;
+	use crate::data::action::moderator_action_data::tests::{
 		moderator_context, ModeratorTestOptions,
 	};
-	use crate::business::data::moderator_action_data::ModeratorActionError;
-	use crate::business::definition::action::Action;
-	use crate::business::{
-		data::{
-			action_data::{RequestContext, RequestInput},
-			moderator_action_data::ModeratorRequestContext,
-		},
-		definition::action::ModeratorAction,
+	use crate::data::action::moderator_action_data::ModeratorActionError;
+	use crate::data::action::{
+		action_data::{RequestContext, RequestInput},
+		moderator_action_data::ModeratorRequestContext,
 	};
+	use crate::data::action_type::moderator_action_type::ModeratorActionType;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]

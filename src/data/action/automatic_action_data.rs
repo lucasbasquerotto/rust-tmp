@@ -45,7 +45,7 @@ pub enum AutomaticActionError {
 
 #[cfg(test)]
 pub mod tests {
-	use crate::business::data::action_data::{Application, Request};
+	use crate::data::action::action_data::{Application, Request};
 
 	use super::{AutomaticRequest, AutomaticRequestContext};
 

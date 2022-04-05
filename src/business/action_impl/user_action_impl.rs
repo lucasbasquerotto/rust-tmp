@@ -1,14 +1,14 @@
 use crate::business::{
-	data::{
-		action_data::{DescriptiveError, ErrorData, RequestInput},
-		user_action_data::{
-			UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
-			UserNoAuthSession, UserRequestContext, UserSession,
-		},
-	},
 	definition::action::{Action, ActionError, UserAction},
 	definition::action::{ActionInput, ActionOutput},
 	definition::action_helpers::DescriptiveRequestContext,
+};
+use crate::data::action::{
+	action_data::{DescriptiveError, ErrorData, RequestInput},
+	user_action_data::{
+		UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
+		UserNoAuthSession, UserRequestContext, UserSession,
+	},
 };
 
 ////////////////////////////////////////////////
@@ -212,16 +212,14 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use crate::business::action_type::user_action_type::UserActionType;
-	use crate::business::data::user_action_data::tests::{user_context, UserTestOptions};
-	use crate::business::data::user_action_data::{
+	use crate::business::definition::action::Action;
+	use crate::business::definition::action::UserAction;
+	use crate::data::action::user_action_data::tests::{user_context, UserTestOptions};
+	use crate::data::action::user_action_data::{
 		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext,
 	};
-	use crate::business::definition::action::Action;
-	use crate::business::{
-		data::{action_data::RequestInput, user_action_data::UserRequestContext},
-		definition::action::UserAction,
-	};
+	use crate::data::action::{action_data::RequestInput, user_action_data::UserRequestContext};
+	use crate::data::action_type::user_action_type::UserActionType;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]

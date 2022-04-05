@@ -1,15 +1,15 @@
 use std::fmt::Debug;
 
-use crate::business::{
-	action_type::{
-		automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
-		user_action_type::UserActionType,
-	},
-	data::{
+use crate::data::{
+	action::{
 		action_data::{DescriptiveError, ErrorData, RequestInput},
 		automatic_action_data::{AutomaticActionError, AutomaticRequestContext},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 		user_action_data::{UserActionError, UserRequestContext},
+	},
+	action_type::{
+		automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
+		user_action_type::UserActionType,
 	},
 };
 

@@ -21,7 +21,7 @@ pub mod tests {
 
 	use strum::IntoEnumIterator;
 
-	use crate::business::action_type::general_action_type::ActionType;
+	use super::ActionType;
 
 	pub fn test_enum_action_type<T: 'static + ActionType + IntoEnumIterator>(
 		id_action_map: &HashMap<u32, T>,

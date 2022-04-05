@@ -1,10 +1,10 @@
-use crate::business::{
-	action_type::user_action_type::UserActionType,
-	data::{
+use crate::business::definition::action::{ActionError, UserAction};
+use crate::data::{
+	action::{
 		action_data::{DescriptiveError, ErrorData, RequestInput},
 		user_action_data::{UserActionError, UserRequestContext},
 	},
-	definition::action::{ActionError, UserAction},
+	action_type::user_action_type::UserActionType,
 };
 
 ////////////////////////////////////////////////
@@ -45,9 +45,7 @@ impl UserAction<(), (), LogoutError> for LogoutAction {
 	fn new(
 		input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
 	) -> Result<Self, LogoutError> {
-		input
-			.map(Self)
-			.map_err(LogoutError::UserError)
+		input.map(Self).map_err(LogoutError::UserError)
 	}
 
 	fn run_inner(self) -> Result<(), LogoutError> {
@@ -63,16 +61,11 @@ impl UserAction<(), (), LogoutError> for LogoutAction {
 #[cfg(test)]
 mod tests {
 	use super::LogoutAction;
-	use crate::{
-		business::{
-			data::{
-				action_data::RequestInput,
-				user_action_data::tests::{user_context, UserTestOptions},
-			},
-			definition::action::Action,
-		},
-		tests::test_utils::tests::run_test,
+	use crate::data::action::{
+		action_data::RequestInput,
+		user_action_data::tests::{user_context, UserTestOptions},
 	};
+	use crate::{business::definition::action::Action, tests::test_utils::tests::run_test};
 
 	#[test]
 	fn main() {

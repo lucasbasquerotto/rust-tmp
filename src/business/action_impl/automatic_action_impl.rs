@@ -1,14 +1,14 @@
 use crate::business::{
-	data::{
-		action_data::{DescriptiveError, ErrorData, RequestInput},
-		automatic_action_data::{
-			AutomaticActionError, AutomaticRequest, AutomaticRequestContext, HookRequestContext,
-			InternalRequestContext,
-		},
-	},
 	definition::action::{Action, ActionError, AutomaticAction},
 	definition::action::{ActionInput, ActionOutput},
 	definition::action_helpers::DescriptiveRequestContext,
+};
+use crate::data::action::{
+	action_data::{DescriptiveError, ErrorData, RequestInput},
+	automatic_action_data::{
+		AutomaticActionError, AutomaticRequest, AutomaticRequestContext, HookRequestContext,
+		InternalRequestContext,
+	},
 };
 
 ////////////////////////////////////////////////
@@ -188,18 +188,18 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use crate::business::action_type::automatic_action_type::AutomaticActionType;
-	use crate::business::data::automatic_action_data::tests::{
+	use crate::business::definition::action::Action;
+	use crate::business::definition::action::AutomaticAction;
+	use crate::data::action::automatic_action_data::tests::{
 		automatic_context, AutomaticTestOptions,
 	};
-	use crate::business::data::automatic_action_data::{
+	use crate::data::action::automatic_action_data::{
 		AutomaticActionError, AutomaticRequest, HookRequestContext, InternalRequestContext,
 	};
-	use crate::business::definition::action::Action;
-	use crate::business::{
-		data::{action_data::RequestInput, automatic_action_data::AutomaticRequestContext},
-		definition::action::AutomaticAction,
+	use crate::data::action::{
+		action_data::RequestInput, automatic_action_data::AutomaticRequestContext,
 	};
+	use crate::data::action_type::automatic_action_type::AutomaticActionType;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]

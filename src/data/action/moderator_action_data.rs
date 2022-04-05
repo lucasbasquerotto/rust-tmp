@@ -1,4 +1,4 @@
-use crate::business::action_type::moderator_action_type::ModeratorActionType;
+use crate::data::action_type::moderator_action_type::ModeratorActionType;
 
 use super::action_data::{Application, Request, Session};
 
@@ -37,8 +37,8 @@ pub enum ModeratorActionError {
 
 #[cfg(test)]
 pub mod tests {
-	use crate::business::action_type::moderator_action_type::ModeratorActionType;
-	use crate::business::data::action_data::{Application, Request};
+	use crate::data::action::action_data::{Application, Request};
+	use crate::data::action_type::moderator_action_type::ModeratorActionType;
 
 	use super::{ModeratorRequestContext, ModeratorSession};
 

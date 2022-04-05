@@ -1,10 +1,10 @@
-use crate::business::{
-	action_type::user_action_type::UserActionType,
-	data::{
+use crate::business::definition::action::{ActionError, ActionInput, ActionOutput, UserAction};
+use crate::data::{
+	action::{
 		action_data::{DescriptiveError, ErrorData, RequestInput},
 		user_action_data::{UserActionError, UserNoAuthRequestContext, UserRequestContext},
 	},
-	definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
+	action_type::user_action_type::UserActionType,
 };
 
 ////////////////////////////////////////////////
@@ -94,10 +94,10 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 #[cfg(test)]
 mod tests {
 	use super::{LoginAction, LoginData, LoginError, LoginResult};
-	use crate::business::data::action_data::RequestInput;
-	use crate::business::data::user_action_data::tests::{user_context, UserTestOptions};
-	use crate::business::data::user_action_data::UserActionError;
 	use crate::business::definition::action::Action;
+	use crate::data::action::action_data::RequestInput;
+	use crate::data::action::user_action_data::tests::{user_context, UserTestOptions};
+	use crate::data::action::user_action_data::UserActionError;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
