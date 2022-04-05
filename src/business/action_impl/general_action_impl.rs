@@ -102,8 +102,9 @@ impl<T: ActionType> fmt::Display for ActionTypeWrapper<T> {
 #[cfg(test)]
 mod tests {
 	use crate::business::action_impl::general_action_impl::ActionTypeWrapper;
+	use crate::business::action_type::general_action_type::ActionScope;
 	use crate::business::data::action_data::{
-		ActionErrorInfo, ActionScope, DescriptiveError, ErrorContext, ErrorData,
+		ActionErrorInfo, DescriptiveError, ErrorContext, ErrorData,
 	};
 	use crate::business::definition::action::ActionError;
 	use crate::business::definition::action_helpers::ActionErrorHelper;

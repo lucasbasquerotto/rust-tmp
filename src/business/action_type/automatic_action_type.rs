@@ -1,5 +1,4 @@
-use super::general_action_type::ActionType;
-use crate::business::data::action_data::ActionScope;
+use super::general_action_type::{ActionScope, ActionType};
 use std::{collections::HashMap, iter::FromIterator};
 use strum::{EnumIter, IntoEnumIterator};
 

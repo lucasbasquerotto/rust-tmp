@@ -121,14 +121,3 @@ pub struct ActionErrorInfo<T: ActionType, C: RequestContext, E: ActionError> {
 	pub error_context: ErrorContext<T, C>,
 	pub error: E,
 }
-
-////////////////////////////////////////////////
-/////////////////// ACTION /////////////////////
-////////////////////////////////////////////////
-
-#[derive(Debug)]
-pub enum ActionScope {
-	User,
-	Moderator,
-	Automatic,
-}

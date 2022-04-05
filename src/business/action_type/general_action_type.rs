@@ -1,6 +1,11 @@
 use std::fmt::Debug;
 
-use crate::business::data::action_data::ActionScope;
+#[derive(Debug)]
+pub enum ActionScope {
+	User,
+	Moderator,
+	Automatic,
+}
 
 pub trait ActionType: Clone + Copy + Debug + Eq + PartialEq {
 	fn scope() -> ActionScope;
