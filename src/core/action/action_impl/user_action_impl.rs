@@ -1,15 +1,17 @@
-use crate::core::action::data::{
-	action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
-	user_action_data::{
-		UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
-		UserNoAuthRequestContext, UserNoAuthSession, UserOutputInfo, UserRequestContext,
-		UserRequestInput, UserSession,
+use crate::core::action::{
+	data::{
+		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
+		user_action_data::{
+			UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
+			UserNoAuthRequestContext, UserNoAuthSession, UserOutputInfo, UserRequestContext,
+			UserRequestInput, UserSession, UserUnconfirmedRequestContext, UserUnconfirmedSession,
+		},
 	},
+	definition::action_helpers::DescriptiveInfo,
 };
 use crate::core::action::{
 	definition::action::{Action, ActionError, UserAction},
 	definition::action::{ActionInput, ActionOutput},
-	definition::action_helpers::DescriptiveRequestContext,
 };
 
 ////////////////////////////////////////////////
@@ -18,29 +20,57 @@ use crate::core::action::{
 
 impl<I: ActionInput> ActionInput for RequestInput<I, UserRequestContext> {}
 
-impl DescriptiveRequestContext for UserRequestContext {
+impl DescriptiveInfo for UserAuthSession {
 	fn description(&self) -> String {
-		let UserRequestContext {
-			session: UserSession { user_id, .. },
-			..
-		} = &self;
-		format!("user({user_id:?})")
+		let UserAuthSession { user_id, .. } = &self;
+		format!("user({user_id})")
 	}
 }
 
-impl DescriptiveRequestContext for UserAuthRequestContext {
+impl DescriptiveInfo for UserNoAuthSession {
 	fn description(&self) -> String {
-		let UserAuthRequestContext {
-			session: UserAuthSession { user_id, .. },
-			..
-		} = &self;
-		format!("user({user_id:?})")
+		"user(not authenticated)".to_string()
 	}
 }
 
-impl DescriptiveRequestContext for UserNoAuthRequestContext {
+impl DescriptiveInfo for UserUnconfirmedSession {
 	fn description(&self) -> String {
-		"unauthenticated".to_string()
+		let UserUnconfirmedSession { user_id, .. } = &self;
+		format!("user(unconfirmed - {user_id})")
+	}
+}
+
+impl DescriptiveInfo for UserSession {
+	fn description(&self) -> String {
+		match self {
+			UserSession::Auth(session) => session.description(),
+			UserSession::NoAuth(session) => session.description(),
+			UserSession::Unconfirmed(session) => session.description(),
+		}
+	}
+}
+
+impl DescriptiveInfo for UserRequestContext {
+	fn description(&self) -> String {
+		self.session.description()
+	}
+}
+
+impl DescriptiveInfo for UserAuthRequestContext {
+	fn description(&self) -> String {
+		self.session.description()
+	}
+}
+
+impl DescriptiveInfo for UserNoAuthRequestContext {
+	fn description(&self) -> String {
+		self.session.description()
+	}
+}
+
+impl DescriptiveInfo for UserUnconfirmedRequestContext {
+	fn description(&self) -> String {
+		self.session.description()
 	}
 }
 
@@ -52,16 +82,14 @@ impl UserRequestContext {
 			request,
 		} = self;
 
-		match session.user_id {
-			Some(user_id) => Ok(UserAuthRequestContext {
+		match session {
+			UserSession::Auth(session) => Ok(UserAuthRequestContext {
 				application,
-				session: UserAuthSession {
-					created_at: session.created_at,
-					user_id,
-				},
+				session,
 				request,
 			}),
-			None => Err(UserActionError::Unauthenticated),
+			UserSession::NoAuth(_) => Err(UserActionError::Unauthenticated),
+			UserSession::Unconfirmed(_) => Err(UserActionError::Unauthenticated),
 		}
 	}
 
@@ -72,13 +100,31 @@ impl UserRequestContext {
 			request,
 		} = self;
 
-		match session.user_id {
-			Some(_) => Err(UserActionError::Authenticated),
-			None => Ok(UserNoAuthRequestContext {
+		match session {
+			UserSession::Auth(_) => Err(UserActionError::Authenticated),
+			UserSession::NoAuth(session) => Ok(UserNoAuthRequestContext {
 				application,
-				session: UserNoAuthSession {
-					created_at: session.created_at,
-				},
+				session,
+				request,
+			}),
+			UserSession::Unconfirmed(_) => Err(UserActionError::Authenticated),
+		}
+	}
+
+	#[allow(dead_code)]
+	pub fn into_unconfirmed(self) -> Result<UserUnconfirmedRequestContext, UserActionError> {
+		let UserRequestContext {
+			application,
+			session,
+			request,
+		} = self;
+
+		match session {
+			UserSession::Auth(_) => Err(UserActionError::Authenticated),
+			UserSession::NoAuth(_) => Err(UserActionError::Unauthenticated),
+			UserSession::Unconfirmed(session) => Ok(UserUnconfirmedRequestContext {
+				application,
+				session,
 				request,
 			}),
 		}
@@ -116,10 +162,7 @@ impl UserAuthRequestContext {
 
 		UserRequestContext {
 			application,
-			session: UserSession {
-				created_at: session.created_at,
-				user_id: Some(session.user_id),
-			},
+			session: UserSession::Auth(session),
 			request,
 		}
 	}
@@ -146,10 +189,34 @@ impl UserNoAuthRequestContext {
 
 		UserRequestContext {
 			application,
-			session: UserSession {
-				created_at: session.created_at,
-				user_id: None,
-			},
+			session: UserSession::NoAuth(session),
+			request,
+		}
+	}
+}
+
+impl<T> RequestInput<T, UserUnconfirmedRequestContext> {
+	#[allow(dead_code)]
+	pub fn into_general(self) -> RequestInput<T, UserRequestContext> {
+		let context = self.context.into_general();
+		RequestInput {
+			context,
+			data: self.data,
+		}
+	}
+}
+
+impl UserUnconfirmedRequestContext {
+	pub fn into_general(self) -> UserRequestContext {
+		let UserUnconfirmedRequestContext {
+			application,
+			request,
+			session,
+		} = self;
+
+		UserRequestContext {
+			application,
+			session: UserSession::Unconfirmed(session),
 			request,
 		}
 	}
@@ -229,7 +296,8 @@ where
 #[cfg(test)]
 pub mod tests {
 	use crate::core::action::data::user_action_data::{
-		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext, UserOutputInfo,
+		UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
+		UserOutputInfo, UserSession, UserUnconfirmedSession,
 	};
 	use crate::core::action::data::{
 		action_data::ActionContext,
@@ -267,9 +335,14 @@ pub mod tests {
 		}
 
 		fn run_inner(self) -> Result<(), UserActionError> {
-			match self.0.context.session.user_id {
-				Some(user_id) => info!("user action test: {user_id}"),
-				None => info!("user action test"),
+			match self.0.context.session {
+				UserSession::Auth(UserAuthSession { user_id, .. }) => {
+					info!("user action test: {user_id}")
+				}
+				UserSession::Unconfirmed(UserUnconfirmedSession { user_id, .. }) => {
+					info!("user action test: [unconfirmed] {user_id}")
+				}
+				UserSession::NoAuth(_) => info!("user action test"),
 			};
 			Ok(())
 		}

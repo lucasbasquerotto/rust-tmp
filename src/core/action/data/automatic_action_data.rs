@@ -1,6 +1,8 @@
 use crate::core::action::{
 	action_type::automatic_action_type::AutomaticActionType,
-	data::action_data::{ActionErrorInfo, ActionResultInfo, Application, Request, RequestInput},
+	data::action_data::{
+		ActionErrorInfo, ActionResultInfo, Application, Request, RequestContext, RequestInput,
+	},
 };
 use std::fmt::Debug;
 
@@ -20,16 +22,22 @@ pub struct AutomaticRequestContext {
 	pub request: AutomaticRequest,
 }
 
+impl RequestContext for AutomaticRequestContext {}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct InternalRequestContext {
 	pub application: Application,
 }
+
+impl RequestContext for InternalRequestContext {}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct HookRequestContext {
 	pub application: Application,
 	pub request: Request,
 }
+
+impl RequestContext for HookRequestContext {}
 
 pub type AutomaticRequestInput<I> = RequestInput<I, AutomaticRequestContext>;
 

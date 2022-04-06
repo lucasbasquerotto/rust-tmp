@@ -1,6 +1,6 @@
 use crate::core::action::definition::{
 	action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
-	action_helpers::DescriptiveRequestContext,
+	action_helpers::DescriptiveInfo,
 };
 use crate::core::action::{
 	action_type::general_action_type::ActionType,
@@ -19,7 +19,7 @@ use crate::core::action::{
 
 impl<I: ActionInput> ActionInput for RequestInput<I, ModeratorRequestContext> {}
 
-impl DescriptiveRequestContext for ModeratorRequestContext {
+impl DescriptiveInfo for ModeratorRequestContext {
 	fn description(&self) -> String {
 		let ModeratorRequestContext {
 			session: ModeratorSession { user_id, .. },

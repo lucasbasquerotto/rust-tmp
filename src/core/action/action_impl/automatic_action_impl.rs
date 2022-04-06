@@ -1,14 +1,17 @@
-use crate::core::action::data::{
-	action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
-	automatic_action_data::{
-		AutomaticActionError, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequest,
-		AutomaticRequestContext, AutomaticRequestInput, HookRequestContext, InternalRequestContext,
+use crate::core::action::{
+	data::{
+		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
+		automatic_action_data::{
+			AutomaticActionError, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequest,
+			AutomaticRequestContext, AutomaticRequestInput, HookRequestContext,
+			InternalRequestContext,
+		},
 	},
+	definition::action_helpers::DescriptiveInfo,
 };
 use crate::core::action::{
 	definition::action::{Action, ActionError, AutomaticAction},
 	definition::action::{ActionInput, ActionOutput},
-	definition::action_helpers::DescriptiveRequestContext,
 };
 
 ////////////////////////////////////////////////
@@ -17,7 +20,7 @@ use crate::core::action::{
 
 impl<I: ActionInput> ActionInput for RequestInput<I, AutomaticRequestContext> {}
 
-impl DescriptiveRequestContext for AutomaticRequestContext {
+impl DescriptiveInfo for AutomaticRequestContext {
 	fn description(&self) -> String {
 		let AutomaticRequestContext { request, .. } = &self;
 
@@ -28,13 +31,13 @@ impl DescriptiveRequestContext for AutomaticRequestContext {
 	}
 }
 
-impl DescriptiveRequestContext for InternalRequestContext {
+impl DescriptiveInfo for InternalRequestContext {
 	fn description(&self) -> String {
 		"automatic(internal)".to_string()
 	}
 }
 
-impl DescriptiveRequestContext for HookRequestContext {
+impl DescriptiveInfo for HookRequestContext {
 	fn description(&self) -> String {
 		"automatic(hook)".to_string()
 	}

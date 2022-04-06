@@ -7,8 +7,18 @@ use crate::core::action::{
 
 use super::action::ActionError;
 
-pub trait DescriptiveRequestContext: Debug + Eq + PartialEq + Clone {
+pub trait DescriptiveInfo {
 	fn description(&self) -> String;
+}
+
+pub trait DescriptiveRequestContext:
+	Debug + Eq + PartialEq + Clone + DescriptiveInfo + RequestContext
+{
+}
+
+impl<T: Debug + Eq + PartialEq + Clone + DescriptiveInfo + RequestContext> DescriptiveRequestContext
+	for T
+{
 }
 
 pub trait ActionErrorHelper<T: ActionType, C: RequestContext, E: ActionError>: Debug

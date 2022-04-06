@@ -7,14 +7,8 @@ use crate::core::action::definition::{
 };
 use crate::core::action::{
 	action_type::general_action_type::ActionType,
-	data::action_data::{ActionErrorInfo, ErrorData, ErrorInfo, RequestContext},
+	data::action_data::{ActionErrorInfo, ErrorData, ErrorInfo},
 };
-
-////////////////////////////////////////////////
-//////////////////// INPUT /////////////////////
-////////////////////////////////////////////////
-
-impl<T: DescriptiveRequestContext> RequestContext for T {}
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////
@@ -101,21 +95,27 @@ impl<T: ActionType> fmt::Display for ActionTypeWrapper<T> {
 
 #[cfg(test)]
 mod tests {
-	use crate::core::action::action_impl::general_action_impl::ActionTypeWrapper;
-	use crate::core::action::action_type::general_action_type::ActionScope;
 	use crate::core::action::action_type::general_action_type::ActionType;
 	use crate::core::action::data::action_data::{
 		ActionContext, ActionErrorInfo, DescriptiveError, ErrorData,
 	};
 	use crate::core::action::definition::action::ActionError;
 	use crate::core::action::definition::action_helpers::ActionErrorHelper;
-	use crate::core::action::definition::action_helpers::DescriptiveRequestContext;
+	use crate::core::action::{
+		action_impl::general_action_impl::ActionTypeWrapper,
+		definition::action_helpers::DescriptiveInfo,
+	};
+	use crate::core::action::{
+		action_type::general_action_type::ActionScope, data::action_data::RequestContext,
+	};
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug, Eq, PartialEq, Clone)]
 	struct TestRequestContext(String);
 
-	impl DescriptiveRequestContext for TestRequestContext {
+	impl RequestContext for TestRequestContext {}
+
+	impl DescriptiveInfo for TestRequestContext {
 		fn description(&self) -> String {
 			self.0.to_string()
 		}
