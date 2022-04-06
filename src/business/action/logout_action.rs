@@ -50,7 +50,7 @@ impl UserAction<(), (), LogoutError> for LogoutAction {
 	}
 
 	fn run_inner(self) -> Result<(), LogoutError> {
-		println!("logout");
+		println!("TODO: logout");
 		Ok(())
 	}
 }

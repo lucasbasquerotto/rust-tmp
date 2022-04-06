@@ -79,7 +79,7 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 	fn run_inner(self) -> Result<LoginResult, LoginError> {
 		let LoginAction(input) = &self;
 		let LoginData { name, pass } = &input.data;
-		println!("login: {name} ({pass})");
+		println!("TODO: login: {name} ({pass})");
 		let result = LoginResult {
 			id: 1,
 			name: name.to_string(),
