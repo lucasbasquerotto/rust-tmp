@@ -62,9 +62,15 @@ impl UserAction<(), (), LogoutError> for LogoutAction {
 #[cfg(test)]
 mod tests {
 	use super::LogoutAction;
-	use crate::core::action::data::{
-		action_data::RequestInput,
-		user_action_data::tests::{user_context, UserTestOptions},
+	use crate::core::action::{
+		data::{
+			action_data::{ActionContext, RequestInput},
+			user_action_data::{
+				tests::{user_context, UserTestOptions},
+				UserOutputInfo,
+			},
+		},
+		definition::action::UserAction,
 	};
 	use crate::{core::action::definition::action::Action, tests::test_utils::tests::run_test};
 
@@ -72,8 +78,18 @@ mod tests {
 	fn main() {
 		run_test(|_| {
 			let context = user_context(UserTestOptions { user_id: None });
+			let action_context = ActionContext {
+				action_type: LogoutAction::action_type(),
+				context: context.clone(),
+			};
 			let result = LogoutAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(UserOutputInfo {
+					action_context,
+					data: (),
+				}),
+			);
 		});
 	}
 }

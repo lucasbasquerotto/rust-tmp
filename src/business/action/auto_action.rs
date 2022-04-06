@@ -141,10 +141,11 @@ fn run<C: RequestContext>(
 #[cfg(test)]
 mod tests {
 	use super::{AutoActionHook, AutoActionInternal, AutoData, AutoError, AutoResult};
-	use crate::core::action::data::automatic_action_data::tests::{
-		automatic_context, AutomaticTestOptions,
-	};
 	use crate::core::action::data::automatic_action_data::AutomaticActionError;
+	use crate::core::action::data::automatic_action_data::{
+		tests::{automatic_context, AutomaticTestOptions},
+		AutomaticOutputInfo,
+	};
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::{
 		data::action_data::{ActionContext, ActionErrorInfo, RequestInput},
@@ -156,6 +157,10 @@ mod tests {
 	fn test_internal_error_hook() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let action_context = ActionContext {
+				action_type: AutoActionInternal::action_type(),
+				context: context.clone(),
+			};
 
 			let result = AutoActionInternal::run(RequestInput {
 				data: AutoData {
@@ -168,10 +173,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: AutoActionInternal::action_type(),
-						context: context.clone(),
-					},
+					action_context,
 					error: AutoError::AutomaticError(AutomaticActionError::NotInternal),
 				}),
 			);
@@ -182,6 +184,10 @@ mod tests {
 	fn test_internal_ok() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let action_context = ActionContext {
+				action_type: AutoActionInternal::action_type(),
+				context: context.clone(),
+			};
 
 			let result = AutoActionInternal::run(RequestInput {
 				data: AutoData {
@@ -193,13 +199,16 @@ mod tests {
 
 			assert!(result.as_ref().is_ok());
 			assert_eq!(
-				result,
-				Ok(AutoResult {
-					id: 1,
-					auto: "internal".to_string(),
-					param1: "Param 01 (Ok)".to_owned(),
-					param2: 2,
-				}),
+				&result,
+				&Ok(AutomaticOutputInfo {
+					action_context,
+					data: AutoResult {
+						id: 1,
+						auto: "internal".to_string(),
+						param1: "Param 01 (Ok)".to_owned(),
+						param2: 2,
+					},
+				})
 			);
 		});
 	}
@@ -208,6 +217,10 @@ mod tests {
 	fn test_hook_error_internal() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let action_context = ActionContext {
+				action_type: AutoActionHook::action_type(),
+				context: context.clone(),
+			};
 
 			let result = AutoActionHook::run(RequestInput {
 				data: AutoData {
@@ -220,10 +233,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: AutoActionInternal::action_type(),
-						context: context.clone(),
-					},
+					action_context,
 					error: AutoError::AutomaticError(AutomaticActionError::NotHook),
 				}),
 			);
@@ -234,6 +244,10 @@ mod tests {
 	fn test_hook_ok() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let action_context = ActionContext {
+				action_type: AutoActionHook::action_type(),
+				context: context.clone(),
+			};
 
 			let result = AutoActionHook::run(RequestInput {
 				data: AutoData {
@@ -245,13 +259,16 @@ mod tests {
 
 			assert!(result.as_ref().is_ok());
 			assert_eq!(
-				result,
-				Ok(AutoResult {
-					id: 1,
-					auto: "hook".to_string(),
-					param1: "Param 01 (Ok)".to_owned(),
-					param2: 4,
-				}),
+				&result,
+				&Ok(AutomaticOutputInfo {
+					action_context,
+					data: AutoResult {
+						id: 1,
+						auto: "hook".to_string(),
+						param1: "Param 01 (Ok)".to_owned(),
+						param2: 4,
+					},
+				})
 			);
 		});
 	}

@@ -1,6 +1,6 @@
 use crate::core::action::{
 	action_type::moderator_action_type::ModeratorActionType,
-	data::action_data::{ActionErrorInfo, RequestInput},
+	data::action_data::{ActionErrorInfo, ActionResultInfo, RequestInput},
 };
 
 use super::action_data::{Application, Request, Session};
@@ -29,8 +29,9 @@ pub type ModeratorRequestInput<I> = RequestInput<I, ModeratorRequestContext>;
 
 pub type ModeratorActionInput<I> = Result<ModeratorRequestInput<I>, ModeratorActionError>;
 
-pub type ModeratorActionErrorInfo<E> =
-	ActionErrorInfo<ModeratorActionType, ModeratorRequestContext, E>;
+pub type ModeratorOutputInfo<D> = ActionResultInfo<ModeratorActionType, ModeratorRequestContext, D>;
+
+pub type ModeratorErrorInfo<E> = ActionErrorInfo<ModeratorActionType, ModeratorRequestContext, E>;
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////

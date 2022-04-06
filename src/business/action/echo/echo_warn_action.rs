@@ -65,11 +65,13 @@ impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction {
 #[cfg(test)]
 pub mod tests {
 	use super::EchoWarnAction;
-	use crate::core::action::data::action_data::RequestInput;
 	use crate::core::action::data::moderator_action_data::tests::{
 		moderator_context, ModeratorTestOptions,
 	};
 	use crate::core::action::data::moderator_action_data::ModeratorActionError;
+	use crate::core::action::data::{
+		action_data::RequestInput, moderator_action_data::ModeratorOutputInfo,
+	};
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::definition::action::ModeratorAction;
 	use crate::core::action::{
@@ -88,6 +90,10 @@ pub mod tests {
 				admin: false,
 				allowed_actions: vec![],
 			});
+			let action_context = ActionContext {
+				action_type: EchoWarnAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = EchoWarnAction::run(RequestInput {
 				data: (),
@@ -96,10 +102,7 @@ pub mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: EchoWarnAction::action_type(),
-						context: context.clone(),
-					},
+					action_context,
 					error: EchoWarnError::ModeratorError(ModeratorActionError::NotAllowed(
 						ModeratorActionType::EchoWarn
 					)),
@@ -115,9 +118,19 @@ pub mod tests {
 				admin: false,
 				allowed_actions: vec![EchoWarnAction::action_type()],
 			});
+			let action_context = ActionContext {
+				action_type: EchoWarnAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = EchoWarnAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(ModeratorOutputInfo {
+					action_context,
+					data: (),
+				}),
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("WARN - echo warn action".to_string())
@@ -132,9 +145,19 @@ pub mod tests {
 				admin: true,
 				allowed_actions: vec![],
 			});
+			let action_context = ActionContext {
+				action_type: EchoWarnAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = EchoWarnAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(ModeratorOutputInfo {
+					action_context,
+					data: (),
+				}),
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("WARN - echo warn action".to_string())

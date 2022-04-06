@@ -95,8 +95,11 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 #[cfg(test)]
 mod tests {
 	use super::{LoginAction, LoginData, LoginError, LoginResult};
-	use crate::core::action::data::user_action_data::tests::{user_context, UserTestOptions};
 	use crate::core::action::data::user_action_data::UserActionError;
+	use crate::core::action::data::user_action_data::{
+		tests::{user_context, UserTestOptions},
+		UserOutputInfo,
+	};
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::{
 		data::action_data::{ActionContext, ActionErrorInfo, RequestInput},
@@ -134,6 +137,10 @@ mod tests {
 	fn test_ok() {
 		run_test(|_| {
 			let context = user_context(UserTestOptions { user_id: None });
+			let action_context = ActionContext {
+				action_type: LoginAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = LoginAction::run(RequestInput {
 				data: LoginData {
@@ -145,10 +152,13 @@ mod tests {
 
 			assert!(result.as_ref().is_ok());
 			assert_eq!(
-				result,
-				Ok(LoginResult {
-					id: 1,
-					name: "User 02".to_string(),
+				&result,
+				&Ok(UserOutputInfo {
+					action_context,
+					data: LoginResult {
+						id: 1,
+						name: "User 02".to_string(),
+					},
 				}),
 			);
 		});

@@ -1,9 +1,9 @@
 use crate::core::action::data::{
-	action_data::{ActionContext, ActionErrorInfo, DescriptiveError, ErrorData, RequestInput},
+	action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
 	user_action_data::{
-		UserActionError, UserActionErrorInfo, UserAuthRequestContext, UserAuthSession,
-		UserNoAuthRequestContext, UserNoAuthSession, UserRequestContext, UserRequestInput,
-		UserSession,
+		UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
+		UserNoAuthRequestContext, UserNoAuthSession, UserOutputInfo, UserRequestContext,
+		UserRequestInput, UserSession,
 	},
 };
 use crate::core::action::{
@@ -194,24 +194,31 @@ impl ActionError for UserActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-impl<I, O, E, T> Action<UserRequestInput<I>, O, UserActionErrorInfo<E>> for T
+impl<I, O, E, T> Action<UserRequestInput<I>, UserOutputInfo<O>, UserErrorInfo<E>> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
 	E: ActionError,
 	T: UserAction<I, O, E>,
 {
-	fn run(input: UserRequestInput<I>) -> Result<O, UserActionErrorInfo<E>> {
-		let context = input.context.clone();
-		Self::new(Ok(input))
-			.and_then(|action| action.run_inner())
-			.map_err(|error| ActionErrorInfo {
-				action_context: ActionContext {
-					action_type: Self::action_type(),
-					context,
-				},
+	fn run(input: UserRequestInput<I>) -> Result<UserOutputInfo<O>, UserErrorInfo<E>> {
+		let action_context = ActionContext {
+			action_type: Self::action_type(),
+			context: input.context.clone(),
+		};
+
+		let result = Self::new(Ok(input)).and_then(|action| action.run_inner());
+
+		match result {
+			Ok(data) => Ok(UserOutputInfo {
+				action_context,
+				data,
+			}),
+			Err(error) => Err(UserErrorInfo {
+				action_context,
 				error,
-			})
+			}),
+		}
 	}
 }
 
@@ -222,7 +229,7 @@ where
 #[cfg(test)]
 pub mod tests {
 	use crate::core::action::data::user_action_data::{
-		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext,
+		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext, UserOutputInfo,
 	};
 	use crate::core::action::data::{
 		action_data::ActionContext,
@@ -355,6 +362,10 @@ pub mod tests {
 	fn test_ok_no_auth() {
 		run_test(|helper| {
 			let context = user_context(UserTestOptions { user_id: None });
+			let action_context = ActionContext {
+				action_type: TestAction::action_type(),
+				context: context.clone(),
+			};
 
 			assert_eq!(
 				Ok(&context),
@@ -367,7 +378,13 @@ pub mod tests {
 			);
 
 			let result = TestAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				result,
+				Ok(UserOutputInfo {
+					action_context,
+					data: (),
+				}),
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - user action test".to_string())
@@ -379,6 +396,10 @@ pub mod tests {
 	fn test_ok_auth() {
 		run_test(|helper| {
 			let context = user_context(UserTestOptions { user_id: Some(1) });
+			let action_context = ActionContext {
+				action_type: TestAction::action_type(),
+				context: context.clone(),
+			};
 
 			assert_eq!(
 				Ok(&context),
@@ -391,7 +412,13 @@ pub mod tests {
 			);
 
 			let result = TestAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				result,
+				Ok(UserOutputInfo {
+					action_context,
+					data: (),
+				}),
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - user action test: 1".to_string())
@@ -403,6 +430,10 @@ pub mod tests {
 	fn test_no_auth_not_allowed() {
 		run_test(|_| {
 			let context = user_context(UserTestOptions { user_id: Some(2) });
+			let action_context = ActionContext {
+				action_type: TestActionNoAuth::action_type(),
+				context: context.clone(),
+			};
 
 			assert_eq!(
 				Ok(&context),
@@ -421,10 +452,7 @@ pub mod tests {
 			assert_eq!(
 				result,
 				Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: TestActionNoAuth::action_type(),
-						context: context.clone(),
-					},
+					action_context,
 					error: UserActionError::Authenticated,
 				})
 			);
@@ -435,6 +463,10 @@ pub mod tests {
 	fn test_no_auth_ok() {
 		run_test(|helper| {
 			let context = user_context(UserTestOptions { user_id: None });
+			let action_context = ActionContext {
+				action_type: TestActionNoAuth::action_type(),
+				context: context.clone(),
+			};
 
 			assert_eq!(
 				Ok(&context),
@@ -450,7 +482,13 @@ pub mod tests {
 				data: (),
 				context: context.clone(),
 			});
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				result,
+				Ok(UserOutputInfo {
+					action_context,
+					data: (),
+				}),
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - user action test (no auth)".to_string())
@@ -462,6 +500,10 @@ pub mod tests {
 	fn test_auth_not_allowed() {
 		run_test(|_| {
 			let context = user_context(UserTestOptions { user_id: None });
+			let action_context = ActionContext {
+				action_type: TestActionAuth::action_type(),
+				context: context.clone(),
+			};
 
 			assert_eq!(
 				Ok(&context),
@@ -480,10 +522,7 @@ pub mod tests {
 			assert_eq!(
 				result,
 				Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: TestActionAuth::action_type(),
-						context: context.clone(),
-					},
+					action_context,
 					error: UserActionError::Unauthenticated,
 				})
 			);
@@ -494,6 +533,10 @@ pub mod tests {
 	fn test_auth_ok() {
 		run_test(|helper| {
 			let context = user_context(UserTestOptions { user_id: Some(3) });
+			let action_context = ActionContext {
+				action_type: TestActionAuth::action_type(),
+				context: context.clone(),
+			};
 
 			assert_eq!(
 				Ok(&context),
@@ -506,7 +549,13 @@ pub mod tests {
 			);
 
 			let result = TestActionAuth::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				result,
+				Ok(UserOutputInfo {
+					action_context,
+					data: (),
+				}),
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - user action test (auth): 3".to_string())

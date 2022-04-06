@@ -1,18 +1,15 @@
+use crate::core::action::definition::{
+	action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
+	action_helpers::DescriptiveRequestContext,
+};
 use crate::core::action::{
 	action_type::general_action_type::ActionType,
 	data::{
 		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
 		moderator_action_data::{
-			ModeratorActionError, ModeratorActionErrorInfo, ModeratorRequestContext,
+			ModeratorActionError, ModeratorErrorInfo, ModeratorOutputInfo, ModeratorRequestContext,
 			ModeratorRequestInput, ModeratorSession,
 		},
-	},
-};
-use crate::core::action::{
-	data::action_data::ActionErrorInfo,
-	definition::{
-		action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
-		action_helpers::DescriptiveRequestContext,
 	},
 };
 
@@ -57,7 +54,8 @@ impl ActionError for ModeratorActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-impl<I, O, E, T> Action<ModeratorRequestInput<I>, O, ModeratorActionErrorInfo<E>> for T
+impl<I, O, E, T> Action<ModeratorRequestInput<I>, ModeratorOutputInfo<O>, ModeratorErrorInfo<E>>
+	for T
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -65,8 +63,14 @@ where
 	T: ModeratorAction<I, O, E>,
 	Self: Sized,
 {
-	fn run(input: ModeratorRequestInput<I>) -> Result<O, ModeratorActionErrorInfo<E>> {
-		let context = input.context.clone();
+	fn run(
+		input: ModeratorRequestInput<I>,
+	) -> Result<ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> {
+		let context = &input.context;
+		let action_context = ActionContext {
+			action_type: Self::action_type(),
+			context: context.clone(),
+		};
 		let action_type = Self::action_type();
 		let allowed =
 			context.session.admin || context.session.allowed_actions.contains(&action_type);
@@ -77,15 +81,18 @@ where
 			Self::new(Err(ModeratorActionError::NotAllowed(action_type)))
 		};
 
-		action_result
-			.and_then(|action| action.run_inner())
-			.map_err(|error| ActionErrorInfo {
-				action_context: ActionContext {
-					action_type: Self::action_type(),
-					context: context.clone(),
-				},
+		let result = action_result.and_then(|action| action.run_inner());
+
+		match result {
+			Ok(data) => Ok(ModeratorOutputInfo {
+				action_context,
+				data,
+			}),
+			Err(error) => Err(ModeratorErrorInfo {
+				action_context,
 				error,
-			})
+			}),
+		}
 	}
 }
 
@@ -95,10 +102,11 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use crate::core::action::data::moderator_action_data::tests::{
-		moderator_context, ModeratorTestOptions,
-	};
 	use crate::core::action::data::moderator_action_data::ModeratorActionError;
+	use crate::core::action::data::moderator_action_data::{
+		tests::{moderator_context, ModeratorTestOptions},
+		ModeratorOutputInfo,
+	};
 	use crate::core::action::data::{
 		action_data::{RequestContext, RequestInput},
 		moderator_action_data::ModeratorRequestContext,
@@ -141,18 +149,19 @@ pub mod tests {
 				admin: false,
 				allowed_actions: vec![],
 			});
+			let action_context = ActionContext {
+				action_type: TestAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = TestAction::run(RequestInput {
 				data: (),
 				context: context.clone(),
 			});
 			assert_eq!(
-				result,
-				Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: TestAction::action_type(),
-						context: context.clone(),
-					},
+				&result,
+				&Err(ActionErrorInfo {
+					action_context,
 					error: ModeratorActionError::NotAllowed(ModeratorActionType::Test),
 				})
 			);
@@ -166,9 +175,19 @@ pub mod tests {
 				admin: false,
 				allowed_actions: vec![TestAction::action_type()],
 			});
+			let action_context = ActionContext {
+				action_type: TestAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = TestAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(ModeratorOutputInfo {
+					action_context,
+					data: ()
+				}),
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - moderator action test".to_string())
@@ -183,9 +202,19 @@ pub mod tests {
 				admin: true,
 				allowed_actions: vec![],
 			});
+			let action_context = ActionContext {
+				action_type: TestAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = TestAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(ModeratorOutputInfo {
+					action_context,
+					data: ()
+				}),
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - moderator action test".to_string())

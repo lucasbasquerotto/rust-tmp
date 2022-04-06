@@ -8,12 +8,12 @@ use crate::core::action::{
 	data::{
 		action_data::{DescriptiveError, ErrorData},
 		automatic_action_data::{
-			AutomaticActionErrorInfo, AutomaticActionInput, AutomaticRequestInput,
+			AutomaticActionInput, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequestInput,
 		},
 		moderator_action_data::{
-			ModeratorActionErrorInfo, ModeratorActionInput, ModeratorRequestInput,
+			ModeratorActionInput, ModeratorErrorInfo, ModeratorOutputInfo, ModeratorRequestInput,
 		},
-		user_action_data::{UserActionErrorInfo, UserActionInput, UserRequestInput},
+		user_action_data::{UserActionInput, UserErrorInfo, UserOutputInfo, UserRequestInput},
 	},
 };
 
@@ -62,7 +62,8 @@ where
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-pub trait UserAction<I, O, E>: Action<UserRequestInput<I>, O, UserActionErrorInfo<E>>
+pub trait UserAction<I, O, E>:
+	Action<UserRequestInput<I>, UserOutputInfo<O>, UserErrorInfo<E>>
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -79,7 +80,7 @@ where
 ////////////////////////////////////////////////
 
 pub trait ModeratorAction<I, O, E>:
-	Action<ModeratorRequestInput<I>, O, ModeratorActionErrorInfo<E>>
+	Action<ModeratorRequestInput<I>, ModeratorOutputInfo<O>, ModeratorErrorInfo<E>>
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -96,7 +97,7 @@ where
 ////////////////////////////////////////////////
 
 pub trait AutomaticAction<I, O, E>:
-	Action<AutomaticRequestInput<I>, O, AutomaticActionErrorInfo<E>>
+	Action<AutomaticRequestInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>>
 where
 	I: ActionInput,
 	O: ActionOutput,

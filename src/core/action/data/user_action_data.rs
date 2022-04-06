@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use super::action_data::{Application, Request, Session};
 use crate::core::action::{
 	action_type::user_action_type::UserActionType,
-	data::action_data::{ActionErrorInfo, RequestInput},
+	data::action_data::{ActionErrorInfo, ActionResultInfo, RequestInput},
 };
 
 ////////////////////////////////////////////////
@@ -63,7 +63,9 @@ pub type UserNoAuthRequestInput<I> = RequestInput<I, UserNoAuthRequestContext>;
 
 pub type UserActionInput<I> = Result<UserRequestInput<I>, UserActionError>;
 
-pub type UserActionErrorInfo<E> = ActionErrorInfo<UserActionType, UserRequestContext, E>;
+pub type UserOutputInfo<D> = ActionResultInfo<UserActionType, UserRequestContext, D>;
+
+pub type UserErrorInfo<E> = ActionErrorInfo<UserActionType, UserRequestContext, E>;
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////

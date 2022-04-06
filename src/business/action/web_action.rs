@@ -324,9 +324,18 @@ mod tests {
 			action_type::moderator_action_type::ModeratorActionType,
 			data::{
 				action_data::{ActionContext, ActionErrorInfo, ErrorInfo, RequestInput},
-				automatic_action_data::tests::{automatic_context, AutomaticTestOptions},
-				moderator_action_data::tests::{moderator_context, ModeratorTestOptions},
-				user_action_data::tests::{user_context, UserTestOptions},
+				automatic_action_data::{
+					tests::{automatic_context, AutomaticTestOptions},
+					AutomaticOutputInfo,
+				},
+				moderator_action_data::{
+					tests::{moderator_context, ModeratorTestOptions},
+					ModeratorOutputInfo,
+				},
+				user_action_data::{
+					tests::{user_context, UserTestOptions},
+					UserOutputInfo,
+				},
 			},
 			definition::action::{
 				Action, ActionError, AutomaticAction, ModeratorAction, UserAction,
@@ -339,6 +348,10 @@ mod tests {
 	fn test_user_auth_ok() {
 		run_test(|_| {
 			let context = user_context(UserTestOptions { user_id: Some(1) });
+			let action_context = ActionContext {
+				action_type: WebActionUser::action_type(),
+				context: context.clone(),
+			};
 
 			let _m = mock("GET", "/mock/http/get")
 				.with_status(200)
@@ -363,10 +376,13 @@ mod tests {
 
 			assert_eq!(
 				&result,
-				&Ok(WebResult {
-					url: "http://httpbin.org.mock/get".to_string(),
-					args: WebResultArgs {}
-				})
+				&Ok(UserOutputInfo {
+					action_context,
+					data: WebResult {
+						url: "http://httpbin.org.mock/get".to_string(),
+						args: WebResultArgs {}
+					},
+				}),
 			);
 		});
 	}
@@ -375,6 +391,10 @@ mod tests {
 	fn test_user_no_auth_ok() {
 		run_test(|_| {
 			let context = user_context(UserTestOptions { user_id: None });
+			let action_context = ActionContext {
+				action_type: WebActionUser::action_type(),
+				context: context.clone(),
+			};
 
 			let _m = mock("GET", "/mock/http/get")
 				.with_status(200)
@@ -399,10 +419,13 @@ mod tests {
 
 			assert_eq!(
 				&result,
-				&Ok(WebResult {
-					url: "http://httpbin.org.mock/get".to_string(),
-					args: WebResultArgs {}
-				})
+				&Ok(UserOutputInfo {
+					action_context,
+					data: WebResult {
+						url: "http://httpbin.org.mock/get".to_string(),
+						args: WebResultArgs {}
+					},
+				}),
 			);
 		});
 	}
@@ -411,6 +434,10 @@ mod tests {
 	fn test_user_status_error() {
 		run_test(|_| {
 			let context = user_context(UserTestOptions { user_id: None });
+			let action_context = ActionContext {
+				action_type: WebActionUser::action_type(),
+				context: context.clone(),
+			};
 
 			let _m = mock("GET", "/mock/http/status/403")
 				.with_status(403)
@@ -427,10 +454,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: WebActionUser::action_type(),
-						context: context.clone(),
-					},
+					action_context,
 					error: UserWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
 						UrlData {
 							url: format!(
@@ -457,6 +481,10 @@ mod tests {
 	fn test_user_no_status_error() {
 		run_test(|_| {
 			let context = user_context(UserTestOptions { user_id: None });
+			let action_context = ActionContext {
+				action_type: WebActionUser::action_type(),
+				context: context.clone(),
+			};
 
 			let result = WebActionUser::run(RequestInput {
 				data: WebData {
@@ -469,10 +497,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: WebActionUser::action_type(),
-						context: context.clone(),
-					},
+					action_context,
 					error: UserWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
 						UrlData {
 							url: format!(
@@ -502,6 +527,10 @@ mod tests {
 				admin: false,
 				allowed_actions: vec![ModeratorActionType::Web],
 			});
+			let action_context = ActionContext {
+				action_type: WebActionModerator::action_type(),
+				context: context.clone(),
+			};
 
 			let _m = mock("GET", "/mock/http/get")
 				.with_status(200)
@@ -526,10 +555,13 @@ mod tests {
 
 			assert_eq!(
 				&result,
-				&Ok(WebResult {
-					url: "http://httpbin.org.mock/get".to_string(),
-					args: WebResultArgs {}
-				})
+				&Ok(ModeratorOutputInfo {
+					action_context,
+					data: WebResult {
+						url: "http://httpbin.org.mock/get".to_string(),
+						args: WebResultArgs {}
+					},
+				}),
 			);
 		});
 	}
@@ -632,6 +664,10 @@ mod tests {
 	fn test_auto_internal_ok() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let action_context = ActionContext {
+				action_type: WebActionAutomatic::action_type(),
+				context: context.clone(),
+			};
 
 			let _m = mock("GET", "/mock/http/get")
 				.with_status(200)
@@ -656,9 +692,12 @@ mod tests {
 
 			assert_eq!(
 				&result,
-				&Ok(WebResult {
-					url: "http://httpbin.org.mock/get".to_string(),
-					args: WebResultArgs {}
+				&Ok(AutomaticOutputInfo {
+					action_context,
+					data: WebResult {
+						url: "http://httpbin.org.mock/get".to_string(),
+						args: WebResultArgs {}
+					},
 				})
 			);
 		});
@@ -668,6 +707,10 @@ mod tests {
 	fn test_auto_status_error() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let action_context = ActionContext {
+				action_type: WebActionAutomatic::action_type(),
+				context: context.clone(),
+			};
 
 			let _m = mock("GET", "/mock/http/status/403")
 				.with_status(403)
@@ -684,10 +727,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: WebActionAutomatic::action_type(),
-						context: context.clone(),
-					},
+					action_context,
 					error: AutomaticWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
 						UrlData {
 							url: format!(

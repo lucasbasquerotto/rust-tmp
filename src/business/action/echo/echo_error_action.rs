@@ -65,7 +65,6 @@ impl ModeratorAction<(), (), EchoErrorError> for EchoErrorAction {
 #[cfg(test)]
 pub mod tests {
 	use super::EchoErrorAction;
-	use crate::core::action::action_type::moderator_action_type::ModeratorActionType;
 	use crate::core::action::data::action_data::RequestInput;
 	use crate::core::action::data::moderator_action_data::tests::{
 		moderator_context, ModeratorTestOptions,
@@ -73,6 +72,10 @@ pub mod tests {
 	use crate::core::action::data::moderator_action_data::ModeratorActionError;
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::definition::action::ModeratorAction;
+	use crate::core::action::{
+		action_type::moderator_action_type::ModeratorActionType,
+		data::moderator_action_data::ModeratorOutputInfo,
+	};
 	use crate::tests::test_utils::tests::run_test;
 	use crate::{
 		business::action::echo::echo_error_action::EchoErrorError,
@@ -86,6 +89,10 @@ pub mod tests {
 				admin: false,
 				allowed_actions: vec![],
 			});
+			let action_context = ActionContext {
+				action_type: EchoErrorAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = EchoErrorAction::run(RequestInput {
 				data: (),
@@ -94,10 +101,7 @@ pub mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: EchoErrorAction::action_type(),
-						context: context.clone(),
-					},
+					action_context,
 					error: EchoErrorError::ModeratorError(ModeratorActionError::NotAllowed(
 						ModeratorActionType::EchoError
 					)),
@@ -113,9 +117,19 @@ pub mod tests {
 				admin: false,
 				allowed_actions: vec![EchoErrorAction::action_type()],
 			});
+			let action_context = ActionContext {
+				action_type: EchoErrorAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = EchoErrorAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(ModeratorOutputInfo {
+					action_context,
+					data: (),
+				}),
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("ERROR - echo error action".to_string())
@@ -130,9 +144,19 @@ pub mod tests {
 				admin: true,
 				allowed_actions: vec![EchoErrorAction::action_type()],
 			});
+			let action_context = ActionContext {
+				action_type: EchoErrorAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = EchoErrorAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(ModeratorOutputInfo {
+					action_context,
+					data: (),
+				}),
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("ERROR - echo error action".to_string())

@@ -1,8 +1,8 @@
 use crate::core::action::data::{
-	action_data::{ActionContext, ActionErrorInfo, DescriptiveError, ErrorData, RequestInput},
+	action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
 	automatic_action_data::{
-		AutomaticActionError, AutomaticActionErrorInfo, AutomaticRequest, AutomaticRequestContext,
-		AutomaticRequestInput, HookRequestContext, InternalRequestContext,
+		AutomaticActionError, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequest,
+		AutomaticRequestContext, AutomaticRequestInput, HookRequestContext, InternalRequestContext,
 	},
 };
 use crate::core::action::{
@@ -169,25 +169,37 @@ impl ActionError for AutomaticActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-impl<I, O, E, T> Action<AutomaticRequestInput<I>, O, AutomaticActionErrorInfo<E>> for T
+impl<I, O, E, T> Action<AutomaticRequestInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>>
+	for T
 where
 	I: ActionInput,
 	O: ActionOutput,
 	E: ActionError,
 	T: AutomaticAction<I, O, E>,
 {
-	fn run(input: AutomaticRequestInput<I>) -> Result<O, AutomaticActionErrorInfo<E>> {
+	fn run(
+		input: AutomaticRequestInput<I>,
+	) -> Result<AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> {
 		let context = input.context.clone();
+		let action_context = ActionContext {
+			action_type: Self::action_type(),
+			context: context.clone(),
+		};
+
 		let action_result = Self::new(Ok(input));
-		action_result
-			.and_then(|action| action.run_inner())
-			.map_err(|error| ActionErrorInfo {
-				action_context: ActionContext {
-					action_type: Self::action_type(),
-					context: context.clone(),
-				},
+
+		let result = action_result.and_then(|action| action.run_inner());
+
+		match result {
+			Ok(data) => Ok(AutomaticOutputInfo {
+				action_context,
+				data,
+			}),
+			Err(error) => Err(AutomaticErrorInfo {
+				action_context,
 				error,
-			})
+			}),
+		}
 	}
 }
 
@@ -197,8 +209,9 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use crate::core::action::data::automatic_action_data::tests::{
-		automatic_context, AutomaticTestOptions,
+	use crate::core::action::data::automatic_action_data::{
+		tests::{automatic_context, AutomaticTestOptions},
+		AutomaticOutputInfo,
 	};
 	use crate::core::action::data::automatic_action_data::{
 		AutomaticActionError, AutomaticRequest, HookRequestContext, InternalRequestContext,
@@ -328,9 +341,19 @@ pub mod tests {
 	fn test_ok_hook() {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let action_context = ActionContext {
+				action_type: TestAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = TestAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(AutomaticOutputInfo {
+					action_context,
+					data: (),
+				})
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - automatic action test (hook)".to_string())
@@ -342,9 +365,19 @@ pub mod tests {
 	fn test_ok_internal() {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let action_context = ActionContext {
+				action_type: TestAction::action_type(),
+				context: context.clone(),
+			};
 
 			let result = TestAction::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(AutomaticOutputInfo {
+					action_context,
+					data: (),
+				})
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - automatic action test (internal)".to_string())
@@ -356,18 +389,19 @@ pub mod tests {
 	fn test_hook_not_allowed() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let action_context = ActionContext {
+				action_type: TestActionHook::action_type(),
+				context: context.clone(),
+			};
 
 			let result = TestActionHook::run(RequestInput {
 				data: (),
 				context: context.clone(),
 			});
 			assert_eq!(
-				result,
-				Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: TestActionHook::action_type(),
-						context: context.clone(),
-					},
+				&result,
+				&Err(ActionErrorInfo {
+					action_context,
 					error: AutomaticActionError::NotHook,
 				})
 			);
@@ -378,9 +412,19 @@ pub mod tests {
 	fn test_hook_ok() {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let action_context = ActionContext {
+				action_type: TestActionHook::action_type(),
+				context: context.clone(),
+			};
 
 			let result = TestActionHook::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(AutomaticOutputInfo {
+					action_context,
+					data: (),
+				})
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - automatic action test (only hook)".to_string())
@@ -392,18 +436,19 @@ pub mod tests {
 	fn test_internal_not_allowed() {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let action_context = ActionContext {
+				action_type: TestActionInternal::action_type(),
+				context: context.clone(),
+			};
 
 			let result = TestActionInternal::run(RequestInput {
 				data: (),
 				context: context.clone(),
 			});
 			assert_eq!(
-				result,
-				Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: TestActionInternal::action_type(),
-						context: context.clone(),
-					},
+				&result,
+				&Err(ActionErrorInfo {
+					action_context,
 					error: AutomaticActionError::NotInternal,
 				})
 			);
@@ -414,9 +459,19 @@ pub mod tests {
 	fn test_internal_ok() {
 		run_test(|helper| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let action_context = ActionContext {
+				action_type: TestActionInternal::action_type(),
+				context: context.clone(),
+			};
 
 			let result = TestActionInternal::run(RequestInput { data: (), context });
-			assert_eq!(result, Ok(()));
+			assert_eq!(
+				&result,
+				&Ok(AutomaticOutputInfo {
+					action_context,
+					data: (),
+				})
+			);
 			assert_eq!(
 				helper.pop_log(),
 				Some("INFO - automatic action test (only internal)".to_string())
