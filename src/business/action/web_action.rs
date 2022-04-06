@@ -324,7 +324,7 @@ mod tests {
 		core::action::{
 			action_type::moderator_action_type::ModeratorActionType,
 			data::{
-				action_data::{ActionErrorInfo, ErrorContext, ErrorInfo, RequestInput},
+				action_data::{ActionContext, ActionErrorInfo, ErrorInfo, RequestInput},
 				automatic_action_data::tests::{automatic_context, AutomaticTestOptions},
 				moderator_action_data::tests::{moderator_context, ModeratorTestOptions},
 				user_action_data::tests::{user_context, UserTestOptions},
@@ -428,7 +428,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: WebActionUser::action_type(),
 						context: context.clone(),
 					},
@@ -470,7 +470,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: WebActionUser::action_type(),
 						context: context.clone(),
 					},
@@ -558,7 +558,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: WebActionModerator::action_type(),
 						context: context.clone(),
 					},
@@ -603,7 +603,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: WebActionModerator::action_type(),
 						context: context.clone(),
 					},
@@ -685,7 +685,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: WebActionAutomatic::action_type(),
 						context: context.clone(),
 					},
@@ -727,7 +727,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: WebActionAutomatic::action_type(),
 						context: context.clone(),
 					},

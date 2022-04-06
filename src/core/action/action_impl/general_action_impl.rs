@@ -33,7 +33,7 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 {
 	fn description(&self) -> String {
 		let private_error = &self.error.private_error();
-		let error_context = &self.error_context;
+		let error_context = &self.action_context;
 		let action = format!(
 			"[action({action_scope:?}::{action_type} - {action_id})]",
 			action_scope = T::scope(),
@@ -105,7 +105,7 @@ mod tests {
 	use crate::core::action::action_type::general_action_type::ActionScope;
 	use crate::core::action::action_type::general_action_type::ActionType;
 	use crate::core::action::data::action_data::{
-		ActionErrorInfo, DescriptiveError, ErrorContext, ErrorData,
+		ActionContext, ActionErrorInfo, DescriptiveError, ErrorData,
 	};
 	use crate::core::action::definition::action::ActionError;
 	use crate::core::action::definition::action_helpers::ActionErrorHelper;
@@ -169,12 +169,12 @@ mod tests {
 			let action_type = TestActionType(1);
 			let context = TestRequestContext("My error #01".to_string());
 			let error = TestActionError(action_type);
-			let error_context = ErrorContext {
+			let error_context = ActionContext {
 				action_type,
 				context,
 			};
 			let error_info = ActionErrorInfo {
-				error_context,
+				action_context: error_context,
 				error,
 			};
 			let public_error = error_info.handle();
@@ -216,12 +216,12 @@ mod tests {
 			let action_type = TestActionType(2);
 			let context = TestRequestContext("My error #02".to_string());
 			let error = TestActionError(action_type);
-			let error_context = ErrorContext {
+			let error_context = ActionContext {
 				action_type,
 				context,
 			};
 			let error_info = ActionErrorInfo {
-				error_context,
+				action_context: error_context,
 				error,
 			};
 			let public_error = error_info.handle();

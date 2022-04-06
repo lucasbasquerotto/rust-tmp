@@ -1,7 +1,7 @@
 use crate::core::action::{
 	action_type::automatic_action_type::AutomaticActionType,
 	data::{
-		action_data::{ActionErrorInfo, DescriptiveError, ErrorContext, ErrorData, RequestInput},
+		action_data::{ActionContext, ActionErrorInfo, DescriptiveError, ErrorData, RequestInput},
 		automatic_action_data::{
 			AutomaticActionError, AutomaticRequest, AutomaticRequestContext, HookRequestContext,
 			InternalRequestContext,
@@ -192,7 +192,7 @@ where
 		action_result
 			.and_then(|action| action.run_inner())
 			.map_err(|error| ActionErrorInfo {
-				error_context: ErrorContext {
+				action_context: ActionContext {
 					action_type: Self::action_type(),
 					context: context.clone(),
 				},
@@ -220,7 +220,7 @@ pub mod tests {
 	use crate::core::action::definition::action::AutomaticAction;
 	use crate::core::action::{
 		action_type::automatic_action_type::AutomaticActionType,
-		data::action_data::{ActionErrorInfo, ErrorContext},
+		data::action_data::{ActionContext, ActionErrorInfo},
 	};
 	use crate::tests::test_utils::tests::run_test;
 
@@ -374,7 +374,7 @@ pub mod tests {
 			assert_eq!(
 				result,
 				Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: TestActionHook::action_type(),
 						context: context.clone(),
 					},
@@ -410,7 +410,7 @@ pub mod tests {
 			assert_eq!(
 				result,
 				Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: TestActionInternal::action_type(),
 						context: context.clone(),
 					},

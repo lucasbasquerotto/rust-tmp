@@ -153,7 +153,7 @@ mod tests {
 	use crate::core::action::data::automatic_action_data::AutomaticActionError;
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::{
-		data::action_data::{ActionErrorInfo, ErrorContext, RequestInput},
+		data::action_data::{ActionContext, ActionErrorInfo, RequestInput},
 		definition::action::AutomaticAction,
 	};
 	use crate::tests::test_utils::tests::run_test;
@@ -174,7 +174,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: AutoActionInternal::action_type(),
 						context: context.clone(),
 					},
@@ -226,7 +226,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: AutoActionInternal::action_type(),
 						context: context.clone(),
 					},

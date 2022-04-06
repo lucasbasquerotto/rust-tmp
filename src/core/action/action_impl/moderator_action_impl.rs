@@ -1,7 +1,7 @@
 use crate::core::action::{
 	action_type::{general_action_type::ActionType, moderator_action_type::ModeratorActionType},
 	data::{
-		action_data::{DescriptiveError, ErrorContext, ErrorData, RequestInput},
+		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext, ModeratorSession},
 	},
 };
@@ -84,7 +84,7 @@ where
 		action_result
 			.and_then(|action| action.run_inner())
 			.map_err(|error| ActionErrorInfo {
-				error_context: ErrorContext {
+				action_context: ActionContext {
 					action_type: Self::action_type(),
 					context: context.clone(),
 				},
@@ -111,7 +111,7 @@ pub mod tests {
 	use crate::core::action::definition::action::ModeratorAction;
 	use crate::core::action::{
 		action_type::moderator_action_type::ModeratorActionType,
-		data::action_data::{ActionErrorInfo, ErrorContext},
+		data::action_data::{ActionContext, ActionErrorInfo},
 	};
 	use crate::tests::test_utils::tests::run_test;
 
@@ -153,7 +153,7 @@ pub mod tests {
 			assert_eq!(
 				result,
 				Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: TestAction::action_type(),
 						context: context.clone(),
 					},

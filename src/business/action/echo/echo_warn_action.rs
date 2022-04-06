@@ -77,7 +77,7 @@ pub mod tests {
 	use crate::tests::test_utils::tests::run_test;
 	use crate::{
 		business::action::echo::echo_warn_action::EchoWarnError,
-		core::action::data::action_data::ErrorContext,
+		core::action::data::action_data::ActionContext,
 	};
 
 	#[test]
@@ -95,7 +95,7 @@ pub mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: EchoWarnAction::action_type(),
 						context: context.clone(),
 					},

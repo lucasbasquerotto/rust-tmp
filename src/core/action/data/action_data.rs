@@ -38,7 +38,7 @@ pub type ActionRequestResult<T> = Result<T, Option<ErrorData>>;
 ////////////////////////////////////////////////
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ErrorContext<T: ActionType, C: RequestContext> {
+pub struct ActionContext<T: ActionType, C: RequestContext> {
 	pub action_type: T,
 	pub context: C,
 }
@@ -71,7 +71,7 @@ pub struct ErrorContextInfo<
 	C: RequestContext,
 	E: Debug = Option<()>,
 > {
-	pub error_context: ErrorContext<T, C>,
+	pub error_context: ActionContext<T, C>,
 	pub error_info: ErrorInfo<D, E>,
 }
 
@@ -115,7 +115,13 @@ pub struct ErrorData {
 }
 
 #[derive(Debug, Eq, PartialEq)]
+pub struct ActionResultInfo<T: ActionType, C: RequestContext, D> {
+	pub action_context: ActionContext<T, C>,
+	pub data: D,
+}
+
+#[derive(Debug, Eq, PartialEq)]
 pub struct ActionErrorInfo<T: ActionType, C: RequestContext, E> {
-	pub error_context: ErrorContext<T, C>,
+	pub action_context: ActionContext<T, C>,
 	pub error: E,
 }

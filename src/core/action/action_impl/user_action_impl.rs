@@ -1,7 +1,7 @@
 use crate::core::action::{
 	action_type::user_action_type::UserActionType,
 	data::{
-		action_data::{ActionErrorInfo, DescriptiveError, ErrorContext, ErrorData, RequestInput},
+		action_data::{ActionContext, ActionErrorInfo, DescriptiveError, ErrorData, RequestInput},
 		user_action_data::{
 			UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
 			UserNoAuthSession, UserRequestContext, UserSession,
@@ -215,7 +215,7 @@ where
 		Self::new(Ok(input))
 			.and_then(|action| action.run_inner())
 			.map_err(|error| ActionErrorInfo {
-				error_context: ErrorContext {
+				action_context: ActionContext {
 					action_type: Self::action_type(),
 					context,
 				},
@@ -234,7 +234,7 @@ pub mod tests {
 		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext,
 	};
 	use crate::core::action::data::{
-		action_data::ErrorContext,
+		action_data::ActionContext,
 		user_action_data::tests::{user_context, UserTestOptions},
 	};
 	use crate::core::action::data::{
@@ -430,7 +430,7 @@ pub mod tests {
 			assert_eq!(
 				result,
 				Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: TestActionNoAuth::action_type(),
 						context: context.clone(),
 					},
@@ -489,7 +489,7 @@ pub mod tests {
 			assert_eq!(
 				result,
 				Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: TestActionAuth::action_type(),
 						context: context.clone(),
 					},

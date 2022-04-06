@@ -98,7 +98,7 @@ mod tests {
 	use crate::core::action::data::user_action_data::UserActionError;
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::{
-		data::action_data::{ActionErrorInfo, ErrorContext, RequestInput},
+		data::action_data::{ActionContext, ActionErrorInfo, RequestInput},
 		definition::action::UserAction,
 	};
 	use crate::tests::test_utils::tests::run_test;
@@ -119,7 +119,7 @@ mod tests {
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
-					error_context: ErrorContext {
+					action_context: ActionContext {
 						action_type: LoginAction::action_type(),
 						context: context.clone(),
 					},
