@@ -1,10 +1,13 @@
-use crate::core::action::definition::action::{ActionError, UserAction};
 use crate::core::action::{
 	action_type::user_action_type::UserActionType,
 	data::{
-		action_data::{DescriptiveError, ErrorData, RequestInput},
-		user_action_data::{UserActionError, UserRequestContext},
+		action_data::{DescriptiveError, ErrorData},
+		user_action_data::{UserActionError, UserRequestInput},
 	},
+};
+use crate::core::action::{
+	data::user_action_data::UserActionInput,
+	definition::action::{ActionError, UserAction},
 };
 
 ////////////////////////////////////////////////
@@ -35,16 +38,14 @@ impl ActionError for LogoutError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct LogoutAction(RequestInput<(), UserRequestContext>);
+pub struct LogoutAction(UserRequestInput<()>);
 
 impl UserAction<(), (), LogoutError> for LogoutAction {
 	fn action_type() -> UserActionType {
 		UserActionType::Logout
 	}
 
-	fn new(
-		input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
-	) -> Result<Self, LogoutError> {
+	fn new(input: UserActionInput<()>) -> Result<Self, LogoutError> {
 		input.map(Self).map_err(LogoutError::UserError)
 	}
 

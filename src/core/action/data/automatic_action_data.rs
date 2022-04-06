@@ -1,4 +1,7 @@
-use crate::core::action::data::action_data::{Application, Request};
+use crate::core::action::{
+	action_type::automatic_action_type::AutomaticActionType,
+	data::action_data::{ActionErrorInfo, Application, Request, RequestInput},
+};
 use std::fmt::Debug;
 
 ////////////////////////////////////////////////
@@ -27,6 +30,17 @@ pub struct HookRequestContext {
 	pub application: Application,
 	pub request: Request,
 }
+
+pub type AutomaticRequestInput<I> = RequestInput<I, AutomaticRequestContext>;
+
+pub type InternalRequestInput<I> = RequestInput<I, InternalRequestContext>;
+
+pub type HookRequestInput<I> = RequestInput<I, HookRequestContext>;
+
+pub type AutomaticActionInput<I> = Result<AutomaticRequestInput<I>, AutomaticActionError>;
+
+pub type AutomaticActionErrorInfo<E> =
+	ActionErrorInfo<AutomaticActionType, AutomaticRequestContext, E>;
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////

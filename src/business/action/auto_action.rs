@@ -1,15 +1,13 @@
-use crate::core::action::definition::action::{
-	ActionError, ActionInput, ActionOutput, AutomaticAction,
-};
 use crate::core::action::{
 	action_type::automatic_action_type::AutomaticActionType,
 	data::{
 		action_data::{DescriptiveError, ErrorData, RequestContext, RequestInput},
-		automatic_action_data::{
-			AutomaticActionError, AutomaticRequestContext, HookRequestContext,
-			InternalRequestContext,
-		},
+		automatic_action_data::{AutomaticActionError, HookRequestInput, InternalRequestInput},
 	},
+};
+use crate::core::action::{
+	data::automatic_action_data::AutomaticActionInput,
+	definition::action::{ActionError, ActionInput, ActionOutput, AutomaticAction},
 };
 
 ////////////////////////////////////////////////
@@ -66,16 +64,14 @@ impl ActionError for AutoError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct AutoActionInternal(RequestInput<AutoData, InternalRequestContext>);
+pub struct AutoActionInternal(InternalRequestInput<AutoData>);
 
 impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 	fn action_type() -> AutomaticActionType {
 		AutomaticActionType::Auto
 	}
 
-	fn new(
-		input: Result<RequestInput<AutoData, AutomaticRequestContext>, AutomaticActionError>,
-	) -> Result<Self, AutoError> {
+	fn new(input: AutomaticActionInput<AutoData>) -> Result<Self, AutoError> {
 		input
 			.and_then(|ok_input| ok_input.into_internal())
 			.map(Self)
@@ -93,16 +89,14 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct AutoActionHook(RequestInput<AutoData, HookRequestContext>);
+pub struct AutoActionHook(HookRequestInput<AutoData>);
 
 impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 	fn action_type() -> AutomaticActionType {
 		AutomaticActionType::Auto
 	}
 
-	fn new(
-		input: Result<RequestInput<AutoData, AutomaticRequestContext>, AutomaticActionError>,
-	) -> Result<Self, AutoError> {
+	fn new(input: AutomaticActionInput<AutoData>) -> Result<Self, AutoError> {
 		match input {
 			Err(err) => Err(AutoError::AutomaticError(err)),
 			Ok(ok_input) => {

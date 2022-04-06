@@ -1,8 +1,11 @@
 use crate::core::action::{
-	action_type::{general_action_type::ActionType, moderator_action_type::ModeratorActionType},
+	action_type::general_action_type::ActionType,
 	data::{
 		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
-		moderator_action_data::{ModeratorActionError, ModeratorRequestContext, ModeratorSession},
+		moderator_action_data::{
+			ModeratorActionError, ModeratorActionErrorInfo, ModeratorRequestContext,
+			ModeratorRequestInput, ModeratorSession,
+		},
 	},
 };
 use crate::core::action::{
@@ -54,12 +57,7 @@ impl ActionError for ModeratorActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-impl<I, O, E, T>
-	Action<
-		RequestInput<I, ModeratorRequestContext>,
-		O,
-		ActionErrorInfo<ModeratorActionType, ModeratorRequestContext, E>,
-	> for T
+impl<I, O, E, T> Action<ModeratorRequestInput<I>, O, ModeratorActionErrorInfo<E>> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -67,9 +65,7 @@ where
 	T: ModeratorAction<I, O, E>,
 	Self: Sized,
 {
-	fn run(
-		input: RequestInput<I, ModeratorRequestContext>,
-	) -> Result<O, ActionErrorInfo<ModeratorActionType, ModeratorRequestContext, E>> {
+	fn run(input: ModeratorRequestInput<I>) -> Result<O, ModeratorActionErrorInfo<E>> {
 		let context = input.context.clone();
 		let action_type = Self::action_type();
 		let allowed =

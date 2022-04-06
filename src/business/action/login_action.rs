@@ -1,10 +1,13 @@
-use crate::core::action::definition::action::{ActionError, ActionInput, ActionOutput, UserAction};
 use crate::core::action::{
 	action_type::user_action_type::UserActionType,
 	data::{
-		action_data::{DescriptiveError, ErrorData, RequestInput},
-		user_action_data::{UserActionError, UserNoAuthRequestContext, UserRequestContext},
+		action_data::{DescriptiveError, ErrorData},
+		user_action_data::{UserActionError, UserNoAuthRequestInput},
 	},
+};
+use crate::core::action::{
+	data::user_action_data::UserActionInput,
+	definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
 };
 
 ////////////////////////////////////////////////
@@ -59,16 +62,14 @@ impl ActionError for LoginError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct LoginAction(RequestInput<LoginData, UserNoAuthRequestContext>);
+pub struct LoginAction(UserNoAuthRequestInput<LoginData>);
 
 impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 	fn action_type() -> UserActionType {
 		UserActionType::Login
 	}
 
-	fn new(
-		input: Result<RequestInput<LoginData, UserRequestContext>, UserActionError>,
-	) -> Result<Self, LoginError> {
+	fn new(input: UserActionInput<LoginData>) -> Result<Self, LoginError> {
 		input
 			.and_then(|ok_input| ok_input.into_no_auth())
 			.map(Self)

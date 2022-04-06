@@ -1,6 +1,10 @@
 use chrono::{DateTime, Utc};
 
 use super::action_data::{Application, Request, Session};
+use crate::core::action::{
+	action_type::user_action_type::UserActionType,
+	data::action_data::{ActionErrorInfo, RequestInput},
+};
 
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
@@ -49,6 +53,17 @@ pub struct UserNoAuthRequestContext {
 	pub session: UserNoAuthSession,
 	pub request: Request,
 }
+
+pub type UserRequestInput<I> = RequestInput<I, UserRequestContext>;
+
+#[allow(dead_code)]
+pub type UserAuthRequestInput<I> = RequestInput<I, UserAuthRequestContext>;
+
+pub type UserNoAuthRequestInput<I> = RequestInput<I, UserNoAuthRequestContext>;
+
+pub type UserActionInput<I> = Result<UserRequestInput<I>, UserActionError>;
+
+pub type UserActionErrorInfo<E> = ActionErrorInfo<UserActionType, UserRequestContext, E>;
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////

@@ -1,10 +1,13 @@
-use crate::core::action::definition::action::{ActionError, ModeratorAction};
 use crate::core::action::{
 	action_type::moderator_action_type::ModeratorActionType,
 	data::{
-		action_data::{DescriptiveError, ErrorData, RequestInput},
-		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
+		action_data::{DescriptiveError, ErrorData},
+		moderator_action_data::{ModeratorActionError, ModeratorRequestInput},
 	},
+};
+use crate::core::action::{
+	data::moderator_action_data::ModeratorActionInput,
+	definition::action::{ActionError, ModeratorAction},
 };
 
 ////////////////////////////////////////////////
@@ -35,16 +38,14 @@ impl ActionError for EchoWarnError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct EchoWarnAction(RequestInput<(), ModeratorRequestContext>);
+pub struct EchoWarnAction(ModeratorRequestInput<()>);
 
 impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction {
 	fn action_type() -> ModeratorActionType {
 		ModeratorActionType::EchoWarn
 	}
 
-	fn new(
-		input: Result<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
-	) -> Result<Self, EchoWarnError> {
+	fn new(input: ModeratorActionInput<()>) -> Result<Self, EchoWarnError> {
 		match input {
 			Err(err) => Err(EchoWarnError::ModeratorError(err)),
 			Ok(ok_input) => Ok(Self(ok_input)),

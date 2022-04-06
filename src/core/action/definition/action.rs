@@ -6,10 +6,14 @@ use crate::core::action::{
 		user_action_type::UserActionType,
 	},
 	data::{
-		action_data::{ActionErrorInfo, DescriptiveError, ErrorData, RequestInput},
-		automatic_action_data::{AutomaticActionError, AutomaticRequestContext},
-		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
-		user_action_data::{UserActionError, UserRequestContext},
+		action_data::{DescriptiveError, ErrorData},
+		automatic_action_data::{
+			AutomaticActionErrorInfo, AutomaticActionInput, AutomaticRequestInput,
+		},
+		moderator_action_data::{
+			ModeratorActionErrorInfo, ModeratorActionInput, ModeratorRequestInput,
+		},
+		user_action_data::{UserActionErrorInfo, UserActionInput, UserRequestInput},
 	},
 };
 
@@ -58,12 +62,7 @@ where
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-pub trait UserAction<I, O, E>:
-	Action<
-	RequestInput<I, UserRequestContext>,
-	O,
-	ActionErrorInfo<UserActionType, UserRequestContext, E>,
->
+pub trait UserAction<I, O, E>: Action<UserRequestInput<I>, O, UserActionErrorInfo<E>>
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -71,7 +70,7 @@ where
 	Self: Sized,
 {
 	fn action_type() -> UserActionType;
-	fn new(input: Result<RequestInput<I, UserRequestContext>, UserActionError>) -> Result<Self, E>;
+	fn new(input: UserActionInput<I>) -> Result<Self, E>;
 	fn run_inner(self) -> Result<O, E>;
 }
 
@@ -80,11 +79,7 @@ where
 ////////////////////////////////////////////////
 
 pub trait ModeratorAction<I, O, E>:
-	Action<
-	RequestInput<I, ModeratorRequestContext>,
-	O,
-	ActionErrorInfo<ModeratorActionType, ModeratorRequestContext, E>,
->
+	Action<ModeratorRequestInput<I>, O, ModeratorActionErrorInfo<E>>
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -92,9 +87,7 @@ where
 	Self: Sized,
 {
 	fn action_type() -> ModeratorActionType;
-	fn new(
-		input: Result<RequestInput<I, ModeratorRequestContext>, ModeratorActionError>,
-	) -> Result<Self, E>;
+	fn new(input: ModeratorActionInput<I>) -> Result<Self, E>;
 	fn run_inner(self) -> Result<O, E>;
 }
 
@@ -103,11 +96,7 @@ where
 ////////////////////////////////////////////////
 
 pub trait AutomaticAction<I, O, E>:
-	Action<
-	RequestInput<I, AutomaticRequestContext>,
-	O,
-	ActionErrorInfo<AutomaticActionType, AutomaticRequestContext, E>,
->
+	Action<AutomaticRequestInput<I>, O, AutomaticActionErrorInfo<E>>
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -115,8 +104,6 @@ where
 	Self: Sized,
 {
 	fn action_type() -> AutomaticActionType;
-	fn new(
-		input: Result<RequestInput<I, AutomaticRequestContext>, AutomaticActionError>,
-	) -> Result<Self, E>;
+	fn new(input: AutomaticActionInput<I>) -> Result<Self, E>;
 	fn run_inner(self) -> Result<O, E>;
 }

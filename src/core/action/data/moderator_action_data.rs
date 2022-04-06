@@ -1,4 +1,7 @@
-use crate::core::action::action_type::moderator_action_type::ModeratorActionType;
+use crate::core::action::{
+	action_type::moderator_action_type::ModeratorActionType,
+	data::action_data::{ActionErrorInfo, RequestInput},
+};
 
 use super::action_data::{Application, Request, Session};
 
@@ -21,6 +24,13 @@ pub struct ModeratorRequestContext {
 	pub session: ModeratorSession,
 	pub request: Request,
 }
+
+pub type ModeratorRequestInput<I> = RequestInput<I, ModeratorRequestContext>;
+
+pub type ModeratorActionInput<I> = Result<ModeratorRequestInput<I>, ModeratorActionError>;
+
+pub type ModeratorActionErrorInfo<E> =
+	ActionErrorInfo<ModeratorActionType, ModeratorRequestContext, E>;
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////

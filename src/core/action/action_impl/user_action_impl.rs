@@ -1,11 +1,9 @@
-use crate::core::action::{
-	action_type::user_action_type::UserActionType,
-	data::{
-		action_data::{ActionContext, ActionErrorInfo, DescriptiveError, ErrorData, RequestInput},
-		user_action_data::{
-			UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
-			UserNoAuthSession, UserRequestContext, UserSession,
-		},
+use crate::core::action::data::{
+	action_data::{ActionContext, ActionErrorInfo, DescriptiveError, ErrorData, RequestInput},
+	user_action_data::{
+		UserActionError, UserActionErrorInfo, UserAuthRequestContext, UserAuthSession,
+		UserNoAuthRequestContext, UserNoAuthSession, UserRequestContext, UserRequestInput,
+		UserSession,
 	},
 };
 use crate::core::action::{
@@ -196,21 +194,14 @@ impl ActionError for UserActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-impl<I, O, E, T>
-	Action<
-		RequestInput<I, UserRequestContext>,
-		O,
-		ActionErrorInfo<UserActionType, UserRequestContext, E>,
-	> for T
+impl<I, O, E, T> Action<UserRequestInput<I>, O, UserActionErrorInfo<E>> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
 	E: ActionError,
 	T: UserAction<I, O, E>,
 {
-	fn run(
-		input: RequestInput<I, UserRequestContext>,
-	) -> Result<O, ActionErrorInfo<UserActionType, UserRequestContext, E>> {
+	fn run(input: UserRequestInput<I>) -> Result<O, UserActionErrorInfo<E>> {
 		let context = input.context.clone();
 		Self::new(Ok(input))
 			.and_then(|action| action.run_inner())

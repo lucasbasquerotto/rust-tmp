@@ -1,11 +1,8 @@
-use crate::core::action::{
-	action_type::automatic_action_type::AutomaticActionType,
-	data::{
-		action_data::{ActionContext, ActionErrorInfo, DescriptiveError, ErrorData, RequestInput},
-		automatic_action_data::{
-			AutomaticActionError, AutomaticRequest, AutomaticRequestContext, HookRequestContext,
-			InternalRequestContext,
-		},
+use crate::core::action::data::{
+	action_data::{ActionContext, ActionErrorInfo, DescriptiveError, ErrorData, RequestInput},
+	automatic_action_data::{
+		AutomaticActionError, AutomaticActionErrorInfo, AutomaticRequest, AutomaticRequestContext,
+		AutomaticRequestInput, HookRequestContext, InternalRequestContext,
 	},
 };
 use crate::core::action::{
@@ -172,21 +169,14 @@ impl ActionError for AutomaticActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-impl<I, O, E, T>
-	Action<
-		RequestInput<I, AutomaticRequestContext>,
-		O,
-		ActionErrorInfo<AutomaticActionType, AutomaticRequestContext, E>,
-	> for T
+impl<I, O, E, T> Action<AutomaticRequestInput<I>, O, AutomaticActionErrorInfo<E>> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
 	E: ActionError,
 	T: AutomaticAction<I, O, E>,
 {
-	fn run(
-		input: RequestInput<I, AutomaticRequestContext>,
-	) -> Result<O, ActionErrorInfo<AutomaticActionType, AutomaticRequestContext, E>> {
+	fn run(input: AutomaticRequestInput<I>) -> Result<O, AutomaticActionErrorInfo<E>> {
 		let context = input.context.clone();
 		let action_result = Self::new(Ok(input));
 		action_result

@@ -1,16 +1,21 @@
-use crate::core::action::definition::action::{
-	ActionError, ActionInput, ActionOutput, AutomaticAction, ModeratorAction, UserAction,
-};
 use crate::core::action::{
 	action_type::{
 		automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
 		user_action_type::UserActionType,
 	},
 	data::{
-		action_data::{DescriptiveError, ErrorData, ErrorInfo, RequestInput},
-		automatic_action_data::{AutomaticActionError, AutomaticRequestContext},
-		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
-		user_action_data::{UserActionError, UserRequestContext},
+		action_data::{DescriptiveError, ErrorData, ErrorInfo},
+		automatic_action_data::{AutomaticActionError, AutomaticRequestInput},
+		moderator_action_data::{
+			ModeratorActionError, ModeratorActionInput, ModeratorRequestInput,
+		},
+		user_action_data::{UserActionError, UserActionInput, UserRequestInput},
+	},
+};
+use crate::core::action::{
+	data::automatic_action_data::AutomaticActionInput,
+	definition::action::{
+		ActionError, ActionInput, ActionOutput, AutomaticAction, ModeratorAction, UserAction,
 	},
 };
 
@@ -90,16 +95,14 @@ impl ActionError for UserWebError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct WebActionUser(RequestInput<WebData, UserRequestContext>);
+pub struct WebActionUser(UserRequestInput<WebData>);
 
 impl UserAction<WebData, WebResult, UserWebError> for WebActionUser {
 	fn action_type() -> UserActionType {
 		UserActionType::Web
 	}
 
-	fn new(
-		input: Result<RequestInput<WebData, UserRequestContext>, UserActionError>,
-	) -> Result<Self, UserWebError> {
+	fn new(input: UserActionInput<WebData>) -> Result<Self, UserWebError> {
 		input.map(Self).map_err(UserWebError::UserError)
 	}
 
@@ -140,16 +143,14 @@ impl ActionError for ModeratorWebError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct WebActionModerator(RequestInput<WebData, ModeratorRequestContext>);
+pub struct WebActionModerator(ModeratorRequestInput<WebData>);
 
 impl ModeratorAction<WebData, WebResult, ModeratorWebError> for WebActionModerator {
 	fn action_type() -> ModeratorActionType {
 		ModeratorActionType::Web
 	}
 
-	fn new(
-		input: Result<RequestInput<WebData, ModeratorRequestContext>, ModeratorActionError>,
-	) -> Result<Self, ModeratorWebError> {
+	fn new(input: ModeratorActionInput<WebData>) -> Result<Self, ModeratorWebError> {
 		input.map(Self).map_err(ModeratorWebError::ModeratorError)
 	}
 
@@ -190,16 +191,14 @@ impl ActionError for AutomaticWebError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct WebActionAutomatic(RequestInput<WebData, AutomaticRequestContext>);
+pub struct WebActionAutomatic(AutomaticRequestInput<WebData>);
 
 impl AutomaticAction<WebData, WebResult, AutomaticWebError> for WebActionAutomatic {
 	fn action_type() -> AutomaticActionType {
 		AutomaticActionType::Web
 	}
 
-	fn new(
-		input: Result<RequestInput<WebData, AutomaticRequestContext>, AutomaticActionError>,
-	) -> Result<Self, AutomaticWebError> {
+	fn new(input: AutomaticActionInput<WebData>) -> Result<Self, AutomaticWebError> {
 		input.map(Self).map_err(AutomaticWebError::AutomaticError)
 	}
 
