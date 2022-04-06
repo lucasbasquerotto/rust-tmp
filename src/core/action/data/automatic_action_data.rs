@@ -1,6 +1,5 @@
+use crate::core::action::data::action_data::{Application, Request};
 use std::fmt::Debug;
-
-use super::action_data::{Application, Request};
 
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
@@ -45,7 +44,7 @@ pub enum AutomaticActionError {
 
 #[cfg(test)]
 pub mod tests {
-	use crate::data::action::action_data::{Application, Request};
+	use crate::core::action::data::action_data::{Application, Request};
 
 	use super::{AutomaticRequest, AutomaticRequestContext};
 

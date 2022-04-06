@@ -1,13 +1,13 @@
 use core::fmt;
 use std::fmt::Debug;
 
-use crate::business::definition::{
+use crate::core::action::definition::{
 	action::ActionError,
 	action_helpers::{ActionErrorHelper, DescriptiveRequestContext},
 };
-use crate::data::{
-	action::action_data::{ActionErrorInfo, ErrorData, ErrorInfo, RequestContext},
+use crate::core::action::{
 	action_type::general_action_type::ActionType,
+	data::action_data::{ActionErrorInfo, ErrorData, ErrorInfo, RequestContext},
 };
 
 ////////////////////////////////////////////////
@@ -101,15 +101,15 @@ impl<T: ActionType> fmt::Display for ActionTypeWrapper<T> {
 
 #[cfg(test)]
 mod tests {
-	use crate::business::action_impl::general_action_impl::ActionTypeWrapper;
-	use crate::business::definition::action::ActionError;
-	use crate::business::definition::action_helpers::ActionErrorHelper;
-	use crate::business::definition::action_helpers::DescriptiveRequestContext;
-	use crate::data::action::action_data::{
+	use crate::core::action::action_impl::general_action_impl::ActionTypeWrapper;
+	use crate::core::action::action_type::general_action_type::ActionScope;
+	use crate::core::action::action_type::general_action_type::ActionType;
+	use crate::core::action::data::action_data::{
 		ActionErrorInfo, DescriptiveError, ErrorContext, ErrorData,
 	};
-	use crate::data::action_type::general_action_type::ActionScope;
-	use crate::data::action_type::general_action_type::ActionType;
+	use crate::core::action::definition::action::ActionError;
+	use crate::core::action::definition::action_helpers::ActionErrorHelper;
+	use crate::core::action::definition::action_helpers::DescriptiveRequestContext;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug, Eq, PartialEq, Clone)]

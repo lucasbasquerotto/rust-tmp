@@ -37,7 +37,7 @@ impl ActionType for UserActionType {
 mod tests {
 	use super::ID_ACTION_MAP;
 	use crate::{
-		data::action_type::general_action_type::tests::test_enum_action_type,
+		core::action::action_type::general_action_type::tests::test_enum_action_type,
 		tests::test_utils::tests::run_test,
 	};
 

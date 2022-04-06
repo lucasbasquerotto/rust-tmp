@@ -1,16 +1,16 @@
-use crate::business::definition::action::{
+use crate::core::action::definition::action::{
 	ActionError, ActionInput, ActionOutput, AutomaticAction, ModeratorAction, UserAction,
 };
-use crate::data::{
-	action::{
+use crate::core::action::{
+	action_type::{
+		automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
+		user_action_type::UserActionType,
+	},
+	data::{
 		action_data::{DescriptiveError, ErrorData, ErrorInfo, RequestInput},
 		automatic_action_data::{AutomaticActionError, AutomaticRequestContext},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 		user_action_data::{UserActionError, UserRequestContext},
-	},
-	action_type::{
-		automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
-		user_action_type::UserActionType,
 	},
 };
 
@@ -315,21 +315,19 @@ fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
 mod tests {
 	use mockito::mock;
 
-	use crate::data::{
-		action::{
-			action_data::{ErrorInfo, RequestInput},
-			automatic_action_data::tests::{automatic_context, AutomaticTestOptions},
-			moderator_action_data::tests::{moderator_context, ModeratorTestOptions},
-			user_action_data::tests::{user_context, UserTestOptions},
-		},
-		action_type::moderator_action_type::ModeratorActionType,
-	};
 	use crate::{
-		business::{
-			action::web_action::{
-				httpbin_base_url, AutomaticWebError, ModeratorWebError, UrlData, UserWebError,
-				WebActionAutomatic, WebActionModerator, WebActionUser, WebData, WebResult,
-				WebResultArgs, WebSharedError,
+		business::action::web_action::{
+			httpbin_base_url, AutomaticWebError, ModeratorWebError, UrlData, UserWebError,
+			WebActionAutomatic, WebActionModerator, WebActionUser, WebData, WebResult,
+			WebResultArgs, WebSharedError,
+		},
+		core::action::{
+			action_type::moderator_action_type::ModeratorActionType,
+			data::{
+				action_data::{ErrorInfo, RequestInput},
+				automatic_action_data::tests::{automatic_context, AutomaticTestOptions},
+				moderator_action_data::tests::{moderator_context, ModeratorTestOptions},
+				user_action_data::tests::{user_context, UserTestOptions},
 			},
 			definition::action::{Action, ActionError},
 		},

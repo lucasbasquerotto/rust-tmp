@@ -1,10 +1,10 @@
-use crate::business::definition::action::{ActionError, UserAction};
-use crate::data::{
-	action::{
+use crate::core::action::definition::action::{ActionError, UserAction};
+use crate::core::action::{
+	action_type::user_action_type::UserActionType,
+	data::{
 		action_data::{DescriptiveError, ErrorData, RequestInput},
 		user_action_data::{UserActionError, UserRequestContext},
 	},
-	action_type::user_action_type::UserActionType,
 };
 
 ////////////////////////////////////////////////
@@ -61,11 +61,11 @@ impl UserAction<(), (), LogoutError> for LogoutAction {
 #[cfg(test)]
 mod tests {
 	use super::LogoutAction;
-	use crate::data::action::{
+	use crate::core::action::data::{
 		action_data::RequestInput,
 		user_action_data::tests::{user_context, UserTestOptions},
 	};
-	use crate::{business::definition::action::Action, tests::test_utils::tests::run_test};
+	use crate::{core::action::definition::action::Action, tests::test_utils::tests::run_test};
 
 	#[test]
 	fn main() {

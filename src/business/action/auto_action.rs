@@ -1,15 +1,15 @@
-use crate::business::definition::action::{
+use crate::core::action::definition::action::{
 	ActionError, ActionInput, ActionOutput, AutomaticAction,
 };
-use crate::data::{
-	action::{
+use crate::core::action::{
+	action_type::automatic_action_type::AutomaticActionType,
+	data::{
 		action_data::{DescriptiveError, ErrorData, RequestContext, RequestInput},
 		automatic_action_data::{
 			AutomaticActionError, AutomaticRequestContext, HookRequestContext,
 			InternalRequestContext,
 		},
 	},
-	action_type::automatic_action_type::AutomaticActionType,
 };
 
 ////////////////////////////////////////////////
@@ -147,12 +147,12 @@ fn run<C: RequestContext>(
 #[cfg(test)]
 mod tests {
 	use super::{AutoActionHook, AutoActionInternal, AutoData, AutoError, AutoResult};
-	use crate::business::definition::action::Action;
-	use crate::data::action::action_data::RequestInput;
-	use crate::data::action::automatic_action_data::tests::{
+	use crate::core::action::data::action_data::RequestInput;
+	use crate::core::action::data::automatic_action_data::tests::{
 		automatic_context, AutomaticTestOptions,
 	};
-	use crate::data::action::automatic_action_data::AutomaticActionError;
+	use crate::core::action::data::automatic_action_data::AutomaticActionError;
+	use crate::core::action::definition::action::Action;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]

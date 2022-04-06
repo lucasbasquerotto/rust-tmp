@@ -3,30 +3,26 @@ use std::{collections::HashMap, iter::FromIterator};
 use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, EnumIter)]
-pub enum ModeratorActionType {
+pub enum AutomaticActionType {
 	Test,
-	EchoInfo,
-	EchoWarn,
-	EchoError,
+	Auto,
 	Web,
 }
 
 #[ctor::ctor]
-static ID_ACTION_MAP: HashMap<u32, ModeratorActionType> =
-	HashMap::from_iter(ModeratorActionType::iter().map(|item| (item.id(), item)));
+static ID_ACTION_MAP: HashMap<u32, AutomaticActionType> =
+	HashMap::from_iter(AutomaticActionType::iter().map(|item| (item.id(), item)));
 
-impl ActionType for ModeratorActionType {
+impl ActionType for AutomaticActionType {
 	fn scope() -> ActionScope {
-		ActionScope::Moderator
+		ActionScope::Automatic
 	}
 
 	fn id(&self) -> u32 {
 		match self {
-			ModeratorActionType::Test => 0,
-			ModeratorActionType::EchoInfo => 1,
-			ModeratorActionType::EchoWarn => 2,
-			ModeratorActionType::EchoError => 3,
-			ModeratorActionType::Web => 4,
+			AutomaticActionType::Test => 0,
+			AutomaticActionType::Auto => 1,
+			AutomaticActionType::Web => 2,
 		}
 	}
 
@@ -39,7 +35,7 @@ impl ActionType for ModeratorActionType {
 mod tests {
 	use super::ID_ACTION_MAP;
 	use crate::{
-		data::action_type::general_action_type::tests::test_enum_action_type,
+		core::action::action_type::general_action_type::tests::test_enum_action_type,
 		tests::test_utils::tests::run_test,
 	};
 

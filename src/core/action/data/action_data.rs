@@ -1,7 +1,6 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use crate::business::definition::action::ActionError;
-use crate::data::action_type::general_action_type::ActionType;
+use crate::core::action::action_type::general_action_type::ActionType;
 
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
@@ -116,7 +115,7 @@ pub struct ErrorData {
 }
 
 #[derive(Debug)]
-pub struct ActionErrorInfo<T: ActionType, C: RequestContext, E: ActionError> {
+pub struct ActionErrorInfo<T: ActionType, C: RequestContext, E> {
 	pub error_context: ErrorContext<T, C>,
 	pub error: E,
 }

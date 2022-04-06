@@ -6,7 +6,7 @@ extern crate serde;
 extern crate strum;
 
 mod business;
-mod data;
+mod core;
 
 pub fn main() {}
 
