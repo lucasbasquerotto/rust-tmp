@@ -180,15 +180,12 @@ where
 	fn run(
 		input: AutomaticRequestInput<I>,
 	) -> Result<AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> {
-		let context = input.context.clone();
 		let action_context = ActionContext {
 			action_type: Self::action_type(),
-			context: context.clone(),
+			context: input.context.clone(),
 		};
 
-		let action_result = Self::new(Ok(input));
-
-		let result = action_result.and_then(|action| action.run_inner());
+		let result = Self::new(Ok(input)).and_then(|action| action.run_inner());
 
 		match result {
 			Ok(data) => Ok(AutomaticOutputInfo {
