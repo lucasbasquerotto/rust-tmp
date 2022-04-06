@@ -324,12 +324,14 @@ mod tests {
 		core::action::{
 			action_type::moderator_action_type::ModeratorActionType,
 			data::{
-				action_data::{ErrorInfo, RequestInput},
+				action_data::{ActionErrorInfo, ErrorContext, ErrorInfo, RequestInput},
 				automatic_action_data::tests::{automatic_context, AutomaticTestOptions},
 				moderator_action_data::tests::{moderator_context, ModeratorTestOptions},
 				user_action_data::tests::{user_context, UserTestOptions},
 			},
-			definition::action::{Action, ActionError},
+			definition::action::{
+				Action, ActionError, AutomaticAction, ModeratorAction, UserAction,
+			},
 		},
 		tests::test_utils::tests::run_test,
 	};
@@ -393,7 +395,7 @@ mod tests {
 					error: false,
 					status: None,
 				},
-				context,
+				context: context.clone(),
 			});
 
 			assert_eq!(
@@ -420,24 +422,30 @@ mod tests {
 					error: false,
 					status: Some(403),
 				},
-				context,
+				context: context.clone(),
 			});
 
 			assert_eq!(
 				&result,
-				&Err(UserWebError::WebError(WebSharedError::Reqwest(
-					ErrorInfo::mock(UrlData {
-						url: format!(
-							"{host}/{path}",
-							host = httpbin_base_url(),
-							path = "status/403"
-						),
-						status: Some(403)
-					})
-				)))
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: WebActionUser::action_type(),
+						context: context.clone(),
+					},
+					error: UserWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
+						UrlData {
+							url: format!(
+								"{host}/{path}",
+								host = httpbin_base_url(),
+								path = "status/403"
+							),
+							status: Some(403)
+						}
+					))),
+				}),
 			);
 
-			let public_error = &result.unwrap_err().public_error();
+			let public_error = &result.unwrap_err().error.public_error();
 
 			assert_eq!(
 				public_error.as_ref().unwrap().msg,
@@ -456,24 +464,30 @@ mod tests {
 					error: true,
 					status: None,
 				},
-				context,
+				context: context.clone(),
 			});
 
 			assert_eq!(
 				&result,
-				&Err(UserWebError::WebError(WebSharedError::Reqwest(
-					ErrorInfo::mock(UrlData {
-						url: format!(
-							"{host}/{path}",
-							host = httpbin_base_url(),
-							path = "get/error"
-						),
-						status: None
-					})
-				)))
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: WebActionUser::action_type(),
+						context: context.clone(),
+					},
+					error: UserWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
+						UrlData {
+							url: format!(
+								"{host}/{path}",
+								host = httpbin_base_url(),
+								path = "get/error"
+							),
+							status: None
+						}
+					))),
+				}),
 			);
 
-			let public_error = &result.unwrap_err().public_error();
+			let public_error = &result.unwrap_err().error.public_error();
 
 			assert_eq!(
 				public_error.as_ref().unwrap().msg,
@@ -538,24 +552,30 @@ mod tests {
 					error: false,
 					status: Some(403),
 				},
-				context,
+				context: context.clone(),
 			});
 
 			assert_eq!(
 				&result,
-				&Err(ModeratorWebError::WebError(WebSharedError::Reqwest(
-					ErrorInfo::mock(UrlData {
-						url: format!(
-							"{host}/{path}",
-							host = httpbin_base_url(),
-							path = "status/403"
-						),
-						status: Some(403)
-					})
-				)))
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: WebActionModerator::action_type(),
+						context: context.clone(),
+					},
+					error: ModeratorWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
+						UrlData {
+							url: format!(
+								"{host}/{path}",
+								host = httpbin_base_url(),
+								path = "status/403"
+							),
+							status: Some(403)
+						}
+					))),
+				}),
 			);
 
-			let public_error = &result.unwrap_err().public_error();
+			let public_error = &result.unwrap_err().error.public_error();
 
 			assert_eq!(
 				public_error.as_ref().unwrap().msg,
@@ -577,24 +597,30 @@ mod tests {
 					error: true,
 					status: None,
 				},
-				context,
+				context: context.clone(),
 			});
 
 			assert_eq!(
 				&result,
-				&Err(ModeratorWebError::WebError(WebSharedError::Reqwest(
-					ErrorInfo::mock(UrlData {
-						url: format!(
-							"{host}/{path}",
-							host = httpbin_base_url(),
-							path = "get/error"
-						),
-						status: None
-					})
-				)))
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: WebActionModerator::action_type(),
+						context: context.clone(),
+					},
+					error: ModeratorWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
+						UrlData {
+							url: format!(
+								"{host}/{path}",
+								host = httpbin_base_url(),
+								path = "get/error"
+							),
+							status: None
+						}
+					))),
+				}),
 			);
 
-			let public_error = &result.unwrap_err().public_error();
+			let public_error = &result.unwrap_err().error.public_error();
 
 			assert_eq!(
 				public_error.as_ref().unwrap().msg,
@@ -653,24 +679,30 @@ mod tests {
 					error: false,
 					status: Some(403),
 				},
-				context,
+				context: context.clone(),
 			});
 
 			assert_eq!(
 				&result,
-				&Err(AutomaticWebError::WebError(WebSharedError::Reqwest(
-					ErrorInfo::mock(UrlData {
-						url: format!(
-							"{host}/{path}",
-							host = httpbin_base_url(),
-							path = "status/403"
-						),
-						status: Some(403)
-					})
-				)))
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: WebActionAutomatic::action_type(),
+						context: context.clone(),
+					},
+					error: AutomaticWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
+						UrlData {
+							url: format!(
+								"{host}/{path}",
+								host = httpbin_base_url(),
+								path = "status/403"
+							),
+							status: Some(403)
+						}
+					))),
+				}),
 			);
 
-			let public_error = &result.unwrap_err().public_error();
+			let public_error = &result.unwrap_err().error.public_error();
 
 			assert_eq!(
 				public_error.as_ref().unwrap().msg,
@@ -689,24 +721,30 @@ mod tests {
 					error: true,
 					status: None,
 				},
-				context,
+				context: context.clone(),
 			});
 
 			assert_eq!(
 				&result,
-				&Err(AutomaticWebError::WebError(WebSharedError::Reqwest(
-					ErrorInfo::mock(UrlData {
-						url: format!(
-							"{host}/{path}",
-							host = httpbin_base_url(),
-							path = "get/error"
-						),
-						status: None
-					})
-				)))
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: WebActionAutomatic::action_type(),
+						context: context.clone(),
+					},
+					error: AutomaticWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
+						UrlData {
+							url: format!(
+								"{host}/{path}",
+								host = httpbin_base_url(),
+								path = "get/error"
+							),
+							status: None
+						}
+					))),
+				}),
 			);
 
-			let public_error = &result.unwrap_err().public_error();
+			let public_error = &result.unwrap_err().error.public_error();
 
 			assert_eq!(
 				public_error.as_ref().unwrap().msg,

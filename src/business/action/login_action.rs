@@ -94,10 +94,13 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 #[cfg(test)]
 mod tests {
 	use super::{LoginAction, LoginData, LoginError, LoginResult};
-	use crate::core::action::data::action_data::RequestInput;
 	use crate::core::action::data::user_action_data::tests::{user_context, UserTestOptions};
 	use crate::core::action::data::user_action_data::UserActionError;
 	use crate::core::action::definition::action::Action;
+	use crate::core::action::{
+		data::action_data::{ActionErrorInfo, ErrorContext, RequestInput},
+		definition::action::UserAction,
+	};
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
@@ -110,12 +113,18 @@ mod tests {
 					name: "User 01".to_owned(),
 					pass: "p4$$w0rd".to_owned(),
 				},
-				context,
+				context: context.clone(),
 			});
 
 			assert_eq!(
 				&result,
-				&Err(LoginError::UserError(UserActionError::Authenticated))
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: LoginAction::action_type(),
+						context: context.clone(),
+					},
+					error: LoginError::UserError(UserActionError::Authenticated),
+				}),
 			);
 		});
 	}

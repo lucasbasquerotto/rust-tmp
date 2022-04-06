@@ -114,7 +114,7 @@ pub struct ErrorData {
 	pub params: Option<HashMap<String, String>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct ActionErrorInfo<T: ActionType, C: RequestContext, E> {
 	pub error_context: ErrorContext<T, C>,
 	pub error: E,

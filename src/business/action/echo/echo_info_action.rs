@@ -64,7 +64,6 @@ impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction {
 #[cfg(test)]
 pub mod tests {
 	use super::EchoInfoAction;
-	use crate::business::action::echo::echo_info_action::EchoInfoError;
 	use crate::core::action::action_type::moderator_action_type::ModeratorActionType;
 	use crate::core::action::data::action_data::RequestInput;
 	use crate::core::action::data::moderator_action_data::tests::{
@@ -74,6 +73,10 @@ pub mod tests {
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::definition::action::ModeratorAction;
 	use crate::tests::test_utils::tests::run_test;
+	use crate::{
+		business::action::echo::echo_info_action::EchoInfoError,
+		core::action::data::action_data::{ActionErrorInfo, ErrorContext},
+	};
 
 	#[test]
 	fn test_not_allowed() {
@@ -83,12 +86,21 @@ pub mod tests {
 				allowed_actions: vec![],
 			});
 
-			let result = EchoInfoAction::run(RequestInput { data: (), context });
+			let result = EchoInfoAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(
-				result,
-				Err(EchoInfoError::ModeratorError(
-					ModeratorActionError::NotAllowed(ModeratorActionType::EchoInfo)
-				))
+				&result,
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: EchoInfoAction::action_type(),
+						context: context.clone(),
+					},
+					error: EchoInfoError::ModeratorError(ModeratorActionError::NotAllowed(
+						ModeratorActionType::EchoInfo
+					)),
+				}),
 			);
 		});
 	}

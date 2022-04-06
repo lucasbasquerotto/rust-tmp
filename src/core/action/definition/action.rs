@@ -6,7 +6,7 @@ use crate::core::action::{
 		user_action_type::UserActionType,
 	},
 	data::{
-		action_data::{DescriptiveError, ErrorData, RequestInput},
+		action_data::{ActionErrorInfo, DescriptiveError, ErrorData, RequestInput},
 		automatic_action_data::{AutomaticActionError, AutomaticRequestContext},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestContext},
 		user_action_data::{UserActionError, UserRequestContext},
@@ -58,7 +58,12 @@ where
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-pub trait UserAction<I, O, E>: Action<RequestInput<I, UserRequestContext>, O, E>
+pub trait UserAction<I, O, E>:
+	Action<
+	RequestInput<I, UserRequestContext>,
+	O,
+	ActionErrorInfo<UserActionType, UserRequestContext, E>,
+>
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -74,7 +79,12 @@ where
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-pub trait ModeratorAction<I, O, E>: Action<RequestInput<I, ModeratorRequestContext>, O, E>
+pub trait ModeratorAction<I, O, E>:
+	Action<
+	RequestInput<I, ModeratorRequestContext>,
+	O,
+	ActionErrorInfo<ModeratorActionType, ModeratorRequestContext, E>,
+>
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -92,7 +102,12 @@ where
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-pub trait AutomaticAction<I, O, E>: Action<RequestInput<I, AutomaticRequestContext>, O, E>
+pub trait AutomaticAction<I, O, E>:
+	Action<
+	RequestInput<I, AutomaticRequestContext>,
+	O,
+	ActionErrorInfo<AutomaticActionType, AutomaticRequestContext, E>,
+>
 where
 	I: ActionInput,
 	O: ActionOutput,

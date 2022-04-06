@@ -1,8 +1,11 @@
-use crate::core::action::data::{
-	action_data::{DescriptiveError, ErrorData, RequestInput},
-	automatic_action_data::{
-		AutomaticActionError, AutomaticRequest, AutomaticRequestContext, HookRequestContext,
-		InternalRequestContext,
+use crate::core::action::{
+	action_type::automatic_action_type::AutomaticActionType,
+	data::{
+		action_data::{ActionErrorInfo, DescriptiveError, ErrorContext, ErrorData, RequestInput},
+		automatic_action_data::{
+			AutomaticActionError, AutomaticRequest, AutomaticRequestContext, HookRequestContext,
+			InternalRequestContext,
+		},
 	},
 };
 use crate::core::action::{
@@ -169,16 +172,32 @@ impl ActionError for AutomaticActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-impl<I, O, E, T> Action<RequestInput<I, AutomaticRequestContext>, O, E> for T
+impl<I, O, E, T>
+	Action<
+		RequestInput<I, AutomaticRequestContext>,
+		O,
+		ActionErrorInfo<AutomaticActionType, AutomaticRequestContext, E>,
+	> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
 	E: ActionError,
 	T: AutomaticAction<I, O, E>,
 {
-	fn run(input: RequestInput<I, AutomaticRequestContext>) -> Result<O, E> {
-		let action = Self::new(Ok(input))?;
-		action.run_inner()
+	fn run(
+		input: RequestInput<I, AutomaticRequestContext>,
+	) -> Result<O, ActionErrorInfo<AutomaticActionType, AutomaticRequestContext, E>> {
+		let context = input.context.clone();
+		let action_result = Self::new(Ok(input));
+		action_result
+			.and_then(|action| action.run_inner())
+			.map_err(|error| ActionErrorInfo {
+				error_context: ErrorContext {
+					action_type: Self::action_type(),
+					context: context.clone(),
+				},
+				error,
+			})
 	}
 }
 
@@ -188,7 +207,6 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use crate::core::action::action_type::automatic_action_type::AutomaticActionType;
 	use crate::core::action::data::automatic_action_data::tests::{
 		automatic_context, AutomaticTestOptions,
 	};
@@ -200,6 +218,10 @@ pub mod tests {
 	};
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::definition::action::AutomaticAction;
+	use crate::core::action::{
+		action_type::automatic_action_type::AutomaticActionType,
+		data::action_data::{ActionErrorInfo, ErrorContext},
+	};
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]
@@ -345,8 +367,20 @@ pub mod tests {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: true });
 
-			let result = TestActionHook::run(RequestInput { data: (), context });
-			assert_eq!(result, Err(AutomaticActionError::NotHook));
+			let result = TestActionHook::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
+			assert_eq!(
+				result,
+				Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: TestActionHook::action_type(),
+						context: context.clone(),
+					},
+					error: AutomaticActionError::NotHook,
+				})
+			);
 		});
 	}
 
@@ -369,8 +403,20 @@ pub mod tests {
 		run_test(|_| {
 			let context = automatic_context(AutomaticTestOptions { internal: false });
 
-			let result = TestActionInternal::run(RequestInput { data: (), context });
-			assert_eq!(result, Err(AutomaticActionError::NotInternal));
+			let result = TestActionInternal::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
+			assert_eq!(
+				result,
+				Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: TestActionInternal::action_type(),
+						context: context.clone(),
+					},
+					error: AutomaticActionError::NotInternal,
+				})
+			);
 		});
 	}
 

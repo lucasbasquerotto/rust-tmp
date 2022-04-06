@@ -1,8 +1,11 @@
-use crate::core::action::data::{
-	action_data::{DescriptiveError, ErrorData, RequestInput},
-	user_action_data::{
-		UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
-		UserNoAuthSession, UserRequestContext, UserSession,
+use crate::core::action::{
+	action_type::user_action_type::UserActionType,
+	data::{
+		action_data::{ActionErrorInfo, DescriptiveError, ErrorContext, ErrorData, RequestInput},
+		user_action_data::{
+			UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
+			UserNoAuthSession, UserRequestContext, UserSession,
+		},
 	},
 };
 use crate::core::action::{
@@ -193,16 +196,31 @@ impl ActionError for UserActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-impl<I, O, E, T> Action<RequestInput<I, UserRequestContext>, O, E> for T
+impl<I, O, E, T>
+	Action<
+		RequestInput<I, UserRequestContext>,
+		O,
+		ActionErrorInfo<UserActionType, UserRequestContext, E>,
+	> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
 	E: ActionError,
 	T: UserAction<I, O, E>,
 {
-	fn run(input: RequestInput<I, UserRequestContext>) -> Result<O, E> {
-		let action = Self::new(Ok(input))?;
-		action.run_inner()
+	fn run(
+		input: RequestInput<I, UserRequestContext>,
+	) -> Result<O, ActionErrorInfo<UserActionType, UserRequestContext, E>> {
+		let context = input.context.clone();
+		Self::new(Ok(input))
+			.and_then(|action| action.run_inner())
+			.map_err(|error| ActionErrorInfo {
+				error_context: ErrorContext {
+					action_type: Self::action_type(),
+					context,
+				},
+				error,
+			})
 	}
 }
 
@@ -212,16 +230,21 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use crate::core::action::action_type::user_action_type::UserActionType;
-	use crate::core::action::data::user_action_data::tests::{user_context, UserTestOptions};
 	use crate::core::action::data::user_action_data::{
 		UserActionError, UserAuthRequestContext, UserNoAuthRequestContext,
+	};
+	use crate::core::action::data::{
+		action_data::ErrorContext,
+		user_action_data::tests::{user_context, UserTestOptions},
 	};
 	use crate::core::action::data::{
 		action_data::RequestInput, user_action_data::UserRequestContext,
 	};
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::definition::action::UserAction;
+	use crate::core::action::{
+		action_type::user_action_type::UserActionType, data::action_data::ActionErrorInfo,
+	};
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]
@@ -400,8 +423,20 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionNoAuth::run(RequestInput { data: (), context });
-			assert_eq!(result, Err(UserActionError::Authenticated));
+			let result = TestActionNoAuth::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
+			assert_eq!(
+				result,
+				Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: TestActionNoAuth::action_type(),
+						context: context.clone(),
+					},
+					error: UserActionError::Authenticated,
+				})
+			);
 		});
 	}
 
@@ -420,7 +455,10 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionNoAuth::run(RequestInput { data: (), context });
+			let result = TestActionNoAuth::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(result, Ok(()));
 			assert_eq!(
 				helper.pop_log(),
@@ -444,8 +482,20 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionAuth::run(RequestInput { data: (), context });
-			assert_eq!(result, Err(UserActionError::Unauthenticated));
+			let result = TestActionAuth::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
+			assert_eq!(
+				result,
+				Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: TestActionAuth::action_type(),
+						context: context.clone(),
+					},
+					error: UserActionError::Unauthenticated,
+				})
+			);
 		});
 	}
 

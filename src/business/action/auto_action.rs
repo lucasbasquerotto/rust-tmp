@@ -147,12 +147,15 @@ fn run<C: RequestContext>(
 #[cfg(test)]
 mod tests {
 	use super::{AutoActionHook, AutoActionInternal, AutoData, AutoError, AutoResult};
-	use crate::core::action::data::action_data::RequestInput;
 	use crate::core::action::data::automatic_action_data::tests::{
 		automatic_context, AutomaticTestOptions,
 	};
 	use crate::core::action::data::automatic_action_data::AutomaticActionError;
 	use crate::core::action::definition::action::Action;
+	use crate::core::action::{
+		data::action_data::{ActionErrorInfo, ErrorContext, RequestInput},
+		definition::action::AutomaticAction,
+	};
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
@@ -165,12 +168,18 @@ mod tests {
 					param1: "Param 01 (Error)".to_owned(),
 					param2: 1,
 				},
-				context,
+				context: context.clone(),
 			});
 
 			assert_eq!(
 				&result,
-				&Err(AutoError::AutomaticError(AutomaticActionError::NotInternal))
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: AutoActionInternal::action_type(),
+						context: context.clone(),
+					},
+					error: AutoError::AutomaticError(AutomaticActionError::NotInternal),
+				}),
 			);
 		});
 	}
@@ -211,12 +220,18 @@ mod tests {
 					param1: "Param 01 (Error)".to_owned(),
 					param2: 3,
 				},
-				context,
+				context: context.clone(),
 			});
 
 			assert_eq!(
 				&result,
-				&Err(AutoError::AutomaticError(AutomaticActionError::NotHook))
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: AutoActionInternal::action_type(),
+						context: context.clone(),
+					},
+					error: AutoError::AutomaticError(AutomaticActionError::NotHook),
+				}),
 			);
 		});
 	}

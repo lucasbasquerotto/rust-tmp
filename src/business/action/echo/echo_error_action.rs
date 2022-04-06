@@ -64,7 +64,6 @@ impl ModeratorAction<(), (), EchoErrorError> for EchoErrorAction {
 #[cfg(test)]
 pub mod tests {
 	use super::EchoErrorAction;
-	use crate::business::action::echo::echo_error_action::EchoErrorError;
 	use crate::core::action::action_type::moderator_action_type::ModeratorActionType;
 	use crate::core::action::data::action_data::RequestInput;
 	use crate::core::action::data::moderator_action_data::tests::{
@@ -74,6 +73,10 @@ pub mod tests {
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::definition::action::ModeratorAction;
 	use crate::tests::test_utils::tests::run_test;
+	use crate::{
+		business::action::echo::echo_error_action::EchoErrorError,
+		core::action::data::action_data::{ActionErrorInfo, ErrorContext},
+	};
 
 	#[test]
 	fn test_not_allowed() {
@@ -83,12 +86,21 @@ pub mod tests {
 				allowed_actions: vec![],
 			});
 
-			let result = EchoErrorAction::run(RequestInput { data: (), context });
+			let result = EchoErrorAction::run(RequestInput {
+				data: (),
+				context: context.clone(),
+			});
 			assert_eq!(
-				result,
-				Err(EchoErrorError::ModeratorError(
-					ModeratorActionError::NotAllowed(ModeratorActionType::EchoError)
-				))
+				&result,
+				&Err(ActionErrorInfo {
+					error_context: ErrorContext {
+						action_type: EchoErrorAction::action_type(),
+						context: context.clone(),
+					},
+					error: EchoErrorError::ModeratorError(ModeratorActionError::NotAllowed(
+						ModeratorActionType::EchoError
+					)),
+				}),
 			);
 		});
 	}
