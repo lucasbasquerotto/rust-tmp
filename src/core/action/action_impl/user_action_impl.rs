@@ -76,13 +76,13 @@ impl DescriptiveInfo for UserUnconfirmedRequestContext {
 	}
 }
 
-impl UserRequestContext {
-	pub fn into_auth(self) -> Result<UserAuthRequestContext, UserActionError> {
+impl From<UserRequestContext> for Result<UserAuthRequestContext, UserActionError> {
+	fn from(from: UserRequestContext) -> Self {
 		let UserRequestContext {
 			application,
 			session,
 			request,
-		} = self;
+		} = from;
 
 		match session {
 			UserSession::Auth(session) => Ok(UserAuthRequestContext {
@@ -94,13 +94,15 @@ impl UserRequestContext {
 			UserSession::Unconfirmed(_) => Err(UserActionError::Unauthenticated),
 		}
 	}
+}
 
-	pub fn into_no_auth(self) -> Result<UserNoAuthRequestContext, UserActionError> {
+impl From<UserRequestContext> for Result<UserNoAuthRequestContext, UserActionError> {
+	fn from(from: UserRequestContext) -> Self {
 		let UserRequestContext {
 			application,
 			session,
 			request,
-		} = self;
+		} = from;
 
 		match session {
 			UserSession::Auth(_) => Err(UserActionError::Authenticated),
@@ -112,14 +114,15 @@ impl UserRequestContext {
 			UserSession::Unconfirmed(_) => Err(UserActionError::Authenticated),
 		}
 	}
+}
 
-	#[allow(dead_code)]
-	pub fn into_unconfirmed(self) -> Result<UserUnconfirmedRequestContext, UserActionError> {
+impl From<UserRequestContext> for Result<UserUnconfirmedRequestContext, UserActionError> {
+	fn from(from: UserRequestContext) -> Self {
 		let UserRequestContext {
 			application,
 			session,
 			request,
-		} = self;
+		} = from;
 
 		match session {
 			UserSession::Auth(_) => Err(UserActionError::Authenticated),
@@ -133,36 +136,41 @@ impl UserRequestContext {
 	}
 }
 
-impl<I> RequestInput<I, UserRequestContext> {
-	#[allow(dead_code)]
-	pub fn into_auth(self) -> Result<RequestInput<I, UserAuthRequestContext>, UserActionError> {
-		let context = self.context.into_auth()?;
+impl<I> From<RequestInput<I, UserRequestContext>>
+	for Result<RequestInput<I, UserAuthRequestContext>, UserActionError>
+{
+	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
+		let context: Result<UserAuthRequestContext, UserActionError> = from.context.into();
+		let context = context?;
 		Ok(RequestInput {
 			context,
-			data: self.data,
-		})
-	}
-
-	pub fn into_no_auth(
-		self,
-	) -> Result<RequestInput<I, UserNoAuthRequestContext>, UserActionError> {
-		let context = self.context.into_no_auth()?;
-		Ok(RequestInput {
-			context,
-			data: self.data,
+			data: from.data,
 		})
 	}
 }
 
-impl UserAuthRequestContext {
-	pub fn into_general(self) -> UserRequestContext {
+impl<I> From<RequestInput<I, UserRequestContext>>
+	for Result<RequestInput<I, UserNoAuthRequestContext>, UserActionError>
+{
+	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
+		let context: Result<UserNoAuthRequestContext, UserActionError> = from.context.into();
+		let context = context?;
+		Ok(RequestInput {
+			context,
+			data: from.data,
+		})
+	}
+}
+
+impl From<UserAuthRequestContext> for UserRequestContext {
+	fn from(from: UserAuthRequestContext) -> Self {
 		let UserAuthRequestContext {
 			application,
 			session,
 			request,
-		} = self;
+		} = from;
 
-		UserRequestContext {
+		Self {
 			application,
 			session: UserSession::Auth(session),
 			request,
@@ -170,26 +178,25 @@ impl UserAuthRequestContext {
 	}
 }
 
-impl<T> RequestInput<T, UserAuthRequestContext> {
-	#[allow(dead_code)]
-	pub fn into_general(self) -> RequestInput<T, UserRequestContext> {
-		let context = self.context.into_general();
-		RequestInput {
+impl<T> From<RequestInput<T, UserAuthRequestContext>> for RequestInput<T, UserRequestContext> {
+	fn from(from: RequestInput<T, UserAuthRequestContext>) -> Self {
+		let context = from.context.into();
+		Self {
 			context,
-			data: self.data,
+			data: from.data,
 		}
 	}
 }
 
-impl UserNoAuthRequestContext {
-	pub fn into_general(self) -> UserRequestContext {
+impl From<UserNoAuthRequestContext> for UserRequestContext {
+	fn from(from: UserNoAuthRequestContext) -> Self {
 		let UserNoAuthRequestContext {
 			application,
 			request,
 			session,
-		} = self;
+		} = from;
 
-		UserRequestContext {
+		Self {
 			application,
 			session: UserSession::NoAuth(session),
 			request,
@@ -197,26 +204,25 @@ impl UserNoAuthRequestContext {
 	}
 }
 
-impl<T> RequestInput<T, UserUnconfirmedRequestContext> {
-	#[allow(dead_code)]
-	pub fn into_general(self) -> RequestInput<T, UserRequestContext> {
-		let context = self.context.into_general();
-		RequestInput {
+impl<T> From<RequestInput<T, UserNoAuthRequestContext>> for RequestInput<T, UserRequestContext> {
+	fn from(from: RequestInput<T, UserNoAuthRequestContext>) -> Self {
+		let context = from.context.into();
+		Self {
 			context,
-			data: self.data,
+			data: from.data,
 		}
 	}
 }
 
-impl UserUnconfirmedRequestContext {
-	pub fn into_general(self) -> UserRequestContext {
+impl From<UserUnconfirmedRequestContext> for UserRequestContext {
+	fn from(from: UserUnconfirmedRequestContext) -> Self {
 		let UserUnconfirmedRequestContext {
 			application,
 			request,
 			session,
-		} = self;
+		} = from;
 
-		UserRequestContext {
+		Self {
 			application,
 			session: UserSession::Unconfirmed(session),
 			request,
@@ -224,13 +230,14 @@ impl UserUnconfirmedRequestContext {
 	}
 }
 
-impl<T> RequestInput<T, UserNoAuthRequestContext> {
-	#[allow(dead_code)]
-	pub fn into_general(self) -> RequestInput<T, UserRequestContext> {
-		let context = self.context.into_general();
-		RequestInput {
+impl<T> From<RequestInput<T, UserUnconfirmedRequestContext>>
+	for RequestInput<T, UserRequestContext>
+{
+	fn from(from: RequestInput<T, UserUnconfirmedRequestContext>) -> Self {
+		let context = from.context.into();
+		Self {
 			context,
-			data: self.data,
+			data: from.data,
 		}
 	}
 }
@@ -361,7 +368,7 @@ pub mod tests {
 			match input {
 				Err(err) => Err(err),
 				Ok(ok_input) => {
-					let real_input = ok_input.into_no_auth();
+					let real_input = ok_input.into();
 
 					match real_input {
 						Err(err) => Err(err),
@@ -388,7 +395,7 @@ pub mod tests {
 			match input {
 				Err(err) => Err(err),
 				Ok(ok_input) => {
-					let real_input = ok_input.into_auth();
+					let real_input = ok_input.into();
 
 					match real_input {
 						Err(err) => Err(err),
@@ -414,7 +421,8 @@ pub mod tests {
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
-				input.into_no_auth().map(|ctx| ctx.into_general().context),
+				Result::<RequestInput<_, UserNoAuthRequestContext>, UserActionError>::from(input)
+					.map(|ctx| RequestInput::<_, UserRequestContext>::from(ctx).context),
 				"Test input context reversible change"
 			);
 		});
@@ -427,7 +435,8 @@ pub mod tests {
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
-				input.into_auth().map(|ctx| ctx.into_general().context),
+				Result::<RequestInput<_, UserAuthRequestContext>, UserActionError>::from(input)
+					.map(|ctx| RequestInput::<_, UserRequestContext>::from(ctx).context),
 				"Test input context reversible change"
 			);
 		});
@@ -444,10 +453,8 @@ pub mod tests {
 
 			assert_eq!(
 				Ok(&context),
-				context
-					.clone()
-					.into_no_auth()
-					.map(|ctx| ctx.into_general())
+				Result::<UserNoAuthRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
 			);
@@ -479,10 +486,8 @@ pub mod tests {
 
 			assert_eq!(
 				Ok(&context),
-				context
-					.clone()
-					.into_auth()
-					.map(|ctx| ctx.into_general())
+				Result::<UserAuthRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
 			);
@@ -510,10 +515,8 @@ pub mod tests {
 
 			assert_eq!(
 				Ok(&context),
-				context
-					.clone()
-					.into_auth()
-					.map(|ctx| ctx.into_general())
+				Result::<UserAuthRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
 			);
@@ -540,10 +543,8 @@ pub mod tests {
 
 			assert_eq!(
 				Ok(&context),
-				context
-					.clone()
-					.into_no_auth()
-					.map(|ctx| ctx.into_general())
+				Result::<UserNoAuthRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
 			);
@@ -574,10 +575,8 @@ pub mod tests {
 
 			assert_eq!(
 				Ok(&context),
-				context
-					.clone()
-					.into_no_auth()
-					.map(|ctx| ctx.into_general())
+				Result::<UserNoAuthRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
 			);
@@ -608,10 +607,8 @@ pub mod tests {
 
 			assert_eq!(
 				Ok(&context),
-				context
-					.clone()
-					.into_auth()
-					.map(|ctx| ctx.into_general())
+				Result::<UserAuthRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
 			);
