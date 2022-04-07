@@ -22,26 +22,6 @@ use crate::core::action::{
 
 impl<I: ActionInput> ActionInput for RequestInput<I, UserRequestContext> {}
 
-impl DescriptiveInfo for UserAuthSession {
-	fn description(&self) -> Cow<'_, str> {
-		let UserAuthSession { user_id, .. } = &self;
-		format!("user({user_id})").into()
-	}
-}
-
-impl DescriptiveInfo for UserNoAuthSession {
-	fn description(&self) -> Cow<'_, str> {
-		"user(not authenticated)".into()
-	}
-}
-
-impl DescriptiveInfo for UserUnconfirmedSession {
-	fn description(&self) -> Cow<'_, str> {
-		let UserUnconfirmedSession { user_id, .. } = &self;
-		format!("user(unconfirmed - {user_id})").into()
-	}
-}
-
 impl DescriptiveInfo for UserSession {
 	fn description(&self) -> Cow<'_, str> {
 		match self {
@@ -58,9 +38,13 @@ impl DescriptiveInfo for UserRequestContext {
 	}
 }
 
-impl DescriptiveInfo for UserAuthRequestContext {
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
+impl DescriptiveInfo for UserNoAuthSession {
 	fn description(&self) -> Cow<'_, str> {
-		self.session.description()
+		"user(not authenticated)".into()
 	}
 }
 
@@ -70,7 +54,155 @@ impl DescriptiveInfo for UserNoAuthRequestContext {
 	}
 }
 
+impl From<UserRequestContext> for Result<UserNoAuthRequestContext, UserActionError> {
+	fn from(from: UserRequestContext) -> Self {
+		let UserRequestContext {
+			application,
+			session,
+			request,
+		} = from;
+
+		match session {
+			UserSession::Auth(_) => Err(UserActionError::Authenticated),
+			UserSession::NoAuth(session) => Ok(UserNoAuthRequestContext {
+				application,
+				session,
+				request,
+			}),
+			UserSession::Unconfirmed(_) => Err(UserActionError::Authenticated),
+		}
+	}
+}
+
+impl From<UserNoAuthRequestContext> for UserRequestContext {
+	fn from(from: UserNoAuthRequestContext) -> Self {
+		let UserNoAuthRequestContext {
+			application,
+			request,
+			session,
+		} = from;
+
+		Self {
+			application,
+			session: UserSession::NoAuth(session),
+			request,
+		}
+	}
+}
+
+impl<I> From<RequestInput<I, UserRequestContext>>
+	for Result<RequestInput<I, UserNoAuthRequestContext>, UserActionError>
+{
+	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
+		let context: Result<UserNoAuthRequestContext, UserActionError> = from.context.into();
+		let context = context?;
+		Ok(RequestInput {
+			context,
+			data: from.data,
+		})
+	}
+}
+
+impl<T> From<RequestInput<T, UserNoAuthRequestContext>> for RequestInput<T, UserRequestContext> {
+	fn from(from: RequestInput<T, UserNoAuthRequestContext>) -> Self {
+		let context = from.context.into();
+		Self {
+			context,
+			data: from.data,
+		}
+	}
+}
+
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
+impl DescriptiveInfo for UserUnconfirmedSession {
+	fn description(&self) -> Cow<'_, str> {
+		let UserUnconfirmedSession { user_id, .. } = &self;
+		format!("user(unconfirmed - {user_id})").into()
+	}
+}
+
 impl DescriptiveInfo for UserUnconfirmedRequestContext {
+	fn description(&self) -> Cow<'_, str> {
+		self.session.description()
+	}
+}
+
+impl From<UserRequestContext> for Result<UserUnconfirmedRequestContext, UserActionError> {
+	fn from(from: UserRequestContext) -> Self {
+		let UserRequestContext {
+			application,
+			session,
+			request,
+		} = from;
+
+		match session {
+			UserSession::Auth(_) => Err(UserActionError::Authenticated),
+			UserSession::NoAuth(_) => Err(UserActionError::Unauthenticated),
+			UserSession::Unconfirmed(session) => Ok(UserUnconfirmedRequestContext {
+				application,
+				session,
+				request,
+			}),
+		}
+	}
+}
+
+impl From<UserUnconfirmedRequestContext> for UserRequestContext {
+	fn from(from: UserUnconfirmedRequestContext) -> Self {
+		let UserUnconfirmedRequestContext {
+			application,
+			request,
+			session,
+		} = from;
+
+		Self {
+			application,
+			session: UserSession::Unconfirmed(session),
+			request,
+		}
+	}
+}
+
+impl<I> From<RequestInput<I, UserRequestContext>>
+	for Result<RequestInput<I, UserUnconfirmedRequestContext>, UserActionError>
+{
+	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
+		let context: Result<UserUnconfirmedRequestContext, UserActionError> = from.context.into();
+		let context = context?;
+		Ok(RequestInput {
+			context,
+			data: from.data,
+		})
+	}
+}
+
+impl<T> From<RequestInput<T, UserUnconfirmedRequestContext>>
+	for RequestInput<T, UserRequestContext>
+{
+	fn from(from: RequestInput<T, UserUnconfirmedRequestContext>) -> Self {
+		let context = from.context.into();
+		Self {
+			context,
+			data: from.data,
+		}
+	}
+}
+
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
+impl DescriptiveInfo for UserAuthSession {
+	fn description(&self) -> Cow<'_, str> {
+		let UserAuthSession { user_id, .. } = &self;
+		format!("user({user_id})").into()
+	}
+}
+
+impl DescriptiveInfo for UserAuthRequestContext {
 	fn description(&self) -> Cow<'_, str> {
 		self.session.description()
 	}
@@ -96,19 +228,6 @@ impl From<UserRequestContext> for Result<UserAuthRequestContext, UserActionError
 	}
 }
 
-impl<I> From<RequestInput<I, UserRequestContext>>
-	for Result<RequestInput<I, UserAuthRequestContext>, UserActionError>
-{
-	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
-		let context: Result<UserAuthRequestContext, UserActionError> = from.context.into();
-		let context = context?;
-		Ok(RequestInput {
-			context,
-			data: from.data,
-		})
-	}
-}
-
 impl From<UserAuthRequestContext> for UserRequestContext {
 	fn from(from: UserAuthRequestContext) -> Self {
 		let UserAuthRequestContext {
@@ -125,128 +244,21 @@ impl From<UserAuthRequestContext> for UserRequestContext {
 	}
 }
 
+impl<I> From<RequestInput<I, UserRequestContext>>
+	for Result<RequestInput<I, UserAuthRequestContext>, UserActionError>
+{
+	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
+		let context: Result<UserAuthRequestContext, UserActionError> = from.context.into();
+		let context = context?;
+		Ok(RequestInput {
+			context,
+			data: from.data,
+		})
+	}
+}
+
 impl<T> From<RequestInput<T, UserAuthRequestContext>> for RequestInput<T, UserRequestContext> {
 	fn from(from: RequestInput<T, UserAuthRequestContext>) -> Self {
-		let context = from.context.into();
-		Self {
-			context,
-			data: from.data,
-		}
-	}
-}
-
-impl From<UserRequestContext> for Result<UserNoAuthRequestContext, UserActionError> {
-	fn from(from: UserRequestContext) -> Self {
-		let UserRequestContext {
-			application,
-			session,
-			request,
-		} = from;
-
-		match session {
-			UserSession::Auth(_) => Err(UserActionError::Authenticated),
-			UserSession::NoAuth(session) => Ok(UserNoAuthRequestContext {
-				application,
-				session,
-				request,
-			}),
-			UserSession::Unconfirmed(_) => Err(UserActionError::Authenticated),
-		}
-	}
-}
-
-impl<I> From<RequestInput<I, UserRequestContext>>
-	for Result<RequestInput<I, UserNoAuthRequestContext>, UserActionError>
-{
-	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
-		let context: Result<UserNoAuthRequestContext, UserActionError> = from.context.into();
-		let context = context?;
-		Ok(RequestInput {
-			context,
-			data: from.data,
-		})
-	}
-}
-
-impl From<UserNoAuthRequestContext> for UserRequestContext {
-	fn from(from: UserNoAuthRequestContext) -> Self {
-		let UserNoAuthRequestContext {
-			application,
-			request,
-			session,
-		} = from;
-
-		Self {
-			application,
-			session: UserSession::NoAuth(session),
-			request,
-		}
-	}
-}
-
-impl<T> From<RequestInput<T, UserNoAuthRequestContext>> for RequestInput<T, UserRequestContext> {
-	fn from(from: RequestInput<T, UserNoAuthRequestContext>) -> Self {
-		let context = from.context.into();
-		Self {
-			context,
-			data: from.data,
-		}
-	}
-}
-
-impl From<UserRequestContext> for Result<UserUnconfirmedRequestContext, UserActionError> {
-	fn from(from: UserRequestContext) -> Self {
-		let UserRequestContext {
-			application,
-			session,
-			request,
-		} = from;
-
-		match session {
-			UserSession::Auth(_) => Err(UserActionError::Authenticated),
-			UserSession::NoAuth(_) => Err(UserActionError::Unauthenticated),
-			UserSession::Unconfirmed(session) => Ok(UserUnconfirmedRequestContext {
-				application,
-				session,
-				request,
-			}),
-		}
-	}
-}
-
-impl<I> From<RequestInput<I, UserRequestContext>>
-	for Result<RequestInput<I, UserUnconfirmedRequestContext>, UserActionError>
-{
-	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
-		let context: Result<UserUnconfirmedRequestContext, UserActionError> = from.context.into();
-		let context = context?;
-		Ok(RequestInput {
-			context,
-			data: from.data,
-		})
-	}
-}
-
-impl From<UserUnconfirmedRequestContext> for UserRequestContext {
-	fn from(from: UserUnconfirmedRequestContext) -> Self {
-		let UserUnconfirmedRequestContext {
-			application,
-			request,
-			session,
-		} = from;
-
-		Self {
-			application,
-			session: UserSession::Unconfirmed(session),
-			request,
-		}
-	}
-}
-
-impl<T> From<RequestInput<T, UserUnconfirmedRequestContext>>
-	for RequestInput<T, UserRequestContext>
-{
-	fn from(from: RequestInput<T, UserUnconfirmedRequestContext>) -> Self {
 		let context = from.context.into();
 		Self {
 			context,
