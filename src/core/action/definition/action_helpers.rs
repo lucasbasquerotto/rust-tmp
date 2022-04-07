@@ -11,7 +11,7 @@ use crate::{
 use super::action::ActionError;
 
 pub trait DescriptiveInfo {
-	fn description<'a>(&'a self) -> Cow<'a, str>;
+	fn description(&self) -> Cow<'_, str>;
 }
 
 pub trait DescriptiveRequestContext:

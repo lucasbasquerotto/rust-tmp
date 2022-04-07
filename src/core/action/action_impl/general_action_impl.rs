@@ -99,6 +99,8 @@ impl<T: ActionType> fmt::Display for ActionTypeWrapper<T> {
 
 #[cfg(test)]
 mod tests {
+	use std::borrow::Cow;
+
 	use crate::core::action::action_type::general_action_type::ActionType;
 	use crate::core::action::data::action_data::{
 		ActionContext, ActionErrorInfo, DescriptiveError, ErrorData,
@@ -121,8 +123,8 @@ mod tests {
 	impl RequestContext for TestRequestContext {}
 
 	impl DescriptiveInfo for TestRequestContext {
-		fn description(&self) -> Str {
-			self.0.to_string().into()
+		fn description(&self) -> Cow<'_, str> {
+			Cow::Borrowed(&self.0)
 		}
 	}
 
