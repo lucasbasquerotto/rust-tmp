@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{borrow::Cow, fmt::Debug};
 
 use crate::{
 	core::action::{
@@ -11,7 +11,7 @@ use crate::{
 use super::action::ActionError;
 
 pub trait DescriptiveInfo {
-	fn description(&self) -> Str;
+	fn description<'a>(&'a self) -> Cow<'a, str>;
 }
 
 pub trait DescriptiveRequestContext:

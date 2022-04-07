@@ -294,7 +294,7 @@ fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
 		}
 	);
 
-	reqwest::blocking::get(url.to_string())
+	reqwest::blocking::get(&url)
 		.and_then(|req| {
 			if data.error {
 				Ok(req)

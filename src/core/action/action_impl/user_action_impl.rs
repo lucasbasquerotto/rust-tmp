@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::core::action::{
 	definition::action::{Action, ActionError, UserAction},
 	definition::action::{ActionInput, ActionOutput},
@@ -25,27 +27,27 @@ use crate::{
 impl<I: ActionInput> ActionInput for RequestInput<I, UserRequestContext> {}
 
 impl DescriptiveInfo for UserAuthSession {
-	fn description(&self) -> Str {
+	fn description<'a>(&'a self) -> Cow<'a, str> {
 		let UserAuthSession { user_id, .. } = &self;
 		format!("user({user_id})").into()
 	}
 }
 
 impl DescriptiveInfo for UserNoAuthSession {
-	fn description(&self) -> Str {
+	fn description<'a>(&'a self) -> Cow<'a, str> {
 		"user(not authenticated)".into()
 	}
 }
 
 impl DescriptiveInfo for UserUnconfirmedSession {
-	fn description(&self) -> Str {
+	fn description<'a>(&'a self) -> Cow<'a, str> {
 		let UserUnconfirmedSession { user_id, .. } = &self;
 		format!("user(unconfirmed - {user_id})").into()
 	}
 }
 
 impl DescriptiveInfo for UserSession {
-	fn description(&self) -> Str {
+	fn description<'a>(&'a self) -> Cow<'a, str> {
 		match self {
 			UserSession::Auth(session) => session.description(),
 			UserSession::NoAuth(session) => session.description(),
@@ -55,25 +57,25 @@ impl DescriptiveInfo for UserSession {
 }
 
 impl DescriptiveInfo for UserRequestContext {
-	fn description(&self) -> Str {
+	fn description<'a>(&'a self) -> Cow<'a, str> {
 		self.session.description()
 	}
 }
 
 impl DescriptiveInfo for UserAuthRequestContext {
-	fn description(&self) -> Str {
+	fn description<'a>(&'a self) -> Cow<'a, str> {
 		self.session.description()
 	}
 }
 
 impl DescriptiveInfo for UserNoAuthRequestContext {
-	fn description(&self) -> Str {
+	fn description<'a>(&'a self) -> Cow<'a, str> {
 		self.session.description()
 	}
 }
 
 impl DescriptiveInfo for UserUnconfirmedRequestContext {
-	fn description(&self) -> Str {
+	fn description<'a>(&'a self) -> Cow<'a, str> {
 		self.session.description()
 	}
 }
