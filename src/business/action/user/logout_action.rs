@@ -68,12 +68,10 @@ impl UserAction<(), (), LogoutError> for LogoutAction {
 #[cfg(test)]
 mod tests {
 	use super::LogoutAction;
-	use crate::{
-		business::action::logout_action::USER_ACTION_TYPE,
-		core::action::data::{
-			action_data::{ActionContext, RequestInput},
-			user_action_data::{tests::UserRequestContextBuilder, UserOutputInfo},
-		},
+	use super::USER_ACTION_TYPE;
+	use crate::core::action::data::{
+		action_data::{ActionContext, RequestInput},
+		user_action_data::{tests::UserRequestContextBuilder, UserOutputInfo},
 	};
 	use crate::{core::action::definition::action::Action, tests::test_utils::tests::run_test};
 

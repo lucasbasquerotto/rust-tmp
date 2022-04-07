@@ -166,7 +166,7 @@ mod tests {
 
 			let result = AutoActionInternal::run(RequestInput {
 				data: AutoData {
-					param1: "Param 01 (Error)".to_owned(),
+					param1: "Param 01 (Error)".into(),
 					param2: 1,
 				},
 				context,
@@ -193,7 +193,7 @@ mod tests {
 
 			let result = AutoActionInternal::run(RequestInput {
 				data: AutoData {
-					param1: "Param 01 (Ok)".to_owned(),
+					param1: "Param 01 (Ok)".into(),
 					param2: 2,
 				},
 				context,
@@ -206,7 +206,7 @@ mod tests {
 					data: AutoResult {
 						id: 1,
 						auto: "internal".into(),
-						param1: "Param 01 (Ok)".to_owned(),
+						param1: "Param 01 (Ok)".into(),
 						param2: 2,
 					},
 				})
@@ -225,7 +225,7 @@ mod tests {
 
 			let result = AutoActionHook::run(RequestInput {
 				data: AutoData {
-					param1: "Param 01 (Error)".to_owned(),
+					param1: "Param 01 (Error)".into(),
 					param2: 3,
 				},
 				context,
@@ -252,7 +252,7 @@ mod tests {
 
 			let result = AutoActionHook::run(RequestInput {
 				data: AutoData {
-					param1: "Param 01 (Ok)".to_owned(),
+					param1: "Param 01 (Ok)".into(),
 					param2: 4,
 				},
 				context,
@@ -265,7 +265,7 @@ mod tests {
 					data: AutoResult {
 						id: 1,
 						auto: "hook".into(),
-						param1: "Param 01 (Ok)".to_owned(),
+						param1: "Param 01 (Ok)".into(),
 						param2: 4,
 					},
 				})

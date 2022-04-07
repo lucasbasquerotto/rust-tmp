@@ -100,8 +100,8 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 
 #[cfg(test)]
 mod tests {
+	use super::USER_ACTION_TYPE;
 	use super::{LoginAction, LoginData, LoginError, LoginResult};
-	use crate::business::action::login_action::USER_ACTION_TYPE;
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserActionError;
@@ -116,8 +116,8 @@ mod tests {
 
 			let result = LoginAction::run(RequestInput {
 				data: LoginData {
-					name: "User 01".to_owned(),
-					pass: "p4$$w0rd".to_owned(),
+					name: "User 01".into(),
+					pass: "p4$$w0rd".into(),
 				},
 				context: context.clone(),
 			});
@@ -146,8 +146,8 @@ mod tests {
 
 			let result = LoginAction::run(RequestInput {
 				data: LoginData {
-					name: "User 02".to_owned(),
-					pass: "p4$$w0rd2".to_owned(),
+					name: "User 02".into(),
+					pass: "p4$$w0rd2".into(),
 				},
 				context,
 			});
