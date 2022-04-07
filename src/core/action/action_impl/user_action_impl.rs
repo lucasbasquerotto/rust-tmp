@@ -319,7 +319,7 @@ where
 pub mod tests {
 	use crate::core::action::data::action_data::ActionContext;
 	use crate::core::action::data::user_action_data::tests::{
-		UserAuthSessionBuilder, UserRequestContextBuilder,
+		UserAuthSessionBuilder, UserRequestContextBuilder, UserUnconfirmedSessionBuilder,
 	};
 	use crate::core::action::data::user_action_data::{
 		UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
@@ -466,8 +466,8 @@ pub mod tests {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
-				Ok(input.context.clone()),
-				Result::<RequestInput<_, UserNoAuthRequestContext>, UserActionError>::from(input)
+				&Ok(input.context.clone()),
+				&Result::<RequestInput<_, UserNoAuthRequestContext>, UserActionError>::from(input)
 					.map(|ctx| RequestInput::<_, UserRequestContext>::from(ctx).context),
 				"Test input context reversible change"
 			);
@@ -480,8 +480,8 @@ pub mod tests {
 			let context = UserRequestContextBuilder::build_auth();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
-				Ok(input.context.clone()),
-				Result::<RequestInput<_, UserAuthRequestContext>, UserActionError>::from(input)
+				&Ok(input.context.clone()),
+				&Result::<RequestInput<_, UserAuthRequestContext>, UserActionError>::from(input)
 					.map(|ctx| RequestInput::<_, UserRequestContext>::from(ctx).context),
 				"Test input context reversible change"
 			);
@@ -498,8 +498,8 @@ pub mod tests {
 			};
 
 			assert_eq!(
-				Ok(&context),
-				Result::<UserNoAuthRequestContext, UserActionError>::from(context.clone())
+				&Ok(&context),
+				&Result::<UserNoAuthRequestContext, UserActionError>::from(context.clone())
 					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
@@ -507,13 +507,13 @@ pub mod tests {
 
 			let result = TestAction::run(RequestInput { data: (), context });
 			assert_eq!(
-				result,
-				Ok(UserOutputInfo {
+				&result,
+				&Ok(UserOutputInfo {
 					action_context,
 					data: (),
 				}),
 			);
-			assert_eq!(helper.pop_log(), Some("INFO - user action test".into()));
+			assert_eq!(&helper.pop_log(), &Some("INFO - user action test".into()));
 		});
 	}
 
@@ -531,8 +531,8 @@ pub mod tests {
 			};
 
 			assert_eq!(
-				Ok(&context),
-				Result::<UserAuthRequestContext, UserActionError>::from(context.clone())
+				&Ok(&context),
+				&Result::<UserAuthRequestContext, UserActionError>::from(context.clone())
 					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
@@ -540,18 +540,21 @@ pub mod tests {
 
 			let result = TestAction::run(RequestInput { data: (), context });
 			assert_eq!(
-				result,
-				Ok(UserOutputInfo {
+				&result,
+				&Ok(UserOutputInfo {
 					action_context,
 					data: (),
 				}),
 			);
-			assert_eq!(helper.pop_log(), Some("INFO - user action test: 1".into()));
+			assert_eq!(
+				&helper.pop_log(),
+				&Some("INFO - user action test: 1".into())
+			);
 		});
 	}
 
 	#[test]
-	fn test_no_auth_not_allowed() {
+	fn test_no_auth_not_allowed_authenticated() {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
@@ -560,8 +563,8 @@ pub mod tests {
 			};
 
 			assert_eq!(
-				Ok(&context),
-				Result::<UserAuthRequestContext, UserActionError>::from(context.clone())
+				&Ok(&context),
+				&Result::<UserAuthRequestContext, UserActionError>::from(context.clone())
 					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
@@ -569,8 +572,36 @@ pub mod tests {
 
 			let result = TestActionNoAuth::run(RequestInput { data: (), context });
 			assert_eq!(
-				result,
-				Err(ActionErrorInfo {
+				&result,
+				&Err(ActionErrorInfo {
+					action_context,
+					error: UserActionError::Authenticated,
+				})
+			);
+		});
+	}
+
+	#[test]
+	fn test_no_auth_not_allowed_unconfirmed() {
+		run_test(|_| {
+			let context = UserRequestContextBuilder::build_unconfirmed();
+			let action_context = ActionContext {
+				action_type: TestActionNoAuth::action_type(),
+				context: context.clone(),
+			};
+
+			assert_eq!(
+				&Ok(&context),
+				&Result::<UserUnconfirmedRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
+					.as_ref(),
+				"Test context reversible change"
+			);
+
+			let result = TestActionNoAuth::run(RequestInput { data: (), context });
+			assert_eq!(
+				&result,
+				&Err(ActionErrorInfo {
 					action_context,
 					error: UserActionError::Authenticated,
 				})
@@ -588,8 +619,8 @@ pub mod tests {
 			};
 
 			assert_eq!(
-				Ok(&context),
-				Result::<UserNoAuthRequestContext, UserActionError>::from(context.clone())
+				&Ok(&context),
+				&Result::<UserNoAuthRequestContext, UserActionError>::from(context.clone())
 					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
@@ -597,21 +628,21 @@ pub mod tests {
 
 			let result = TestActionNoAuth::run(RequestInput { data: (), context });
 			assert_eq!(
-				result,
-				Ok(UserOutputInfo {
+				&result,
+				&Ok(UserOutputInfo {
 					action_context,
 					data: (),
 				}),
 			);
 			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - user action test (no auth)".into())
+				&helper.pop_log(),
+				&Some("INFO - user action test (no auth)".into())
 			);
 		});
 	}
 
 	#[test]
-	fn test_auth_not_allowed() {
+	fn test_auth_not_allowed_unauthenticated() {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
@@ -620,8 +651,8 @@ pub mod tests {
 			};
 
 			assert_eq!(
-				Ok(&context),
-				Result::<UserNoAuthRequestContext, UserActionError>::from(context.clone())
+				&Ok(&context),
+				&Result::<UserNoAuthRequestContext, UserActionError>::from(context.clone())
 					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
@@ -629,8 +660,36 @@ pub mod tests {
 
 			let result = TestActionAuth::run(RequestInput { data: (), context });
 			assert_eq!(
-				result,
-				Err(ActionErrorInfo {
+				&result,
+				&Err(ActionErrorInfo {
+					action_context,
+					error: UserActionError::Unauthenticated,
+				})
+			);
+		});
+	}
+
+	#[test]
+	fn test_auth_not_allowed_unconfirmed() {
+		run_test(|_| {
+			let context = UserRequestContextBuilder::build_unconfirmed();
+			let action_context = ActionContext {
+				action_type: TestActionAuth::action_type(),
+				context: context.clone(),
+			};
+
+			assert_eq!(
+				&Ok(&context),
+				&Result::<UserUnconfirmedRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
+					.as_ref(),
+				"Test context reversible change"
+			);
+
+			let result = TestActionAuth::run(RequestInput { data: (), context });
+			assert_eq!(
+				&result,
+				&Err(ActionErrorInfo {
 					action_context,
 					error: UserActionError::Unauthenticated,
 				})
@@ -652,8 +711,8 @@ pub mod tests {
 			};
 
 			assert_eq!(
-				Ok(&context),
-				Result::<UserAuthRequestContext, UserActionError>::from(context.clone())
+				&Ok(&context),
+				&Result::<UserAuthRequestContext, UserActionError>::from(context.clone())
 					.map(|ctx| ctx.into())
 					.as_ref(),
 				"Test context reversible change"
@@ -661,15 +720,107 @@ pub mod tests {
 
 			let result = TestActionAuth::run(RequestInput { data: (), context });
 			assert_eq!(
-				result,
-				Ok(UserOutputInfo {
+				&result,
+				&Ok(UserOutputInfo {
 					action_context,
 					data: (),
 				}),
 			);
 			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - user action test (auth): 3".into())
+				&helper.pop_log(),
+				&Some("INFO - user action test (auth): 3".into())
+			);
+		});
+	}
+
+	#[test]
+	fn test_unconfirmed_not_allowed_unauthenticated() {
+		run_test(|_| {
+			let context = UserRequestContextBuilder::build_no_auth();
+			let action_context = ActionContext {
+				action_type: TestActionUnconfirmed::action_type(),
+				context: context.clone(),
+			};
+
+			assert_eq!(
+				&Ok(&context),
+				&Result::<UserNoAuthRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
+					.as_ref(),
+				"Test context reversible change"
+			);
+
+			let result = TestActionUnconfirmed::run(RequestInput { data: (), context });
+			assert_eq!(
+				&result,
+				&Err(ActionErrorInfo {
+					action_context,
+					error: UserActionError::Unauthenticated,
+				})
+			);
+		});
+	}
+
+	#[test]
+	fn test_unconfirmed_not_allowed_authenticated() {
+		run_test(|_| {
+			let context = UserRequestContextBuilder::build_auth();
+			let action_context = ActionContext {
+				action_type: TestActionUnconfirmed::action_type(),
+				context: context.clone(),
+			};
+
+			assert_eq!(
+				&Ok(&context),
+				&Result::<UserAuthRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
+					.as_ref(),
+				"Test context reversible change"
+			);
+
+			let result = TestActionUnconfirmed::run(RequestInput { data: (), context });
+			assert_eq!(
+				&result,
+				&Err(ActionErrorInfo {
+					action_context,
+					error: UserActionError::Authenticated,
+				})
+			);
+		});
+	}
+
+	#[test]
+	fn test_unconfirmed_ok() {
+		run_test(|helper| {
+			let context = UserRequestContextBuilder::new()
+				.session(UserSession::Unconfirmed(
+					UserUnconfirmedSessionBuilder::new().user_id(4).build(),
+				))
+				.build();
+			let action_context = ActionContext {
+				action_type: TestActionUnconfirmed::action_type(),
+				context: context.clone(),
+			};
+
+			assert_eq!(
+				&Ok(&context),
+				&Result::<UserUnconfirmedRequestContext, UserActionError>::from(context.clone())
+					.map(|ctx| ctx.into())
+					.as_ref(),
+				"Test context reversible change"
+			);
+
+			let result = TestActionUnconfirmed::run(RequestInput { data: (), context });
+			assert_eq!(
+				&result,
+				&Ok(UserOutputInfo {
+					action_context,
+					data: (),
+				}),
+			);
+			assert_eq!(
+				&helper.pop_log(),
+				&Some("INFO - user action test (unconfirmed): 4".into())
 			);
 		});
 	}

@@ -134,7 +134,7 @@ pub mod tests {
 					data: (),
 				}),
 			);
-			assert_eq!(helper.pop_log(), Some("WARN - echo warn action".into()));
+			assert_eq!(&helper.pop_log(), &Some("WARN - echo warn action".into()));
 		});
 	}
 
@@ -155,7 +155,7 @@ pub mod tests {
 					data: (),
 				}),
 			);
-			assert_eq!(helper.pop_log(), Some("WARN - echo warn action".into()));
+			assert_eq!(&helper.pop_log(), &Some("WARN - echo warn action".into()));
 		});
 	}
 }

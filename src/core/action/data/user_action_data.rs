@@ -234,5 +234,13 @@ pub mod tests {
 				.session(UserSession::Auth(UserAuthSessionBuilder::new().build()))
 				.build()
 		}
+
+		pub fn build_unconfirmed() -> UserRequestContext {
+			Self::new()
+				.session(UserSession::Unconfirmed(
+					UserUnconfirmedSessionBuilder::new().build(),
+				))
+				.build()
+		}
 	}
 }

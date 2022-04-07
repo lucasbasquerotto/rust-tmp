@@ -186,8 +186,8 @@ mod tests {
 			};
 			let public_error = error_info.handle();
 			assert_eq!(
-				public_error,
-				Some(ErrorData {
+				&public_error,
+				&Some(ErrorData {
 					msg: "Test public error (action_id=1)".into(),
 					params: None
 				})
@@ -209,8 +209,8 @@ mod tests {
 			let source = format!("[source={source}]", source = "Source 01");
 
 			assert_eq!(
-				helper.pop_log(),
-				Some(
+				&helper.pop_log(),
+				&Some(
 					format!("ERROR - {action} {private} {public} {context} {data} {source}").into()
 				)
 			);
@@ -233,8 +233,8 @@ mod tests {
 			};
 			let public_error = error_info.handle();
 			assert_eq!(
-				public_error,
-				Some(ErrorData {
+				&public_error,
+				&Some(ErrorData {
 					msg: "Test public error (action_id=2)".into(),
 					params: None
 				})
@@ -253,8 +253,8 @@ mod tests {
 			let context = format!("[context={context}]", context = "My error #02");
 
 			assert_eq!(
-				helper.pop_log(),
-				Some(format!("ERROR - {action} {public} {context}").into())
+				&helper.pop_log(),
+				&Some(format!("ERROR - {action} {public} {context}").into())
 			);
 		});
 	}

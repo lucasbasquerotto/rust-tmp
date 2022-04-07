@@ -317,8 +317,8 @@ pub mod tests {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
-				Ok(input.context.clone()),
-				Result::<RequestInput<(), InternalRequestContext>, AutomaticActionError>::from(
+				&Ok(input.context.clone()),
+				&Result::<RequestInput<(), InternalRequestContext>, AutomaticActionError>::from(
 					input
 				)
 				.map(|ctx| RequestInput::<(), AutomaticRequestContext>::from(ctx).context),
@@ -333,8 +333,8 @@ pub mod tests {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
-				Ok(input.context.clone()),
-				Result::<RequestInput<(), HookRequestContext>, AutomaticActionError>::from(input)
+				&Ok(input.context.clone()),
+				&Result::<RequestInput<(), HookRequestContext>, AutomaticActionError>::from(input)
 					.map(|ctx| RequestInput::<(), AutomaticRequestContext>::from(ctx).context),
 				"Test input context reversible change"
 			);
@@ -359,8 +359,8 @@ pub mod tests {
 				})
 			);
 			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - automatic action test (hook)".into())
+				&helper.pop_log(),
+				&Some("INFO - automatic action test (hook)".into())
 			);
 		});
 	}
@@ -383,8 +383,8 @@ pub mod tests {
 				})
 			);
 			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - automatic action test (internal)".into())
+				&helper.pop_log(),
+				&Some("INFO - automatic action test (internal)".into())
 			);
 		});
 	}
@@ -427,8 +427,8 @@ pub mod tests {
 				})
 			);
 			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - automatic action test (only hook)".into())
+				&helper.pop_log(),
+				&Some("INFO - automatic action test (only hook)".into())
 			);
 		});
 	}
@@ -471,8 +471,8 @@ pub mod tests {
 				})
 			);
 			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - automatic action test (only internal)".into())
+				&helper.pop_log(),
+				&Some("INFO - automatic action test (only internal)".into())
 			);
 		});
 	}

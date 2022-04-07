@@ -131,7 +131,7 @@ pub mod tests {
 					data: (),
 				}),
 			);
-			assert_eq!(helper.pop_log(), Some("ERROR - echo error action".into()));
+			assert_eq!(&helper.pop_log(), &Some("ERROR - echo error action".into()));
 		});
 	}
 
@@ -152,7 +152,7 @@ pub mod tests {
 					data: (),
 				}),
 			);
-			assert_eq!(helper.pop_log(), Some("ERROR - echo error action".into()));
+			assert_eq!(&helper.pop_log(), &Some("ERROR - echo error action".into()));
 		});
 	}
 }

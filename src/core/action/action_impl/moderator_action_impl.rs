@@ -195,8 +195,8 @@ pub mod tests {
 				}),
 			);
 			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - moderator action test".into())
+				&helper.pop_log(),
+				&Some("INFO - moderator action test".into())
 			);
 		});
 	}
@@ -219,8 +219,8 @@ pub mod tests {
 				}),
 			);
 			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - moderator action test".into())
+				&helper.pop_log(),
+				&Some("INFO - moderator action test".into())
 			);
 		});
 	}

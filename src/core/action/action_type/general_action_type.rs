@@ -28,14 +28,14 @@ pub mod tests {
 	) {
 		let unique_ids_count = HashSet::<u32>::from_iter(T::iter().map(|item| item.id())).len();
 		assert_eq!(
-			unique_ids_count,
-			T::iter().count(),
+			&unique_ids_count,
+			&T::iter().count(),
 			"test if all the types ids are unique"
 		);
 
 		assert_eq!(
-			id_action_map.keys().count(),
-			T::iter().count(),
+			&id_action_map.keys().count(),
+			&T::iter().count(),
 			"test if there is only 1 id for each type"
 		);
 
@@ -47,8 +47,8 @@ pub mod tests {
 			})
 			.count();
 		assert_eq!(
-			count,
-			T::iter().count(),
+			&count,
+			&T::iter().count(),
 			"test if all the types can be retrieved from their ids"
 		);
 	}

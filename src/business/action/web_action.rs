@@ -475,7 +475,10 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(public_error.as_ref().unwrap().msg, "Web Action - Forbidden");
+			assert_eq!(
+				&public_error.as_ref().unwrap().msg,
+				&"Web Action - Forbidden"
+			);
 		});
 	}
 
@@ -515,7 +518,7 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(public_error.as_ref().unwrap().msg, "Web error occured");
+			assert_eq!(&public_error.as_ref().unwrap().msg, &"Web error occured");
 		});
 	}
 
@@ -601,7 +604,10 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(public_error.as_ref().unwrap().msg, "Web Action - Forbidden");
+			assert_eq!(
+				&public_error.as_ref().unwrap().msg,
+				&"Web Action - Forbidden"
+			);
 		});
 	}
 
@@ -640,7 +646,7 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(public_error.as_ref().unwrap().msg, "Web error occured");
+			assert_eq!(&public_error.as_ref().unwrap().msg, &"Web error occured");
 		});
 	}
 
@@ -727,7 +733,10 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(public_error.as_ref().unwrap().msg, "Web Action - Forbidden");
+			assert_eq!(
+				&public_error.as_ref().unwrap().msg,
+				&"Web Action - Forbidden"
+			);
 		});
 	}
 
@@ -766,7 +775,7 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(public_error.as_ref().unwrap().msg, "Web error occured");
+			assert_eq!(&public_error.as_ref().unwrap().msg, &"Web error occured");
 		});
 	}
 }
