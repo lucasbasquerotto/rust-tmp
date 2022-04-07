@@ -34,15 +34,13 @@ impl DescriptiveInfo for AutomaticRequestContext {
 	}
 }
 
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
 impl DescriptiveInfo for InternalRequestContext {
 	fn description(&self) -> Str {
 		"automatic(internal)".into()
-	}
-}
-
-impl DescriptiveInfo for HookRequestContext {
-	fn description(&self) -> Str {
-		"automatic(hook)".into()
 	}
 }
 
@@ -57,6 +55,49 @@ impl From<AutomaticRequestContext> for Result<InternalRequestContext, AutomaticA
 			AutomaticRequest::Internal => Ok(InternalRequestContext { application }),
 			_ => Err(AutomaticActionError::NotInternal),
 		}
+	}
+}
+
+impl From<InternalRequestContext> for AutomaticRequestContext {
+	fn from(from: InternalRequestContext) -> Self {
+		let InternalRequestContext { application } = from;
+		Self {
+			application,
+			request: AutomaticRequest::Internal,
+		}
+	}
+}
+
+impl<I> From<RequestInput<I, AutomaticRequestContext>>
+	for Result<RequestInput<I, InternalRequestContext>, AutomaticActionError>
+{
+	fn from(from: RequestInput<I, AutomaticRequestContext>) -> Self {
+		let context: Result<InternalRequestContext, AutomaticActionError> = from.context.into();
+		let context = context?;
+		Ok(RequestInput {
+			context,
+			data: from.data,
+		})
+	}
+}
+
+impl<T> From<RequestInput<T, InternalRequestContext>> for RequestInput<T, AutomaticRequestContext> {
+	fn from(from: RequestInput<T, InternalRequestContext>) -> Self {
+		let context = from.context.into();
+		Self {
+			context,
+			data: from.data,
+		}
+	}
+}
+
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
+impl DescriptiveInfo for HookRequestContext {
+	fn description(&self) -> Str {
+		"automatic(hook)".into()
 	}
 }
 
@@ -77,16 +118,18 @@ impl From<AutomaticRequestContext> for Result<HookRequestContext, AutomaticActio
 	}
 }
 
-impl<I> From<RequestInput<I, AutomaticRequestContext>>
-	for Result<RequestInput<I, InternalRequestContext>, AutomaticActionError>
-{
-	fn from(from: RequestInput<I, AutomaticRequestContext>) -> Self {
-		let context: Result<InternalRequestContext, AutomaticActionError> = from.context.into();
-		let context = context?;
-		Ok(RequestInput {
-			context,
-			data: from.data,
-		})
+impl From<HookRequestContext> for AutomaticRequestContext {
+	fn from(from: HookRequestContext) -> Self {
+		let HookRequestContext {
+			application,
+			request,
+			..
+		} = from;
+
+		Self {
+			application,
+			request: AutomaticRequest::Hook(request),
+		}
 	}
 }
 
@@ -100,41 +143,6 @@ impl<I> From<RequestInput<I, AutomaticRequestContext>>
 			context,
 			data: from.data,
 		})
-	}
-}
-
-impl From<InternalRequestContext> for AutomaticRequestContext {
-	fn from(from: InternalRequestContext) -> Self {
-		let InternalRequestContext { application } = from;
-		Self {
-			application,
-			request: AutomaticRequest::Internal,
-		}
-	}
-}
-
-impl<T> From<RequestInput<T, InternalRequestContext>> for RequestInput<T, AutomaticRequestContext> {
-	fn from(from: RequestInput<T, InternalRequestContext>) -> Self {
-		let context = from.context.into();
-		Self {
-			context,
-			data: from.data,
-		}
-	}
-}
-
-impl From<HookRequestContext> for AutomaticRequestContext {
-	fn from(from: HookRequestContext) -> Self {
-		let HookRequestContext {
-			application,
-			request,
-			..
-		} = from;
-
-		Self {
-			application,
-			request: AutomaticRequest::Hook(request),
-		}
 	}
 }
 
