@@ -5,8 +5,8 @@ use crate::core::action::{
 		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
 		user_action_data::{
 			UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
-			UserNoAuthRequestContext, UserNoAuthSession, UserOutputInfo, UserRequestContext,
-			UserRequestInput, UserSession, UserUnconfirmedRequestContext, UserUnconfirmedSession,
+			UserNoAuthRequestContext, UserOutputInfo, UserRequestContext, UserRequestInput,
+			UserSession, UserUnconfirmedRequestContext, UserUnconfirmedSession,
 		},
 	},
 	definition::action_helpers::DescriptiveInfo,
@@ -25,9 +25,11 @@ impl<I: ActionInput> ActionInput for RequestInput<I, UserRequestContext> {}
 impl DescriptiveInfo for UserSession {
 	fn description(&self) -> Cow<'_, str> {
 		match self {
-			UserSession::Auth(session) => session.description(),
-			UserSession::NoAuth(session) => session.description(),
-			UserSession::Unconfirmed(session) => session.description(),
+			UserSession::Auth(UserAuthSession { user_id, .. }) => format!("user({user_id})").into(),
+			UserSession::NoAuth(_) => "user(not authenticated)".into(),
+			UserSession::Unconfirmed(UserUnconfirmedSession { user_id, .. }) => {
+				format!("user(unconfirmed - {user_id})").into()
+			}
 		}
 	}
 }
@@ -41,18 +43,6 @@ impl DescriptiveInfo for UserRequestContext {
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
-
-impl DescriptiveInfo for UserNoAuthSession {
-	fn description(&self) -> Cow<'_, str> {
-		"user(not authenticated)".into()
-	}
-}
-
-impl DescriptiveInfo for UserNoAuthRequestContext {
-	fn description(&self) -> Cow<'_, str> {
-		self.session.description()
-	}
-}
 
 impl From<UserRequestContext> for Result<UserNoAuthRequestContext, UserActionError> {
 	fn from(from: UserRequestContext) -> Self {
@@ -116,19 +106,6 @@ impl<T> From<RequestInput<T, UserNoAuthRequestContext>> for RequestInput<T, User
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
-
-impl DescriptiveInfo for UserUnconfirmedSession {
-	fn description(&self) -> Cow<'_, str> {
-		let UserUnconfirmedSession { user_id, .. } = &self;
-		format!("user(unconfirmed - {user_id})").into()
-	}
-}
-
-impl DescriptiveInfo for UserUnconfirmedRequestContext {
-	fn description(&self) -> Cow<'_, str> {
-		self.session.description()
-	}
-}
 
 impl From<UserRequestContext> for Result<UserUnconfirmedRequestContext, UserActionError> {
 	fn from(from: UserRequestContext) -> Self {
@@ -194,19 +171,6 @@ impl<T> From<RequestInput<T, UserUnconfirmedRequestContext>>
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
-
-impl DescriptiveInfo for UserAuthSession {
-	fn description(&self) -> Cow<'_, str> {
-		let UserAuthSession { user_id, .. } = &self;
-		format!("user({user_id})").into()
-	}
-}
-
-impl DescriptiveInfo for UserAuthRequestContext {
-	fn description(&self) -> Cow<'_, str> {
-		self.session.description()
-	}
-}
 
 impl From<UserRequestContext> for Result<UserAuthRequestContext, UserActionError> {
 	fn from(from: UserRequestContext) -> Self {

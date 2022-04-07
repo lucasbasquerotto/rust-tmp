@@ -1,20 +1,19 @@
+use std::borrow::Cow;
+
+use crate::core::action::{
+	data::{
+		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
+		automatic_action_data::{
+			AutomaticActionError, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequest,
+			AutomaticRequestContext, AutomaticRequestInput, HookRequestContext,
+			InternalRequestContext,
+		},
+	},
+	definition::action_helpers::DescriptiveInfo,
+};
 use crate::core::action::{
 	definition::action::{Action, ActionError, AutomaticAction},
 	definition::action::{ActionInput, ActionOutput},
-};
-use crate::{
-	core::action::{
-		data::{
-			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
-			automatic_action_data::{
-				AutomaticActionError, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequest,
-				AutomaticRequestContext, AutomaticRequestInput, HookRequestContext,
-				InternalRequestContext,
-			},
-		},
-		definition::action_helpers::DescriptiveInfo,
-	},
-	lib::data::str::Str,
 };
 
 ////////////////////////////////////////////////
@@ -23,26 +22,25 @@ use crate::{
 
 impl<I: ActionInput> ActionInput for RequestInput<I, AutomaticRequestContext> {}
 
-impl DescriptiveInfo for AutomaticRequestContext {
-	fn description(&self) -> Str {
-		let AutomaticRequestContext { request, .. } = &self;
-
-		match request {
+impl DescriptiveInfo for AutomaticRequest {
+	fn description(&self) -> Cow<'_, str> {
+		match self {
 			AutomaticRequest::Internal => "automatic(internal)".into(),
 			AutomaticRequest::Hook(_) => "automatic(hook)".into(),
 		}
 	}
 }
 
+impl DescriptiveInfo for AutomaticRequestContext {
+	fn description(&self) -> Cow<'_, str> {
+		let AutomaticRequestContext { request, .. } = &self;
+		request.description()
+	}
+}
+
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
-
-impl DescriptiveInfo for InternalRequestContext {
-	fn description(&self) -> Str {
-		"automatic(internal)".into()
-	}
-}
 
 impl From<AutomaticRequestContext> for Result<InternalRequestContext, AutomaticActionError> {
 	fn from(from: AutomaticRequestContext) -> Self {
@@ -94,12 +92,6 @@ impl<T> From<RequestInput<T, InternalRequestContext>> for RequestInput<T, Automa
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
-
-impl DescriptiveInfo for HookRequestContext {
-	fn description(&self) -> Str {
-		"automatic(hook)".into()
-	}
-}
 
 impl From<AutomaticRequestContext> for Result<HookRequestContext, AutomaticActionError> {
 	fn from(from: AutomaticRequestContext) -> Self {
