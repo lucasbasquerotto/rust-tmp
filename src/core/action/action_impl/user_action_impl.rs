@@ -295,13 +295,13 @@ where
 
 #[cfg(test)]
 pub mod tests {
+	use crate::core::action::data::action_data::ActionContext;
+	use crate::core::action::data::user_action_data::tests::{
+		UserAuthSessionBuilder, UserRequestContextBuilder,
+	};
 	use crate::core::action::data::user_action_data::{
 		UserActionError, UserAuthRequestContext, UserAuthSession, UserNoAuthRequestContext,
 		UserOutputInfo, UserSession, UserUnconfirmedSession,
-	};
-	use crate::core::action::data::{
-		action_data::ActionContext,
-		user_action_data::tests::{user_context, UserTestOptions},
 	};
 	use crate::core::action::data::{
 		action_data::RequestInput, user_action_data::UserRequestContext,
@@ -408,7 +408,7 @@ pub mod tests {
 	#[test]
 	fn test_input_context_no_auth() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: None });
+			let context = UserRequestContextBuilder::build_no_auth();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
@@ -421,7 +421,7 @@ pub mod tests {
 	#[test]
 	fn test_input_context_auth() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: Some(10) });
+			let context = UserRequestContextBuilder::build_auth();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
@@ -434,7 +434,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_no_auth() {
 		run_test(|helper| {
-			let context = user_context(UserTestOptions { user_id: None });
+			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
@@ -468,7 +468,11 @@ pub mod tests {
 	#[test]
 	fn test_ok_auth() {
 		run_test(|helper| {
-			let context = user_context(UserTestOptions { user_id: Some(1) });
+			let context = UserRequestContextBuilder::new()
+				.session(UserSession::Auth(
+					UserAuthSessionBuilder::new().user_id(1).build(),
+				))
+				.build();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
@@ -502,7 +506,7 @@ pub mod tests {
 	#[test]
 	fn test_no_auth_not_allowed() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: Some(2) });
+			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
 				action_type: TestActionNoAuth::action_type(),
 				context: context.clone(),
@@ -532,7 +536,7 @@ pub mod tests {
 	#[test]
 	fn test_no_auth_ok() {
 		run_test(|helper| {
-			let context = user_context(UserTestOptions { user_id: None });
+			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestActionNoAuth::action_type(),
 				context: context.clone(),
@@ -566,7 +570,7 @@ pub mod tests {
 	#[test]
 	fn test_auth_not_allowed() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: None });
+			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestActionAuth::action_type(),
 				context: context.clone(),
@@ -596,7 +600,11 @@ pub mod tests {
 	#[test]
 	fn test_auth_ok() {
 		run_test(|helper| {
-			let context = user_context(UserTestOptions { user_id: Some(3) });
+			let context = UserRequestContextBuilder::new()
+				.session(UserSession::Auth(
+					UserAuthSessionBuilder::new().user_id(3).build(),
+				))
+				.build();
 			let action_context = ActionContext {
 				action_type: TestActionAuth::action_type(),
 				context: context.clone(),

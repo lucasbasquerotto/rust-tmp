@@ -66,10 +66,10 @@ impl ModeratorAction<(), (), EchoErrorError> for EchoErrorAction {
 pub mod tests {
 	use super::EchoErrorAction;
 	use crate::core::action::data::action_data::RequestInput;
-	use crate::core::action::data::moderator_action_data::tests::{
-		moderator_context, ModeratorTestOptions,
-	};
+	use crate::core::action::data::moderator_action_data::tests::ModeratorRequestContextBuilder;
+	use crate::core::action::data::moderator_action_data::tests::ModeratorSessionBuilder;
 	use crate::core::action::data::moderator_action_data::ModeratorActionError;
+	use crate::core::action::data::moderator_action_data::ModeratorRequestContext;
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::definition::action::ModeratorAction;
 	use crate::core::action::{
@@ -82,13 +82,20 @@ pub mod tests {
 		core::action::data::action_data::{ActionContext, ActionErrorInfo},
 	};
 
+	fn moderator_context() -> ModeratorRequestContext {
+		ModeratorRequestContextBuilder::new()
+			.session(
+				ModeratorSessionBuilder::new()
+					.allowed_actions(vec![EchoErrorAction::action_type()])
+					.build(),
+			)
+			.build()
+	}
+
 	#[test]
 	fn test_not_allowed() {
 		run_test(|_| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: false,
-				allowed_actions: vec![],
-			});
+			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
 				action_type: EchoErrorAction::action_type(),
 				context: context.clone(),
@@ -110,10 +117,7 @@ pub mod tests {
 	#[test]
 	fn test_ok() {
 		run_test(|helper| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: false,
-				allowed_actions: vec![EchoErrorAction::action_type()],
-			});
+			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: EchoErrorAction::action_type(),
 				context: context.clone(),
@@ -137,10 +141,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_admin() {
 		run_test(|helper| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: true,
-				allowed_actions: vec![EchoErrorAction::action_type()],
-			});
+			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: EchoErrorAction::action_type(),
 				context: context.clone(),

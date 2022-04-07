@@ -141,11 +141,9 @@ fn run<C: RequestContext>(
 #[cfg(test)]
 mod tests {
 	use super::{AutoActionHook, AutoActionInternal, AutoData, AutoError, AutoResult};
+	use crate::core::action::data::automatic_action_data::tests::AutomaticRequestContextBuilder;
 	use crate::core::action::data::automatic_action_data::AutomaticActionError;
-	use crate::core::action::data::automatic_action_data::{
-		tests::{automatic_context, AutomaticTestOptions},
-		AutomaticOutputInfo,
-	};
+	use crate::core::action::data::automatic_action_data::AutomaticOutputInfo;
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::{
 		data::action_data::{ActionContext, ActionErrorInfo, RequestInput},
@@ -156,7 +154,7 @@ mod tests {
 	#[test]
 	fn test_internal_error_hook() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: AutoActionInternal::action_type(),
 				context: context.clone(),
@@ -183,7 +181,7 @@ mod tests {
 	#[test]
 	fn test_internal_ok() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: AutoActionInternal::action_type(),
 				context: context.clone(),
@@ -197,7 +195,6 @@ mod tests {
 				context,
 			});
 
-			assert!(result.as_ref().is_ok());
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -216,7 +213,7 @@ mod tests {
 	#[test]
 	fn test_hook_error_internal() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: AutoActionHook::action_type(),
 				context: context.clone(),
@@ -243,7 +240,7 @@ mod tests {
 	#[test]
 	fn test_hook_ok() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: AutoActionHook::action_type(),
 				context: context.clone(),
@@ -257,7 +254,6 @@ mod tests {
 				context,
 			});
 
-			assert!(result.as_ref().is_ok());
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {

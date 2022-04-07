@@ -125,3 +125,48 @@ pub struct ActionErrorInfo<T: ActionType, C: RequestContext, E> {
 	pub action_context: ActionContext<T, C>,
 	pub error: E,
 }
+
+#[cfg(test)]
+pub mod tests {
+	use super::{Application, Request};
+
+	#[allow(dead_code)]
+	pub struct ApplicationBuilder(Application);
+
+	#[allow(dead_code)]
+	impl ApplicationBuilder {
+		pub fn new() -> Self {
+			Self(Application {
+				request_timeout: 1000,
+			})
+		}
+
+		pub fn request_timeout(mut self, request_timeout: u32) -> Self {
+			self.0.request_timeout = request_timeout;
+			self
+		}
+
+		pub fn build(self) -> Application {
+			self.0
+		}
+	}
+
+	#[allow(dead_code)]
+	pub struct RequestBuilder(Request);
+
+	#[allow(dead_code)]
+	impl RequestBuilder {
+		pub fn new() -> Self {
+			Self(Request { ip: "".to_string() })
+		}
+
+		pub fn ip(mut self, ip: String) -> Self {
+			self.0.ip = ip;
+			self
+		}
+
+		pub fn build(self) -> Request {
+			self.0
+		}
+	}
+}

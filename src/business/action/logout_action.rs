@@ -65,10 +65,7 @@ mod tests {
 	use crate::core::action::{
 		data::{
 			action_data::{ActionContext, RequestInput},
-			user_action_data::{
-				tests::{user_context, UserTestOptions},
-				UserOutputInfo,
-			},
+			user_action_data::{tests::UserRequestContextBuilder, UserOutputInfo},
 		},
 		definition::action::UserAction,
 	};
@@ -77,7 +74,7 @@ mod tests {
 	#[test]
 	fn main() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: None });
+			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: LogoutAction::action_type(),
 				context: context.clone(),

@@ -102,11 +102,10 @@ where
 
 #[cfg(test)]
 pub mod tests {
+	use crate::core::action::data::moderator_action_data::tests::ModeratorRequestContextBuilder;
+	use crate::core::action::data::moderator_action_data::tests::ModeratorSessionBuilder;
 	use crate::core::action::data::moderator_action_data::ModeratorActionError;
-	use crate::core::action::data::moderator_action_data::{
-		tests::{moderator_context, ModeratorTestOptions},
-		ModeratorOutputInfo,
-	};
+	use crate::core::action::data::moderator_action_data::ModeratorOutputInfo;
 	use crate::core::action::data::{
 		action_data::{RequestContext, RequestInput},
 		moderator_action_data::ModeratorRequestContext,
@@ -142,13 +141,20 @@ pub mod tests {
 		}
 	}
 
+	fn moderator_context() -> ModeratorRequestContext {
+		ModeratorRequestContextBuilder::new()
+			.session(
+				ModeratorSessionBuilder::new()
+					.allowed_actions(vec![TestAction::action_type()])
+					.build(),
+			)
+			.build()
+	}
+
 	#[test]
 	fn test_not_allowed() {
 		run_test(|_| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: false,
-				allowed_actions: vec![],
-			});
+			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
@@ -168,10 +174,7 @@ pub mod tests {
 	#[test]
 	fn test_ok() {
 		run_test(|helper| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: false,
-				allowed_actions: vec![TestAction::action_type()],
-			});
+			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
@@ -195,10 +198,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_admin() {
 		run_test(|helper| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: true,
-				allowed_actions: vec![],
-			});
+			let context = ModeratorRequestContextBuilder::build_admin();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),

@@ -209,10 +209,8 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use crate::core::action::data::automatic_action_data::{
-		tests::{automatic_context, AutomaticTestOptions},
-		AutomaticOutputInfo,
-	};
+	use crate::core::action::data::automatic_action_data::tests::AutomaticRequestContextBuilder;
+	use crate::core::action::data::automatic_action_data::AutomaticOutputInfo;
 	use crate::core::action::data::automatic_action_data::{
 		AutomaticActionError, AutomaticRequest, HookRequestContext, InternalRequestContext,
 	};
@@ -314,7 +312,7 @@ pub mod tests {
 	#[test]
 	fn test_input_context_internal() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let context = AutomaticRequestContextBuilder::build_internal();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
@@ -327,7 +325,7 @@ pub mod tests {
 	#[test]
 	fn test_input_context_hook() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let context = AutomaticRequestContextBuilder::build_hook();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
 				Ok(input.context.clone()),
@@ -340,7 +338,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_hook() {
 		run_test(|helper| {
-			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
@@ -364,7 +362,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_internal() {
 		run_test(|helper| {
-			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
@@ -388,7 +386,7 @@ pub mod tests {
 	#[test]
 	fn test_hook_not_allowed() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: TestActionHook::action_type(),
 				context: context.clone(),
@@ -408,7 +406,7 @@ pub mod tests {
 	#[test]
 	fn test_hook_ok() {
 		run_test(|helper| {
-			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: TestActionHook::action_type(),
 				context: context.clone(),
@@ -432,7 +430,7 @@ pub mod tests {
 	#[test]
 	fn test_internal_not_allowed() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: false });
+			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: TestActionInternal::action_type(),
 				context: context.clone(),
@@ -452,7 +450,7 @@ pub mod tests {
 	#[test]
 	fn test_internal_ok() {
 		run_test(|helper| {
-			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: TestActionInternal::action_type(),
 				context: context.clone(),

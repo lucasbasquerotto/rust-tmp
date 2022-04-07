@@ -67,27 +67,47 @@ pub enum AutomaticActionError {
 
 #[cfg(test)]
 pub mod tests {
-	use crate::core::action::data::action_data::{Application, Request};
+	use crate::core::action::data::action_data::{
+		tests::{ApplicationBuilder, RequestBuilder},
+		Application,
+	};
 
 	use super::{AutomaticRequest, AutomaticRequestContext};
 
-	#[derive(Debug, Clone)]
-	pub struct AutomaticTestOptions {
-		pub internal: bool,
-	}
+	#[allow(dead_code)]
+	pub struct AutomaticRequestContextBuilder(AutomaticRequestContext);
 
-	pub fn automatic_context(options: AutomaticTestOptions) -> AutomaticRequestContext {
-		AutomaticRequestContext {
-			application: Application {
-				request_timeout: 1000,
-			},
-			request: if options.internal {
-				AutomaticRequest::Internal
-			} else {
-				AutomaticRequest::Hook(Request {
-					ip: "0.1.2.3".to_string(),
-				})
-			},
+	#[allow(dead_code)]
+	impl AutomaticRequestContextBuilder {
+		pub fn new() -> Self {
+			Self(AutomaticRequestContext {
+				application: ApplicationBuilder::new().build(),
+				request: AutomaticRequest::Internal,
+			})
+		}
+
+		pub fn application(mut self, application: Application) -> Self {
+			self.0.application = application;
+			self
+		}
+
+		pub fn request(mut self, request: AutomaticRequest) -> Self {
+			self.0.request = request;
+			self
+		}
+
+		pub fn build(self) -> AutomaticRequestContext {
+			self.0
+		}
+
+		pub fn build_internal() -> AutomaticRequestContext {
+			Self::new().build()
+		}
+
+		pub fn build_hook() -> AutomaticRequestContext {
+			Self::new()
+				.request(AutomaticRequest::Hook(RequestBuilder::new().build()))
+				.build()
 		}
 	}
 }

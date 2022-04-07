@@ -95,11 +95,9 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 #[cfg(test)]
 mod tests {
 	use super::{LoginAction, LoginData, LoginError, LoginResult};
+	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserActionError;
-	use crate::core::action::data::user_action_data::{
-		tests::{user_context, UserTestOptions},
-		UserOutputInfo,
-	};
+	use crate::core::action::data::user_action_data::UserOutputInfo;
 	use crate::core::action::definition::action::Action;
 	use crate::core::action::{
 		data::action_data::{ActionContext, ActionErrorInfo, RequestInput},
@@ -110,7 +108,7 @@ mod tests {
 	#[test]
 	fn test_error_auth() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: Some(1) });
+			let context = UserRequestContextBuilder::build_auth();
 
 			let result = LoginAction::run(RequestInput {
 				data: LoginData {
@@ -136,7 +134,7 @@ mod tests {
 	#[test]
 	fn test_ok() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: None });
+			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: LoginAction::action_type(),
 				context: context.clone(),
@@ -150,7 +148,6 @@ mod tests {
 				context,
 			});
 
-			assert!(result.as_ref().is_ok());
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {

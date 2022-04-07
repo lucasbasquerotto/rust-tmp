@@ -66,9 +66,11 @@ impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction {
 pub mod tests {
 	use super::EchoWarnAction;
 	use crate::core::action::data::moderator_action_data::tests::{
-		moderator_context, ModeratorTestOptions,
+		ModeratorRequestContextBuilder, ModeratorSessionBuilder,
 	};
-	use crate::core::action::data::moderator_action_data::ModeratorActionError;
+	use crate::core::action::data::moderator_action_data::{
+		ModeratorActionError, ModeratorRequestContext,
+	};
 	use crate::core::action::data::{
 		action_data::RequestInput, moderator_action_data::ModeratorOutputInfo,
 	};
@@ -83,13 +85,20 @@ pub mod tests {
 		core::action::data::action_data::ActionContext,
 	};
 
+	fn moderator_context() -> ModeratorRequestContext {
+		ModeratorRequestContextBuilder::new()
+			.session(
+				ModeratorSessionBuilder::new()
+					.allowed_actions(vec![EchoWarnAction::action_type()])
+					.build(),
+			)
+			.build()
+	}
+
 	#[test]
 	fn test_not_allowed() {
 		run_test(|_| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: false,
-				allowed_actions: vec![],
-			});
+			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
 				action_type: EchoWarnAction::action_type(),
 				context: context.clone(),
@@ -111,10 +120,7 @@ pub mod tests {
 	#[test]
 	fn test_ok() {
 		run_test(|helper| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: false,
-				allowed_actions: vec![EchoWarnAction::action_type()],
-			});
+			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: EchoWarnAction::action_type(),
 				context: context.clone(),
@@ -138,10 +144,7 @@ pub mod tests {
 	#[test]
 	fn test_ok_admin() {
 		run_test(|helper| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: true,
-				allowed_actions: vec![],
-			});
+			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: EchoWarnAction::action_type(),
 				context: context.clone(),

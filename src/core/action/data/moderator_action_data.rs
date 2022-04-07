@@ -11,8 +11,8 @@ use super::action_data::{Application, Request, Session};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ModeratorSession {
-	pub user_id: u64,
 	pub admin: bool,
+	pub user_id: u64,
 	pub allowed_actions: Vec<ModeratorActionType>,
 }
 
@@ -51,29 +51,80 @@ pub enum ModeratorActionError {
 #[cfg(test)]
 pub mod tests {
 	use crate::core::action::action_type::moderator_action_type::ModeratorActionType;
+	use crate::core::action::data::action_data::tests::{ApplicationBuilder, RequestBuilder};
 	use crate::core::action::data::action_data::{Application, Request};
 
 	use super::{ModeratorRequestContext, ModeratorSession};
 
-	#[derive(Debug, Clone)]
-	pub struct ModeratorTestOptions {
-		pub admin: bool,
-		pub allowed_actions: Vec<ModeratorActionType>,
+	#[allow(dead_code)]
+	pub struct ModeratorSessionBuilder(ModeratorSession);
+
+	#[allow(dead_code)]
+	impl ModeratorSessionBuilder {
+		pub fn new() -> Self {
+			Self(ModeratorSession {
+				admin: false,
+				user_id: 0,
+				allowed_actions: vec![],
+			})
+		}
+
+		pub fn admin(mut self, admin: bool) -> Self {
+			self.0.admin = admin;
+			self
+		}
+
+		pub fn user_id(mut self, user_id: u64) -> Self {
+			self.0.user_id = user_id;
+			self
+		}
+
+		pub fn allowed_actions(mut self, allowed_actions: Vec<ModeratorActionType>) -> Self {
+			self.0.allowed_actions = allowed_actions;
+			self
+		}
+
+		pub fn build(self) -> ModeratorSession {
+			self.0
+		}
 	}
 
-	pub fn moderator_context(options: ModeratorTestOptions) -> ModeratorRequestContext {
-		ModeratorRequestContext {
-			application: Application {
-				request_timeout: 1000,
-			},
-			session: ModeratorSession {
-				user_id: 123,
-				admin: options.admin,
-				allowed_actions: options.allowed_actions,
-			},
-			request: Request {
-				ip: "5.6.7.8".to_string(),
-			},
+	#[allow(dead_code)]
+	pub struct ModeratorRequestContextBuilder(ModeratorRequestContext);
+
+	#[allow(dead_code)]
+	impl ModeratorRequestContextBuilder {
+		pub fn new() -> Self {
+			Self(ModeratorRequestContext {
+				application: ApplicationBuilder::new().build(),
+				session: ModeratorSessionBuilder::new().build(),
+				request: RequestBuilder::new().build(),
+			})
+		}
+
+		pub fn application(mut self, application: Application) -> Self {
+			self.0.application = application;
+			self
+		}
+
+		pub fn session(mut self, session: ModeratorSession) -> Self {
+			self.0.session = session;
+			self
+		}
+
+		pub fn request(mut self, request: Request) -> Self {
+			self.0.request = request;
+			self
+		}
+
+		pub fn build(self) -> ModeratorRequestContext {
+			self.0
+		}
+
+		pub fn build_admin() -> ModeratorRequestContext {
+			Self::new()
+				.session(ModeratorSessionBuilder::new().admin(true).build())
+				.build()
 		}
 	}
 }

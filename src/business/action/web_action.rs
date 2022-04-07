@@ -321,21 +321,16 @@ mod tests {
 			WebResultArgs, WebSharedError,
 		},
 		core::action::{
-			action_type::moderator_action_type::ModeratorActionType,
 			data::{
 				action_data::{ActionContext, ActionErrorInfo, ErrorInfo, RequestInput},
 				automatic_action_data::{
-					tests::{automatic_context, AutomaticTestOptions},
-					AutomaticOutputInfo,
+					tests::AutomaticRequestContextBuilder, AutomaticOutputInfo,
 				},
 				moderator_action_data::{
-					tests::{moderator_context, ModeratorTestOptions},
-					ModeratorOutputInfo,
+					tests::{ModeratorRequestContextBuilder, ModeratorSessionBuilder},
+					ModeratorOutputInfo, ModeratorRequestContext,
 				},
-				user_action_data::{
-					tests::{user_context, UserTestOptions},
-					UserOutputInfo,
-				},
+				user_action_data::{tests::UserRequestContextBuilder, UserOutputInfo},
 			},
 			definition::action::{
 				Action, ActionError, AutomaticAction, ModeratorAction, UserAction,
@@ -344,10 +339,20 @@ mod tests {
 		tests::test_utils::tests::run_test,
 	};
 
+	fn moderator_context() -> ModeratorRequestContext {
+		ModeratorRequestContextBuilder::new()
+			.session(
+				ModeratorSessionBuilder::new()
+					.allowed_actions(vec![WebActionModerator::action_type()])
+					.build(),
+			)
+			.build()
+	}
+
 	#[test]
 	fn test_user_auth_ok() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: Some(1) });
+			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
 				action_type: WebActionUser::action_type(),
 				context: context.clone(),
@@ -390,7 +395,7 @@ mod tests {
 	#[test]
 	fn test_user_no_auth_ok() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: None });
+			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: WebActionUser::action_type(),
 				context: context.clone(),
@@ -433,7 +438,7 @@ mod tests {
 	#[test]
 	fn test_user_status_error() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: None });
+			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: WebActionUser::action_type(),
 				context: context.clone(),
@@ -480,7 +485,7 @@ mod tests {
 	#[test]
 	fn test_user_no_status_error() {
 		run_test(|_| {
-			let context = user_context(UserTestOptions { user_id: None });
+			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: WebActionUser::action_type(),
 				context: context.clone(),
@@ -523,10 +528,7 @@ mod tests {
 	#[test]
 	fn test_mod_ok() {
 		run_test(|_| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: false,
-				allowed_actions: vec![ModeratorActionType::Web],
-			});
+			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: WebActionModerator::action_type(),
 				context: context.clone(),
@@ -569,10 +571,7 @@ mod tests {
 	#[test]
 	fn test_mod_status_error() {
 		run_test(|_| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: false,
-				allowed_actions: vec![ModeratorActionType::Web],
-			});
+			let context = moderator_context();
 
 			let _m = mock("GET", "/mock/http/status/403")
 				.with_status(403)
@@ -618,10 +617,7 @@ mod tests {
 	#[test]
 	fn test_mod_no_status_error() {
 		run_test(|_| {
-			let context = moderator_context(ModeratorTestOptions {
-				admin: false,
-				allowed_actions: vec![ModeratorActionType::Web],
-			});
+			let context = moderator_context();
 
 			let result = WebActionModerator::run(RequestInput {
 				data: WebData {
@@ -663,7 +659,7 @@ mod tests {
 	#[test]
 	fn test_auto_internal_ok() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: WebActionAutomatic::action_type(),
 				context: context.clone(),
@@ -706,7 +702,7 @@ mod tests {
 	#[test]
 	fn test_auto_status_error() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: WebActionAutomatic::action_type(),
 				context: context.clone(),
@@ -753,7 +749,7 @@ mod tests {
 	#[test]
 	fn test_auto_no_status_error() {
 		run_test(|_| {
-			let context = automatic_context(AutomaticTestOptions { internal: true });
+			let context = AutomaticRequestContextBuilder::build_internal();
 
 			let result = WebActionAutomatic::run(RequestInput {
 				data: WebData {

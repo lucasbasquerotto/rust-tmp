@@ -105,8 +105,9 @@ pub enum UserActionError {
 
 #[cfg(test)]
 pub mod tests {
-	use chrono::Utc;
+	use chrono::{DateTime, Utc};
 
+	use crate::core::action::data::action_data::tests::{ApplicationBuilder, RequestBuilder};
 	use crate::core::action::data::user_action_data::{
 		UserNoAuthSession, UserRequestContext, UserSession,
 	};
@@ -115,28 +116,123 @@ pub mod tests {
 		user_action_data::UserAuthSession,
 	};
 
-	#[derive(Debug, Clone)]
-	pub struct UserTestOptions {
-		pub user_id: Option<u64>,
+	use super::UserUnconfirmedSession;
+
+	#[allow(dead_code)]
+	pub struct UserNoAuthSessionBuilder(UserNoAuthSession);
+
+	#[allow(dead_code)]
+	impl UserNoAuthSessionBuilder {
+		pub fn new() -> Self {
+			Self(UserNoAuthSession {
+				created_at: Utc::now(),
+			})
+		}
+
+		pub fn created_at(mut self, created_at: DateTime<Utc>) -> Self {
+			self.0.created_at = created_at;
+			self
+		}
+
+		pub fn build(self) -> UserNoAuthSession {
+			self.0
+		}
 	}
 
-	pub fn user_context(options: UserTestOptions) -> UserRequestContext {
-		UserRequestContext {
-			application: Application {
-				request_timeout: 1000,
-			},
-			session: match options.user_id {
-				Some(user_id) => UserSession::Auth(UserAuthSession {
-					created_at: Utc::now(),
-					user_id,
-				}),
-				None => UserSession::NoAuth(UserNoAuthSession {
-					created_at: Utc::now(),
-				}),
-			},
-			request: Request {
-				ip: "1.2.3.4".to_string(),
-			},
+	#[allow(dead_code)]
+	pub struct UserAuthSessionBuilder(UserAuthSession);
+
+	#[allow(dead_code)]
+	impl UserAuthSessionBuilder {
+		pub fn new() -> Self {
+			Self(UserAuthSession {
+				created_at: Utc::now(),
+				user_id: 0,
+			})
+		}
+
+		pub fn created_at(mut self, created_at: DateTime<Utc>) -> Self {
+			self.0.created_at = created_at;
+			self
+		}
+
+		pub fn user_id(mut self, user_id: u64) -> Self {
+			self.0.user_id = user_id;
+			self
+		}
+
+		pub fn build(self) -> UserAuthSession {
+			self.0
+		}
+	}
+
+	#[allow(dead_code)]
+	pub struct UserUnconfirmedSessionBuilder(UserUnconfirmedSession);
+
+	#[allow(dead_code)]
+	impl UserUnconfirmedSessionBuilder {
+		pub fn new() -> Self {
+			Self(UserUnconfirmedSession {
+				created_at: Utc::now(),
+				user_id: 0,
+			})
+		}
+
+		pub fn created_at(mut self, created_at: DateTime<Utc>) -> Self {
+			self.0.created_at = created_at;
+			self
+		}
+
+		pub fn user_id(mut self, user_id: u64) -> Self {
+			self.0.user_id = user_id;
+			self
+		}
+
+		pub fn build(self) -> UserUnconfirmedSession {
+			self.0
+		}
+	}
+
+	#[allow(dead_code)]
+	pub struct UserRequestContextBuilder(UserRequestContext);
+
+	#[allow(dead_code)]
+	impl UserRequestContextBuilder {
+		pub fn new() -> Self {
+			Self(UserRequestContext {
+				application: ApplicationBuilder::new().build(),
+				session: UserSession::NoAuth(UserNoAuthSessionBuilder::new().build()),
+				request: RequestBuilder::new().build(),
+			})
+		}
+
+		pub fn application(mut self, application: Application) -> Self {
+			self.0.application = application;
+			self
+		}
+
+		pub fn session(mut self, session: UserSession) -> Self {
+			self.0.session = session;
+			self
+		}
+
+		pub fn request(mut self, request: Request) -> Self {
+			self.0.request = request;
+			self
+		}
+
+		pub fn build(self) -> UserRequestContext {
+			self.0
+		}
+
+		pub fn build_no_auth() -> UserRequestContext {
+			Self::new().build()
+		}
+
+		pub fn build_auth() -> UserRequestContext {
+			Self::new()
+				.session(UserSession::Auth(UserAuthSessionBuilder::new().build()))
+				.build()
 		}
 	}
 }
