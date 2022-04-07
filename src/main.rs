@@ -7,6 +7,7 @@ extern crate strum;
 
 mod business;
 mod core;
+mod lib;
 
 pub fn main() {}
 

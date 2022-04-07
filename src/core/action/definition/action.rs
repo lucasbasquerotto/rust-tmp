@@ -1,20 +1,25 @@
 use std::fmt::Debug;
 
-use crate::core::action::{
-	action_type::{
-		automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
-		user_action_type::UserActionType,
-	},
-	data::{
-		action_data::{DescriptiveError, ErrorData},
-		automatic_action_data::{
-			AutomaticActionInput, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequestInput,
+use crate::{
+	core::action::{
+		action_type::{
+			automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
+			user_action_type::UserActionType,
 		},
-		moderator_action_data::{
-			ModeratorActionInput, ModeratorErrorInfo, ModeratorOutputInfo, ModeratorRequestInput,
+		data::{
+			action_data::{DescriptiveError, ErrorData},
+			automatic_action_data::{
+				AutomaticActionInput, AutomaticErrorInfo, AutomaticOutputInfo,
+				AutomaticRequestInput,
+			},
+			moderator_action_data::{
+				ModeratorActionInput, ModeratorErrorInfo, ModeratorOutputInfo,
+				ModeratorRequestInput,
+			},
+			user_action_data::{UserActionInput, UserErrorInfo, UserOutputInfo, UserRequestInput},
 		},
-		user_action_data::{UserActionInput, UserErrorInfo, UserOutputInfo, UserRequestInput},
 	},
+	lib::data::str::Str,
 };
 
 ////////////////////////////////////////////////
@@ -42,7 +47,7 @@ pub trait ActionError: Debug {
 
 	fn public_error(&self) -> Option<ErrorData>;
 
-	fn error_msg(msg: String) -> Option<ErrorData> {
+	fn error_msg(msg: Str) -> Option<ErrorData> {
 		Some(ErrorData { msg, params: None })
 	}
 }

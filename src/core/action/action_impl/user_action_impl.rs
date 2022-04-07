@@ -248,10 +248,10 @@ impl ActionError for UserActionError {
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
 			UserActionError::Authenticated => {
-				Self::error_msg("You can't execute this action while authenticated.".to_string())
+				Self::error_msg("You can't execute this action while authenticated.".into())
 			}
 			UserActionError::Unauthenticated => {
-				Self::error_msg("You must be authenticated to execute this action.".to_string())
+				Self::error_msg("You must be authenticated to execute this action.".into())
 			}
 		}
 	}

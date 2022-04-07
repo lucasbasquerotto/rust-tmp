@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use crate::core::action::action_type::general_action_type::ActionType;
+use crate::{core::action::action_type::general_action_type::ActionType, lib::data::str::Str};
 
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
@@ -110,7 +110,7 @@ impl DescriptiveError {
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct ErrorData {
-	pub msg: String,
+	pub msg: Str,
 	pub params: Option<HashMap<String, String>>,
 }
 

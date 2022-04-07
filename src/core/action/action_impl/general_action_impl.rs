@@ -45,7 +45,7 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 				.error
 				.public_error()
 				.map(|data| data.msg)
-				.unwrap_or_else(|| "".to_string())
+				.unwrap_or_else(|| "".into())
 		);
 		let context = format!(
 			"[context={context}]",
@@ -144,7 +144,7 @@ mod tests {
 
 		fn public_error(&self) -> Option<ErrorData> {
 			let action_id = self.0.id();
-			Self::error_msg(format!("Test public error (action_id={action_id})"))
+			Self::error_msg(format!("Test public error (action_id={action_id})").into())
 		}
 	}
 
@@ -181,7 +181,7 @@ mod tests {
 			assert_eq!(
 				public_error,
 				Some(ErrorData {
-					msg: "Test public error (action_id=1)".to_string(),
+					msg: "Test public error (action_id=1)".into(),
 					params: None
 				})
 			);
@@ -228,7 +228,7 @@ mod tests {
 			assert_eq!(
 				public_error,
 				Some(ErrorData {
-					msg: "Test public error (action_id=2)".to_string(),
+					msg: "Test public error (action_id=2)".into(),
 					params: None
 				})
 			);

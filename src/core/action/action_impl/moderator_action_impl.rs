@@ -42,10 +42,13 @@ impl ActionError for ModeratorActionError {
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			ModeratorActionError::NotAllowed(action_type) => Self::error_msg(format!(
-				"You are not allowed to execute this action ({action_id}).",
-				action_id = action_type.id()
-			)),
+			ModeratorActionError::NotAllowed(action_type) => Self::error_msg(
+				format!(
+					"You are not allowed to execute this action ({action_id}).",
+					action_id = action_type.id()
+				)
+				.into(),
+			),
 		}
 	}
 }

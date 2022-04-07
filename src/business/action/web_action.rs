@@ -241,11 +241,11 @@ impl ActionError for WebSharedError {
 
 				match url_data.status {
 					Some(status_code) => match &status_code {
-						403 => "Web Action - Forbidden".to_string(),
-						404 => "Web Action - Not Found".to_string(),
-						status => format!("Web error -> Status: {status}"),
+						403 => "Web Action - Forbidden".into(),
+						404 => "Web Action - Not Found".into(),
+						status => format!("Web error -> Status: {status}").into(),
 					},
-					None => "Web error occured".to_string(),
+					None => "Web error occured".into(),
 				}
 			}
 		};

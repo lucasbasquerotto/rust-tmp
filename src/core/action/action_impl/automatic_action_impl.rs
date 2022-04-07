@@ -159,11 +159,9 @@ impl ActionError for AutomaticActionError {
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
 			AutomaticActionError::NotInternal => {
-				Self::error_msg("This is not an internal action.".to_string())
+				Self::error_msg("This is not an internal action.".into())
 			}
-			AutomaticActionError::NotHook => {
-				Self::error_msg("This is not a hook action.".to_string())
-			}
+			AutomaticActionError::NotHook => Self::error_msg("This is not a hook action.".into()),
 		}
 	}
 }
