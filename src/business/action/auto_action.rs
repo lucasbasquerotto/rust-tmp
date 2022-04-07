@@ -11,6 +11,12 @@ use crate::core::action::{
 };
 
 ////////////////////////////////////////////////
+///////////////////// TYPE /////////////////////
+////////////////////////////////////////////////
+
+const AUTOMATIC_ACTION_TYPE: AutomaticActionType = AutomaticActionType::Auto;
+
+////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
 
@@ -68,7 +74,7 @@ pub struct AutoActionInternal(InternalRequestInput<AutoData>);
 
 impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 	fn action_type() -> AutomaticActionType {
-		AutomaticActionType::Auto
+		AUTOMATIC_ACTION_TYPE
 	}
 
 	fn new(input: AutomaticActionInput<AutoData>) -> Result<Self, AutoError> {
@@ -93,7 +99,7 @@ pub struct AutoActionHook(HookRequestInput<AutoData>);
 
 impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 	fn action_type() -> AutomaticActionType {
-		AutomaticActionType::Auto
+		AUTOMATIC_ACTION_TYPE
 	}
 
 	fn new(input: AutomaticActionInput<AutoData>) -> Result<Self, AutoError> {
@@ -141,14 +147,12 @@ fn run<C: RequestContext>(
 #[cfg(test)]
 mod tests {
 	use super::{AutoActionHook, AutoActionInternal, AutoData, AutoError, AutoResult};
+	use crate::business::action::auto_action::AUTOMATIC_ACTION_TYPE;
+	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::automatic_action_data::tests::AutomaticRequestContextBuilder;
 	use crate::core::action::data::automatic_action_data::AutomaticActionError;
 	use crate::core::action::data::automatic_action_data::AutomaticOutputInfo;
 	use crate::core::action::definition::action::Action;
-	use crate::core::action::{
-		data::action_data::{ActionContext, ActionErrorInfo, RequestInput},
-		definition::action::AutomaticAction,
-	};
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
@@ -156,7 +160,7 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
-				action_type: AutoActionInternal::action_type(),
+				action_type: AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -183,7 +187,7 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
-				action_type: AutoActionInternal::action_type(),
+				action_type: AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -215,7 +219,7 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
-				action_type: AutoActionHook::action_type(),
+				action_type: AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -242,7 +246,7 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
-				action_type: AutoActionHook::action_type(),
+				action_type: AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 

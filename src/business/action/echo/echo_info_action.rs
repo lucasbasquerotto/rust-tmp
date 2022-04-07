@@ -11,6 +11,12 @@ use crate::core::action::{
 };
 
 ////////////////////////////////////////////////
+///////////////////// TYPE /////////////////////
+////////////////////////////////////////////////
+
+const MODERATOR_ACTION_TYPE: ModeratorActionType = ModeratorActionType::EchoInfo;
+
+////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
@@ -42,7 +48,7 @@ pub struct EchoInfoAction(ModeratorRequestInput<()>);
 
 impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction {
 	fn action_type() -> ModeratorActionType {
-		ModeratorActionType::EchoInfo
+		MODERATOR_ACTION_TYPE
 	}
 
 	fn new(input: ModeratorActionInput<()>) -> Result<Self, EchoInfoError> {
@@ -65,17 +71,14 @@ impl ModeratorAction<(), (), EchoInfoError> for EchoInfoAction {
 #[cfg(test)]
 pub mod tests {
 	use super::EchoInfoAction;
+	use crate::business::action::echo::echo_info_action::MODERATOR_ACTION_TYPE;
 	use crate::core::action::data::action_data::RequestInput;
 	use crate::core::action::data::moderator_action_data::tests::ModeratorRequestContextBuilder;
 	use crate::core::action::data::moderator_action_data::tests::ModeratorSessionBuilder;
 	use crate::core::action::data::moderator_action_data::ModeratorActionError;
+	use crate::core::action::data::moderator_action_data::ModeratorOutputInfo;
 	use crate::core::action::data::moderator_action_data::ModeratorRequestContext;
 	use crate::core::action::definition::action::Action;
-	use crate::core::action::definition::action::ModeratorAction;
-	use crate::core::action::{
-		action_type::moderator_action_type::ModeratorActionType,
-		data::moderator_action_data::ModeratorOutputInfo,
-	};
 	use crate::tests::test_utils::tests::run_test;
 	use crate::{
 		business::action::echo::echo_info_action::EchoInfoError,
@@ -86,7 +89,7 @@ pub mod tests {
 		ModeratorRequestContextBuilder::new()
 			.session(
 				ModeratorSessionBuilder::new()
-					.allowed_actions(vec![EchoInfoAction::action_type()])
+					.allowed_actions(vec![MODERATOR_ACTION_TYPE])
 					.build(),
 			)
 			.build()
@@ -97,7 +100,7 @@ pub mod tests {
 		run_test(|_| {
 			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
-				action_type: EchoInfoAction::action_type(),
+				action_type: MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -107,7 +110,7 @@ pub mod tests {
 				&Err(ActionErrorInfo {
 					action_context,
 					error: EchoInfoError::ModeratorError(ModeratorActionError::NotAllowed(
-						ModeratorActionType::EchoInfo
+						MODERATOR_ACTION_TYPE
 					)),
 				}),
 			);
@@ -119,7 +122,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = moderator_context();
 			let action_context = ActionContext {
-				action_type: EchoInfoAction::action_type(),
+				action_type: MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -140,7 +143,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = moderator_context();
 			let action_context = ActionContext {
-				action_type: EchoInfoAction::action_type(),
+				action_type: MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 

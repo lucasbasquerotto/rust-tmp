@@ -11,6 +11,12 @@ use crate::core::action::{
 };
 
 ////////////////////////////////////////////////
+///////////////////// TYPE /////////////////////
+////////////////////////////////////////////////
+
+const MODERATOR_ACTION_TYPE: ModeratorActionType = ModeratorActionType::EchoWarn;
+
+////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
@@ -42,7 +48,7 @@ pub struct EchoWarnAction(ModeratorRequestInput<()>);
 
 impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction {
 	fn action_type() -> ModeratorActionType {
-		ModeratorActionType::EchoWarn
+		MODERATOR_ACTION_TYPE
 	}
 
 	fn new(input: ModeratorActionInput<()>) -> Result<Self, EchoWarnError> {
@@ -64,7 +70,8 @@ impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction {
 
 #[cfg(test)]
 pub mod tests {
-	use super::EchoWarnAction;
+	use super::{EchoWarnAction, MODERATOR_ACTION_TYPE};
+	use crate::core::action::data::action_data::ActionErrorInfo;
 	use crate::core::action::data::moderator_action_data::tests::{
 		ModeratorRequestContextBuilder, ModeratorSessionBuilder,
 	};
@@ -75,10 +82,6 @@ pub mod tests {
 		action_data::RequestInput, moderator_action_data::ModeratorOutputInfo,
 	};
 	use crate::core::action::definition::action::Action;
-	use crate::core::action::definition::action::ModeratorAction;
-	use crate::core::action::{
-		action_type::moderator_action_type::ModeratorActionType, data::action_data::ActionErrorInfo,
-	};
 	use crate::tests::test_utils::tests::run_test;
 	use crate::{
 		business::action::echo::echo_warn_action::EchoWarnError,
@@ -89,7 +92,7 @@ pub mod tests {
 		ModeratorRequestContextBuilder::new()
 			.session(
 				ModeratorSessionBuilder::new()
-					.allowed_actions(vec![EchoWarnAction::action_type()])
+					.allowed_actions(vec![MODERATOR_ACTION_TYPE])
 					.build(),
 			)
 			.build()
@@ -100,7 +103,7 @@ pub mod tests {
 		run_test(|_| {
 			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
-				action_type: EchoWarnAction::action_type(),
+				action_type: MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -110,7 +113,7 @@ pub mod tests {
 				&Err(ActionErrorInfo {
 					action_context,
 					error: EchoWarnError::ModeratorError(ModeratorActionError::NotAllowed(
-						ModeratorActionType::EchoWarn
+						MODERATOR_ACTION_TYPE
 					)),
 				}),
 			);
@@ -122,7 +125,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = moderator_context();
 			let action_context = ActionContext {
-				action_type: EchoWarnAction::action_type(),
+				action_type: MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -143,7 +146,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = moderator_context();
 			let action_context = ActionContext {
-				action_type: EchoWarnAction::action_type(),
+				action_type: MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 

@@ -11,6 +11,12 @@ use crate::core::action::{
 };
 
 ////////////////////////////////////////////////
+///////////////////// TYPE /////////////////////
+////////////////////////////////////////////////
+
+const USER_ACTION_TYPE: UserActionType = UserActionType::Login;
+
+////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
 
@@ -66,7 +72,7 @@ pub struct LoginAction(UserNoAuthRequestInput<LoginData>);
 
 impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 	fn action_type() -> UserActionType {
-		UserActionType::Login
+		USER_ACTION_TYPE
 	}
 
 	fn new(input: UserActionInput<LoginData>) -> Result<Self, LoginError> {
@@ -95,14 +101,12 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 #[cfg(test)]
 mod tests {
 	use super::{LoginAction, LoginData, LoginError, LoginResult};
+	use crate::business::action::login_action::USER_ACTION_TYPE;
+	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserActionError;
 	use crate::core::action::data::user_action_data::UserOutputInfo;
 	use crate::core::action::definition::action::Action;
-	use crate::core::action::{
-		data::action_data::{ActionContext, ActionErrorInfo, RequestInput},
-		definition::action::UserAction,
-	};
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
@@ -122,7 +126,7 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
-						action_type: LoginAction::action_type(),
+						action_type: USER_ACTION_TYPE,
 						context,
 					},
 					error: LoginError::UserError(UserActionError::Authenticated),
@@ -136,7 +140,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: LoginAction::action_type(),
+				action_type: USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 

@@ -20,6 +20,14 @@ use crate::core::action::{
 };
 
 ////////////////////////////////////////////////
+///////////////////// TYPE /////////////////////
+////////////////////////////////////////////////
+
+const USER_ACTION_TYPE: UserActionType = UserActionType::Web;
+const MODERATOR_ACTION_TYPE: ModeratorActionType = ModeratorActionType::Web;
+const AUTOMATIC_ACTION_TYPE: AutomaticActionType = AutomaticActionType::Web;
+
+////////////////////////////////////////////////
 //////////////////// STATIC ////////////////////
 ////////////////////////////////////////////////
 
@@ -99,7 +107,7 @@ pub struct WebActionUser(UserRequestInput<WebData>);
 
 impl UserAction<WebData, WebResult, UserWebError> for WebActionUser {
 	fn action_type() -> UserActionType {
-		UserActionType::Web
+		USER_ACTION_TYPE
 	}
 
 	fn new(input: UserActionInput<WebData>) -> Result<Self, UserWebError> {
@@ -147,7 +155,7 @@ pub struct WebActionModerator(ModeratorRequestInput<WebData>);
 
 impl ModeratorAction<WebData, WebResult, ModeratorWebError> for WebActionModerator {
 	fn action_type() -> ModeratorActionType {
-		ModeratorActionType::Web
+		MODERATOR_ACTION_TYPE
 	}
 
 	fn new(input: ModeratorActionInput<WebData>) -> Result<Self, ModeratorWebError> {
@@ -195,7 +203,7 @@ pub struct WebActionAutomatic(AutomaticRequestInput<WebData>);
 
 impl AutomaticAction<WebData, WebResult, AutomaticWebError> for WebActionAutomatic {
 	fn action_type() -> AutomaticActionType {
-		AutomaticActionType::Web
+		AUTOMATIC_ACTION_TYPE
 	}
 
 	fn new(input: AutomaticActionInput<WebData>) -> Result<Self, AutomaticWebError> {
@@ -318,7 +326,8 @@ mod tests {
 		business::action::web_action::{
 			httpbin_base_url, AutomaticWebError, ModeratorWebError, UrlData, UserWebError,
 			WebActionAutomatic, WebActionModerator, WebActionUser, WebData, WebResult,
-			WebResultArgs, WebSharedError,
+			WebResultArgs, WebSharedError, AUTOMATIC_ACTION_TYPE, MODERATOR_ACTION_TYPE,
+			USER_ACTION_TYPE,
 		},
 		core::action::{
 			data::{
@@ -332,9 +341,7 @@ mod tests {
 				},
 				user_action_data::{tests::UserRequestContextBuilder, UserOutputInfo},
 			},
-			definition::action::{
-				Action, ActionError, AutomaticAction, ModeratorAction, UserAction,
-			},
+			definition::action::{Action, ActionError},
 		},
 		tests::test_utils::tests::run_test,
 	};
@@ -343,7 +350,7 @@ mod tests {
 		ModeratorRequestContextBuilder::new()
 			.session(
 				ModeratorSessionBuilder::new()
-					.allowed_actions(vec![WebActionModerator::action_type()])
+					.allowed_actions(vec![MODERATOR_ACTION_TYPE])
 					.build(),
 			)
 			.build()
@@ -354,7 +361,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
-				action_type: WebActionUser::action_type(),
+				action_type: USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -397,7 +404,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: WebActionUser::action_type(),
+				action_type: USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -440,7 +447,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: WebActionUser::action_type(),
+				action_type: USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -487,7 +494,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: WebActionUser::action_type(),
+				action_type: USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -527,7 +534,7 @@ mod tests {
 		run_test(|_| {
 			let context = moderator_context();
 			let action_context = ActionContext {
-				action_type: WebActionModerator::action_type(),
+				action_type: MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -586,7 +593,7 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
-						action_type: WebActionModerator::action_type(),
+						action_type: MODERATOR_ACTION_TYPE,
 						context,
 					},
 					error: ModeratorWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
@@ -628,7 +635,7 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
-						action_type: WebActionModerator::action_type(),
+						action_type: MODERATOR_ACTION_TYPE,
 						context,
 					},
 					error: ModeratorWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
@@ -655,7 +662,7 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
-				action_type: WebActionAutomatic::action_type(),
+				action_type: AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -698,7 +705,7 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
-				action_type: WebActionAutomatic::action_type(),
+				action_type: AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -757,7 +764,7 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
-						action_type: WebActionAutomatic::action_type(),
+						action_type: AUTOMATIC_ACTION_TYPE,
 						context,
 					},
 					error: AutomaticWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(

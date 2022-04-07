@@ -11,6 +11,12 @@ use crate::core::action::{
 };
 
 ////////////////////////////////////////////////
+///////////////////// TYPE /////////////////////
+////////////////////////////////////////////////
+
+const USER_ACTION_TYPE: UserActionType = UserActionType::Logout;
+
+////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
@@ -42,7 +48,7 @@ pub struct LogoutAction(UserRequestInput<()>);
 
 impl UserAction<(), (), LogoutError> for LogoutAction {
 	fn action_type() -> UserActionType {
-		UserActionType::Logout
+		USER_ACTION_TYPE
 	}
 
 	fn new(input: UserActionInput<()>) -> Result<Self, LogoutError> {
@@ -62,12 +68,12 @@ impl UserAction<(), (), LogoutError> for LogoutAction {
 #[cfg(test)]
 mod tests {
 	use super::LogoutAction;
-	use crate::core::action::{
-		data::{
+	use crate::{
+		business::action::logout_action::USER_ACTION_TYPE,
+		core::action::data::{
 			action_data::{ActionContext, RequestInput},
 			user_action_data::{tests::UserRequestContextBuilder, UserOutputInfo},
 		},
-		definition::action::UserAction,
 	};
 	use crate::{core::action::definition::action::Action, tests::test_utils::tests::run_test};
 
@@ -76,7 +82,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: LogoutAction::action_type(),
+				action_type: USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 			let result = LogoutAction::run(RequestInput { data: (), context });
