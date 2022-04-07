@@ -16,7 +16,7 @@ pub struct RequestInput<I, C: RequestContext> {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Request {
-	pub ip: String,
+	pub ip: Str,
 }
 
 pub trait Session: Clone + Debug + Eq + PartialEq {}
@@ -77,9 +77,9 @@ pub struct ErrorContextInfo<
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DescriptiveError {
-	pub msg: Option<String>,
-	pub data: Option<String>,
-	pub source: Option<String>,
+	pub msg: Option<Str>,
+	pub data: Option<Str>,
+	pub source: Option<Str>,
 }
 
 impl DescriptiveError {
@@ -94,7 +94,7 @@ impl DescriptiveError {
 	pub fn data<T: Debug>(data: T) -> Self {
 		Self {
 			msg: None,
-			data: Some(format!("{data:?}")),
+			data: Some(format!("{data:?}").into()),
 			source: None,
 		}
 	}
@@ -103,7 +103,7 @@ impl DescriptiveError {
 		Self {
 			msg: None,
 			data: None,
-			source: Some(format!("{source:?}")),
+			source: Some(format!("{source:?}").into()),
 		}
 	}
 }
@@ -111,7 +111,7 @@ impl DescriptiveError {
 #[derive(Debug, Eq, PartialEq)]
 pub struct ErrorData {
 	pub msg: Str,
-	pub params: Option<HashMap<String, String>>,
+	pub params: Option<HashMap<Str, Str>>,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -128,6 +128,8 @@ pub struct ActionErrorInfo<T: ActionType, C: RequestContext, E> {
 
 #[cfg(test)]
 pub mod tests {
+	use crate::lib::data::str::Str;
+
 	use super::{Application, Request};
 
 	#[allow(dead_code)]
@@ -157,10 +159,10 @@ pub mod tests {
 	#[allow(dead_code)]
 	impl RequestBuilder {
 		pub fn new() -> Self {
-			Self(Request { ip: "".to_string() })
+			Self(Request { ip: "".into() })
 		}
 
-		pub fn ip(mut self, ip: String) -> Self {
+		pub fn ip(mut self, ip: Str) -> Self {
 			self.0.ip = ip;
 			self
 		}

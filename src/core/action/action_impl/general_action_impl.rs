@@ -1,13 +1,16 @@
 use core::fmt;
 use std::fmt::Debug;
 
-use crate::core::action::definition::{
-	action::ActionError,
-	action_helpers::{ActionErrorHelper, DescriptiveRequestContext},
-};
 use crate::core::action::{
 	action_type::general_action_type::ActionType,
 	data::action_data::{ActionErrorInfo, ErrorData, ErrorInfo},
+};
+use crate::{
+	core::action::definition::{
+		action::ActionError,
+		action_helpers::{ActionErrorHelper, DescriptiveRequestContext},
+	},
+	lib::data::str::Str,
 };
 
 ////////////////////////////////////////////////
@@ -25,7 +28,7 @@ impl<D: Debug + Eq + PartialEq> Eq for ErrorInfo<D> {}
 impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHelper<T, C, E>
 	for ActionErrorInfo<T, C, E>
 {
-	fn description(&self) -> String {
+	fn description(&self) -> Str {
 		let private_error = &self.error.private_error();
 		let error_context = &self.action_context;
 		let action = format!(
@@ -38,7 +41,7 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 			.msg
 			.as_ref()
 			.map(|private| format!("[private={private}]"))
-			.unwrap_or_else(|| "".to_string());
+			.unwrap_or_else(|| "".into());
 		let public = format!(
 			"[public={public}]",
 			public = self
@@ -55,18 +58,19 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 			.data
 			.as_ref()
 			.map(|data| format!("[data={data}]"))
-			.unwrap_or_else(|| "".to_string());
+			.unwrap_or_else(|| "".into());
 		let source = private_error
 			.source
 			.as_ref()
 			.map(|source| format!("[source={source}]"))
-			.unwrap_or_else(|| "".to_string());
+			.unwrap_or_else(|| "".into());
 
 		[action, private, public, context, data, source]
 			.into_iter()
 			.filter(|str| !str.is_empty())
 			.collect::<Vec<String>>()
 			.join(" ")
+			.into()
 	}
 
 	fn handle(self) -> Option<ErrorData> {
@@ -108,16 +112,17 @@ mod tests {
 	use crate::core::action::{
 		action_type::general_action_type::ActionScope, data::action_data::RequestContext,
 	};
+	use crate::lib::data::str::Str;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug, Eq, PartialEq, Clone)]
-	struct TestRequestContext(String);
+	struct TestRequestContext(Str);
 
 	impl RequestContext for TestRequestContext {}
 
 	impl DescriptiveInfo for TestRequestContext {
-		fn description(&self) -> String {
-			self.0.to_string()
+		fn description(&self) -> Str {
+			self.0.to_string().into()
 		}
 	}
 
@@ -133,9 +138,9 @@ mod tests {
 
 			if action_type.0 == 1 {
 				DescriptiveError {
-					msg: Some("Private message 01".to_string()),
-					data: Some("Data 01".to_string()),
-					source: Some("Source 01".to_string()),
+					msg: Some("Private message 01".into()),
+					data: Some("Data 01".into()),
+					source: Some("Source 01".into()),
 				}
 			} else {
 				DescriptiveError::empty()
@@ -167,7 +172,7 @@ mod tests {
 	fn test_1() {
 		run_test(|helper| {
 			let action_type = TestActionType(1);
-			let context = TestRequestContext("My error #01".to_string());
+			let context = TestRequestContext("My error #01".into());
 			let error = TestActionError(action_type);
 			let error_context = ActionContext {
 				action_type,
@@ -203,9 +208,9 @@ mod tests {
 
 			assert_eq!(
 				helper.pop_log(),
-				Some(format!(
-					"ERROR - {action} {private} {public} {context} {data} {source}"
-				))
+				Some(
+					format!("ERROR - {action} {private} {public} {context} {data} {source}").into()
+				)
 			);
 		});
 	}
@@ -214,7 +219,7 @@ mod tests {
 	fn test_2() {
 		run_test(|helper| {
 			let action_type = TestActionType(2);
-			let context = TestRequestContext("My error #02".to_string());
+			let context = TestRequestContext("My error #02".into());
 			let error = TestActionError(action_type);
 			let error_context = ActionContext {
 				action_type,
@@ -247,7 +252,7 @@ mod tests {
 
 			assert_eq!(
 				helper.pop_log(),
-				Some(format!("ERROR - {action} {public} {context}"))
+				Some(format!("ERROR - {action} {public} {context}").into())
 			);
 		});
 	}

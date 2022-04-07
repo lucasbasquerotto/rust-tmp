@@ -1,7 +1,3 @@
-use crate::core::action::definition::{
-	action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
-	action_helpers::DescriptiveInfo,
-};
 use crate::core::action::{
 	action_type::general_action_type::ActionType,
 	data::{
@@ -12,6 +8,13 @@ use crate::core::action::{
 		},
 	},
 };
+use crate::{
+	core::action::definition::{
+		action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
+		action_helpers::DescriptiveInfo,
+	},
+	lib::data::str::Str,
+};
 
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
@@ -20,12 +23,12 @@ use crate::core::action::{
 impl<I: ActionInput> ActionInput for RequestInput<I, ModeratorRequestContext> {}
 
 impl DescriptiveInfo for ModeratorRequestContext {
-	fn description(&self) -> String {
+	fn description(&self) -> Str {
 		let ModeratorRequestContext {
 			session: ModeratorSession { user_id, .. },
 			..
 		} = &self;
-		format!("moderator({user_id:?})")
+		format!("moderator({user_id:?})").into()
 	}
 }
 
@@ -193,7 +196,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				helper.pop_log(),
-				Some("INFO - moderator action test".to_string())
+				Some("INFO - moderator action test".into())
 			);
 		});
 	}
@@ -217,7 +220,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				helper.pop_log(),
-				Some("INFO - moderator action test".to_string())
+				Some("INFO - moderator action test".into())
 			);
 		});
 	}

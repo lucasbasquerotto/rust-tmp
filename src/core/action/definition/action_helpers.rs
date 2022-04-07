@@ -1,14 +1,17 @@
 use std::fmt::Debug;
 
-use crate::core::action::{
-	action_type::general_action_type::ActionType,
-	data::action_data::{ErrorData, RequestContext},
+use crate::{
+	core::action::{
+		action_type::general_action_type::ActionType,
+		data::action_data::{ErrorData, RequestContext},
+	},
+	lib::data::str::Str,
 };
 
 use super::action::ActionError;
 
 pub trait DescriptiveInfo {
-	fn description(&self) -> String;
+	fn description(&self) -> Str;
 }
 
 pub trait DescriptiveRequestContext:
@@ -25,7 +28,7 @@ pub trait ActionErrorHelper<T: ActionType, C: RequestContext, E: ActionError>: D
 where
 	Self: Sized,
 {
-	fn description(&self) -> String;
+	fn description(&self) -> Str;
 
 	fn handle(self) -> Option<ErrorData>;
 }

@@ -3,11 +3,13 @@ pub mod tests {
 	use log::{Level, LevelFilter, Metadata, Record};
 	use std::sync::{Arc, Mutex};
 
+	use crate::lib::data::str::Str;
+
 	lazy_static::lazy_static! {
 		static ref MY_LOGGER: MyLogger = MyLogger(Arc::new(Mutex::new(vec![])));
 	}
 
-	struct MyLogger(Arc<Mutex<Vec<String>>>);
+	struct MyLogger(Arc<Mutex<Vec<Str>>>);
 
 	impl log::Log for MyLogger {
 		fn enabled(&self, metadata: &Metadata) -> bool {
@@ -22,7 +24,8 @@ pub mod tests {
 						"{level} - {args}",
 						level = record.level(),
 						args = record.args()
-					),
+					)
+					.into(),
 				);
 			}
 		}
@@ -32,7 +35,7 @@ pub mod tests {
 	pub struct TestHelper;
 
 	impl TestHelper {
-		pub fn pop_log(&self) -> Option<String> {
+		pub fn pop_log(&self) -> Option<Str> {
 			MY_LOGGER.0.lock().unwrap().pop()
 		}
 

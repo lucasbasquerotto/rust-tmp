@@ -1,17 +1,21 @@
 use crate::core::action::{
-	data::{
-		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
-		user_action_data::{
-			UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
-			UserNoAuthRequestContext, UserNoAuthSession, UserOutputInfo, UserRequestContext,
-			UserRequestInput, UserSession, UserUnconfirmedRequestContext, UserUnconfirmedSession,
-		},
-	},
-	definition::action_helpers::DescriptiveInfo,
-};
-use crate::core::action::{
 	definition::action::{Action, ActionError, UserAction},
 	definition::action::{ActionInput, ActionOutput},
+};
+use crate::{
+	core::action::{
+		data::{
+			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
+			user_action_data::{
+				UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
+				UserNoAuthRequestContext, UserNoAuthSession, UserOutputInfo, UserRequestContext,
+				UserRequestInput, UserSession, UserUnconfirmedRequestContext,
+				UserUnconfirmedSession,
+			},
+		},
+		definition::action_helpers::DescriptiveInfo,
+	},
+	lib::data::str::Str,
 };
 
 ////////////////////////////////////////////////
@@ -21,27 +25,27 @@ use crate::core::action::{
 impl<I: ActionInput> ActionInput for RequestInput<I, UserRequestContext> {}
 
 impl DescriptiveInfo for UserAuthSession {
-	fn description(&self) -> String {
+	fn description(&self) -> Str {
 		let UserAuthSession { user_id, .. } = &self;
-		format!("user({user_id})")
+		format!("user({user_id})").into()
 	}
 }
 
 impl DescriptiveInfo for UserNoAuthSession {
-	fn description(&self) -> String {
-		"user(not authenticated)".to_string()
+	fn description(&self) -> Str {
+		"user(not authenticated)".into()
 	}
 }
 
 impl DescriptiveInfo for UserUnconfirmedSession {
-	fn description(&self) -> String {
+	fn description(&self) -> Str {
 		let UserUnconfirmedSession { user_id, .. } = &self;
-		format!("user(unconfirmed - {user_id})")
+		format!("user(unconfirmed - {user_id})").into()
 	}
 }
 
 impl DescriptiveInfo for UserSession {
-	fn description(&self) -> String {
+	fn description(&self) -> Str {
 		match self {
 			UserSession::Auth(session) => session.description(),
 			UserSession::NoAuth(session) => session.description(),
@@ -51,25 +55,25 @@ impl DescriptiveInfo for UserSession {
 }
 
 impl DescriptiveInfo for UserRequestContext {
-	fn description(&self) -> String {
+	fn description(&self) -> Str {
 		self.session.description()
 	}
 }
 
 impl DescriptiveInfo for UserAuthRequestContext {
-	fn description(&self) -> String {
+	fn description(&self) -> Str {
 		self.session.description()
 	}
 }
 
 impl DescriptiveInfo for UserNoAuthRequestContext {
-	fn description(&self) -> String {
+	fn description(&self) -> Str {
 		self.session.description()
 	}
 }
 
 impl DescriptiveInfo for UserUnconfirmedRequestContext {
-	fn description(&self) -> String {
+	fn description(&self) -> Str {
 		self.session.description()
 	}
 }
@@ -458,10 +462,7 @@ pub mod tests {
 					data: (),
 				}),
 			);
-			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - user action test".to_string())
-			);
+			assert_eq!(helper.pop_log(), Some("INFO - user action test".into()));
 		});
 	}
 
@@ -496,10 +497,7 @@ pub mod tests {
 					data: (),
 				}),
 			);
-			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - user action test: 1".to_string())
-			);
+			assert_eq!(helper.pop_log(), Some("INFO - user action test: 1".into()));
 		});
 	}
 
@@ -562,7 +560,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				helper.pop_log(),
-				Some("INFO - user action test (no auth)".to_string())
+				Some("INFO - user action test (no auth)".into())
 			);
 		});
 	}
@@ -630,7 +628,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				helper.pop_log(),
-				Some("INFO - user action test (auth): 3".to_string())
+				Some("INFO - user action test (auth): 3".into())
 			);
 		});
 	}

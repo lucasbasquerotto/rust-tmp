@@ -1,17 +1,20 @@
 use crate::core::action::{
-	data::{
-		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
-		automatic_action_data::{
-			AutomaticActionError, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequest,
-			AutomaticRequestContext, AutomaticRequestInput, HookRequestContext,
-			InternalRequestContext,
-		},
-	},
-	definition::action_helpers::DescriptiveInfo,
-};
-use crate::core::action::{
 	definition::action::{Action, ActionError, AutomaticAction},
 	definition::action::{ActionInput, ActionOutput},
+};
+use crate::{
+	core::action::{
+		data::{
+			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
+			automatic_action_data::{
+				AutomaticActionError, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequest,
+				AutomaticRequestContext, AutomaticRequestInput, HookRequestContext,
+				InternalRequestContext,
+			},
+		},
+		definition::action_helpers::DescriptiveInfo,
+	},
+	lib::data::str::Str,
 };
 
 ////////////////////////////////////////////////
@@ -21,25 +24,25 @@ use crate::core::action::{
 impl<I: ActionInput> ActionInput for RequestInput<I, AutomaticRequestContext> {}
 
 impl DescriptiveInfo for AutomaticRequestContext {
-	fn description(&self) -> String {
+	fn description(&self) -> Str {
 		let AutomaticRequestContext { request, .. } = &self;
 
 		match request {
-			AutomaticRequest::Internal => "automatic(internal)".to_string(),
-			AutomaticRequest::Hook(_) => "automatic(hook)".to_string(),
+			AutomaticRequest::Internal => "automatic(internal)".into(),
+			AutomaticRequest::Hook(_) => "automatic(hook)".into(),
 		}
 	}
 }
 
 impl DescriptiveInfo for InternalRequestContext {
-	fn description(&self) -> String {
-		"automatic(internal)".to_string()
+	fn description(&self) -> Str {
+		"automatic(internal)".into()
 	}
 }
 
 impl DescriptiveInfo for HookRequestContext {
-	fn description(&self) -> String {
-		"automatic(hook)".to_string()
+	fn description(&self) -> Str {
+		"automatic(hook)".into()
 	}
 }
 
@@ -352,7 +355,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				helper.pop_log(),
-				Some("INFO - automatic action test (hook)".to_string())
+				Some("INFO - automatic action test (hook)".into())
 			);
 		});
 	}
@@ -376,7 +379,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				helper.pop_log(),
-				Some("INFO - automatic action test (internal)".to_string())
+				Some("INFO - automatic action test (internal)".into())
 			);
 		});
 	}
@@ -420,7 +423,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				helper.pop_log(),
-				Some("INFO - automatic action test (only hook)".to_string())
+				Some("INFO - automatic action test (only hook)".into())
 			);
 		});
 	}
@@ -464,7 +467,7 @@ pub mod tests {
 			);
 			assert_eq!(
 				helper.pop_log(),
-				Some("INFO - automatic action test (only internal)".to_string())
+				Some("INFO - automatic action test (only internal)".into())
 			);
 		});
 	}

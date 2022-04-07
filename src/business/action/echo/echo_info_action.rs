@@ -131,10 +131,7 @@ pub mod tests {
 					data: (),
 				}),
 			);
-			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - echo info action".to_string())
-			);
+			assert_eq!(helper.pop_log(), Some("INFO - echo info action".into()));
 		});
 	}
 
@@ -155,10 +152,7 @@ pub mod tests {
 					data: (),
 				}),
 			);
-			assert_eq!(
-				helper.pop_log(),
-				Some("INFO - echo info action".to_string())
-			);
+			assert_eq!(helper.pop_log(), Some("INFO - echo info action".into()));
 		});
 	}
 }

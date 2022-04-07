@@ -82,7 +82,7 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 		println!("TODO: login: {name} ({pass})");
 		let result = LoginResult {
 			id: 1,
-			name: name.to_string(),
+			name: name.into(),
 		};
 		Ok(result)
 	}
@@ -154,7 +154,7 @@ mod tests {
 					action_context,
 					data: LoginResult {
 						id: 1,
-						name: "User 02".to_string(),
+						name: "User 02".into(),
 					},
 				}),
 			);

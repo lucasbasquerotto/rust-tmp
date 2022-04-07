@@ -25,7 +25,7 @@ use crate::core::action::{
 
 #[cfg(not(test))]
 fn httpbin_base_url() -> String {
-	"http://httpbin.org".to_string()
+	"http://httpbin.org".into()
 }
 
 #[cfg(test)]
@@ -286,11 +286,11 @@ fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
 		"{host}{suffix}",
 		host = httpbin_base_url(),
 		suffix = if data.error {
-			"/get/error".to_string()
+			"/get/error".into()
 		} else if let Some(status) = data.status {
 			format!("/status/{status}")
 		} else {
-			"/get".to_string()
+			"/get".into()
 		}
 	);
 
@@ -303,7 +303,7 @@ fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
 			}
 		})
 		.and_then(|req| req.json::<WebResult>())
-		.map_err(|error| error.to_error(url.to_string()))
+		.map_err(|error| error.to_error(url))
 }
 
 ////////////////////////////////////////////////
@@ -384,7 +384,7 @@ mod tests {
 				&Ok(UserOutputInfo {
 					action_context,
 					data: WebResult {
-						url: "http://httpbin.org.mock/get".to_string(),
+						url: "http://httpbin.org.mock/get".into(),
 						args: WebResultArgs {}
 					},
 				}),
@@ -427,7 +427,7 @@ mod tests {
 				&Ok(UserOutputInfo {
 					action_context,
 					data: WebResult {
-						url: "http://httpbin.org.mock/get".to_string(),
+						url: "http://httpbin.org.mock/get".into(),
 						args: WebResultArgs {}
 					},
 				}),
@@ -475,10 +475,7 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(
-				public_error.as_ref().unwrap().msg,
-				"Web Action - Forbidden".to_string()
-			);
+			assert_eq!(public_error.as_ref().unwrap().msg, "Web Action - Forbidden");
 		});
 	}
 
@@ -518,10 +515,7 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(
-				public_error.as_ref().unwrap().msg,
-				"Web error occured".to_string()
-			);
+			assert_eq!(public_error.as_ref().unwrap().msg, "Web error occured");
 		});
 	}
 
@@ -560,7 +554,7 @@ mod tests {
 				&Ok(ModeratorOutputInfo {
 					action_context,
 					data: WebResult {
-						url: "http://httpbin.org.mock/get".to_string(),
+						url: "http://httpbin.org.mock/get".into(),
 						args: WebResultArgs {}
 					},
 				}),
@@ -607,10 +601,7 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(
-				public_error.as_ref().unwrap().msg,
-				"Web Action - Forbidden".to_string()
-			);
+			assert_eq!(public_error.as_ref().unwrap().msg, "Web Action - Forbidden");
 		});
 	}
 
@@ -649,10 +640,7 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(
-				public_error.as_ref().unwrap().msg,
-				"Web error occured".to_string()
-			);
+			assert_eq!(public_error.as_ref().unwrap().msg, "Web error occured");
 		});
 	}
 
@@ -691,7 +679,7 @@ mod tests {
 				&Ok(AutomaticOutputInfo {
 					action_context,
 					data: WebResult {
-						url: "http://httpbin.org.mock/get".to_string(),
+						url: "http://httpbin.org.mock/get".into(),
 						args: WebResultArgs {}
 					},
 				})
@@ -739,10 +727,7 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(
-				public_error.as_ref().unwrap().msg,
-				"Web Action - Forbidden".to_string()
-			);
+			assert_eq!(public_error.as_ref().unwrap().msg, "Web Action - Forbidden");
 		});
 	}
 
@@ -781,10 +766,7 @@ mod tests {
 
 			let public_error = &result.unwrap_err().error.public_error();
 
-			assert_eq!(
-				public_error.as_ref().unwrap().msg,
-				"Web error occured".to_string()
-			);
+			assert_eq!(public_error.as_ref().unwrap().msg, "Web error occured");
 		});
 	}
 }

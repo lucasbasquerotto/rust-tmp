@@ -80,7 +80,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 
 	fn run_inner(self) -> Result<AutoResult, AutoError> {
 		let AutoActionInternal(input) = self;
-		run(input, "internal".to_string())
+		run(input, "internal".into())
 	}
 }
 
@@ -112,7 +112,7 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 
 	fn run_inner(self) -> Result<AutoResult, AutoError> {
 		let AutoActionHook(input) = self;
-		run(input, "hook".to_string())
+		run(input, "hook".into())
 	}
 }
 
@@ -201,7 +201,7 @@ mod tests {
 					action_context,
 					data: AutoResult {
 						id: 1,
-						auto: "internal".to_string(),
+						auto: "internal".into(),
 						param1: "Param 01 (Ok)".to_owned(),
 						param2: 2,
 					},
@@ -260,7 +260,7 @@ mod tests {
 					action_context,
 					data: AutoResult {
 						id: 1,
-						auto: "hook".to_string(),
+						auto: "hook".into(),
 						param1: "Param 01 (Ok)".to_owned(),
 						param2: 4,
 					},
