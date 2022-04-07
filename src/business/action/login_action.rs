@@ -125,7 +125,7 @@ mod tests {
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
 						action_type: LoginAction::action_type(),
-						context: context.clone(),
+						context,
 					},
 					error: LoginError::UserError(UserActionError::Authenticated),
 				}),

@@ -518,10 +518,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionNoAuth::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestActionNoAuth::run(RequestInput { data: (), context });
 			assert_eq!(
 				result,
 				Err(ActionErrorInfo {
@@ -551,10 +548,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionNoAuth::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestActionNoAuth::run(RequestInput { data: (), context });
 			assert_eq!(
 				result,
 				Ok(UserOutputInfo {
@@ -588,10 +582,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionAuth::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestActionAuth::run(RequestInput { data: (), context });
 			assert_eq!(
 				result,
 				Err(ActionErrorInfo {

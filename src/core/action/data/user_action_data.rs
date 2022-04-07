@@ -128,7 +128,7 @@ pub mod tests {
 			session: match options.user_id {
 				Some(user_id) => UserSession::Auth(UserAuthSession {
 					created_at: Utc::now(),
-					user_id: user_id,
+					user_id,
 				}),
 				None => UserSession::NoAuth(UserNoAuthSession {
 					created_at: Utc::now(),

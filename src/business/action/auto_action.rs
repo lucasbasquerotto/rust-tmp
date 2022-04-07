@@ -167,7 +167,7 @@ mod tests {
 					param1: "Param 01 (Error)".to_owned(),
 					param2: 1,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -227,7 +227,7 @@ mod tests {
 					param1: "Param 01 (Error)".to_owned(),
 					param2: 3,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(

@@ -94,10 +94,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = EchoInfoAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = EchoInfoAction::run(RequestInput { data: (), context });
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {

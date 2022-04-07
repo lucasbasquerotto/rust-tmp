@@ -414,7 +414,7 @@ mod tests {
 					error: false,
 					status: None,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -448,7 +448,7 @@ mod tests {
 					error: false,
 					status: Some(403),
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -491,7 +491,7 @@ mod tests {
 					error: true,
 					status: None,
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -591,7 +591,7 @@ mod tests {
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
 						action_type: WebActionModerator::action_type(),
-						context: context.clone(),
+						context,
 					},
 					error: ModeratorWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
 						UrlData {
@@ -636,7 +636,7 @@ mod tests {
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
 						action_type: WebActionModerator::action_type(),
-						context: context.clone(),
+						context,
 					},
 					error: ModeratorWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
 						UrlData {
@@ -721,7 +721,7 @@ mod tests {
 					error: false,
 					status: Some(403),
 				},
-				context: context.clone(),
+				context,
 			});
 
 			assert_eq!(
@@ -768,7 +768,7 @@ mod tests {
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
 						action_type: WebActionAutomatic::action_type(),
-						context: context.clone(),
+						context,
 					},
 					error: AutomaticWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
 						UrlData {

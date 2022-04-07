@@ -154,10 +154,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = TestAction::run(RequestInput {
-				data: (),
-				context: context.clone(),
-			});
+			let result = TestAction::run(RequestInput { data: (), context });
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
