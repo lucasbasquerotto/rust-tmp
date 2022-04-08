@@ -1,16 +1,25 @@
-use crate::core::action::{
-	data::user_action_data::UserActionInput,
-	definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
+use crate::{
+	core::{
+		action::{
+			action_type::user_action_type::UserActionType,
+			data::{
+				action_data::{DescriptiveError, ErrorData},
+				user_action_data::{UserActionError, UserNoAuthRequestInput},
+			},
+		},
+		external::definition::external::ExternalAction,
+	},
+	external::dao::user::register_dao::{RegisterDaoData, RegisterDaoResult},
 };
 use crate::{
-	core::action::{
-		action_type::user_action_type::UserActionType,
-		data::{
-			action_data::{DescriptiveError, ErrorData},
-			user_action_data::{UserActionError, UserNoAuthRequestInput},
+	core::{
+		action::{
+			data::user_action_data::UserActionInput,
+			definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
 		},
+		external::data::external_exception::ExternalException,
 	},
-	external::dao::user::register_dao::{register_dao, RegisterDaoData, RegisterDaoResult},
+	external::dao::user::register_dao::RegisterDaoAction,
 };
 
 ////////////////////////////////////////////////
@@ -51,18 +60,21 @@ impl ActionOutput for RegisterResult {}
 #[derive(Debug, PartialEq)]
 pub enum RegisterError {
 	UserError(UserActionError),
+	ExternalError(ExternalException),
 }
 
 impl ActionError for RegisterError {
 	fn private_error(&self) -> DescriptiveError {
 		match self {
 			RegisterError::UserError(error) => error.private_error(),
+			RegisterError::ExternalError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
 			RegisterError::UserError(error) => error.public_error(),
+			RegisterError::ExternalError(error) => error.public_error(),
 		}
 	}
 }
@@ -89,11 +101,12 @@ impl UserAction<RegisterData, RegisterResult, RegisterError> for RegisterAction 
 	fn run_inner(self) -> Result<RegisterResult, RegisterError> {
 		let RegisterAction(input) = self;
 		let RegisterData { name, email, pass } = input.data;
-		let RegisterDaoResult { id } = register_dao(RegisterDaoData {
+		let RegisterDaoResult { id } = RegisterDaoAction::run(RegisterDaoData {
 			name: name.to_string(),
 			email,
 			pass,
-		});
+		})
+		.map_err(RegisterError::ExternalError)?;
 		let result = RegisterResult { id, name };
 		Ok(result)
 	}
@@ -112,8 +125,11 @@ mod tests {
 	use crate::core::action::data::user_action_data::UserActionError;
 	use crate::core::action::data::user_action_data::UserOutputInfo;
 	use crate::core::action::definition::action::Action;
-	use crate::external::dao::user::register_dao::{RegisterDaoData, RegisterDaoResult};
-	use crate::tests::test_utils::tests::{mock_dao, run_test, MockDaoMethod};
+	use crate::core::external::definition::external::tests::ExternalMocker;
+	use crate::external::dao::user::register_dao::{
+		RegisterDaoAction, RegisterDaoData, RegisterDaoResult,
+	};
+	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
 	fn test_error_auth() {
@@ -157,12 +173,7 @@ mod tests {
 			};
 			let dao_result = RegisterDaoResult { id };
 
-			let _m = mock_dao(
-				"register".into(),
-				MockDaoMethod::Insert,
-				Some(dao_input),
-				Some(dao_result),
-			);
+			let _m = RegisterDaoAction::mock(dao_input, dao_result);
 
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {

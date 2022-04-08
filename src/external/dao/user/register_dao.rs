@@ -22,10 +22,21 @@ pub struct RegisterDaoResult {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
+pub struct RegisterDaoAction;
+
 #[cfg(not(test))]
-pub fn register_dao(data: RegisterDaoData) -> RegisterDaoResult {
-	drop(data);
-	todo!()
+pub mod main {
+	use super::{RegisterDaoAction, RegisterDaoData, RegisterDaoResult};
+	use crate::core::external::{
+		data::external_exception::ExternalException, definition::external::ExternalAction,
+	};
+
+	impl ExternalAction<RegisterDaoData, RegisterDaoResult> for RegisterDaoAction {
+		fn run(input: RegisterDaoData) -> Result<RegisterDaoResult, ExternalException> {
+			drop(input);
+			todo!()
+		}
+	}
 }
 
 ////////////////////////////////////////////////
@@ -33,7 +44,20 @@ pub fn register_dao(data: RegisterDaoData) -> RegisterDaoResult {
 ////////////////////////////////////////////////
 
 #[cfg(test)]
-pub fn register_dao(data: RegisterDaoData) -> RegisterDaoResult {
-	use crate::tests::test_utils::tests::{test_dao, MockDaoMethod};
-	test_dao("register".into(), MockDaoMethod::Insert, Some(data)).unwrap()
+pub mod tests {
+	use super::{RegisterDaoAction, RegisterDaoData, RegisterDaoResult};
+	use crate::{
+		core::external::definition::external::tests::{ExternalTest, MockExternalMethod},
+		lib::data::str::Str,
+	};
+
+	impl ExternalTest<RegisterDaoData, RegisterDaoResult> for RegisterDaoAction {
+		fn name() -> Str {
+			"register".into()
+		}
+
+		fn method() -> MockExternalMethod {
+			MockExternalMethod::Insert
+		}
+	}
 }
