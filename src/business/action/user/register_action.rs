@@ -81,9 +81,9 @@ impl ActionError for Error {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct RegisterAction(UserNoAuthRequestInput<Input>);
+pub struct Action(UserNoAuthRequestInput<Input>);
 
-impl UserAction<Input, Output, Error> for RegisterAction {
+impl UserAction<Input, Output, Error> for Action {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
@@ -97,7 +97,7 @@ impl UserAction<Input, Output, Error> for RegisterAction {
 	}
 
 	fn run_inner(self) -> Result<Output, Error> {
-		let RegisterAction(input) = self;
+		let Self(input) = self;
 		let Input { name, email, pass } = input.data;
 		let user_dao::RegisterResult { id } =
 			user_dao::RegisterAction::run(user_dao::RegisterData {
@@ -118,8 +118,6 @@ impl UserAction<Input, Output, Error> for RegisterAction {
 
 #[cfg(test)]
 mod tests {
-	use super::RegisterAction;
-	use super::USER_ACTION_TYPE;
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserActionError;
@@ -134,7 +132,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_auth();
 
-			let result = RegisterAction::run(RequestInput {
+			let result = super::Action::run(RequestInput {
 				data: super::Input {
 					name: "User 01".into(),
 					email: "user-01@domain.test".into(),
@@ -147,7 +145,7 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
-						action_type: USER_ACTION_TYPE,
+						action_type: super::USER_ACTION_TYPE,
 						context,
 					},
 					error: super::Error::UserError(Box::new(UserActionError::Authenticated)),
@@ -175,11 +173,11 @@ mod tests {
 
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: USER_ACTION_TYPE,
+				action_type: super::USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = RegisterAction::run(RequestInput {
+			let result = super::Action::run(RequestInput {
 				data: super::Input {
 					name: name.into(),
 					email: email.into(),

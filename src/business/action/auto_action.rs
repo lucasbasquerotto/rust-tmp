@@ -70,9 +70,9 @@ impl ActionError for Error {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct InternalAction(InternalRequestInput<Input>);
+pub struct Internal(InternalRequestInput<Input>);
 
-impl AutomaticAction<Input, Output, Error> for InternalAction {
+impl AutomaticAction<Input, Output, Error> for Internal {
 	fn action_type() -> AutomaticActionType {
 		AUTOMATIC_ACTION_TYPE
 	}
@@ -85,7 +85,7 @@ impl AutomaticAction<Input, Output, Error> for InternalAction {
 	}
 
 	fn run_inner(self) -> Result<Output, Error> {
-		let InternalAction(input) = self;
+		let Self(input) = self;
 		run(input, "internal".into())
 	}
 }
@@ -95,9 +95,9 @@ impl AutomaticAction<Input, Output, Error> for InternalAction {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct HookAction(HookRequestInput<Input>);
+pub struct Hook(HookRequestInput<Input>);
 
-impl AutomaticAction<Input, Output, Error> for HookAction {
+impl AutomaticAction<Input, Output, Error> for Hook {
 	fn action_type() -> AutomaticActionType {
 		AUTOMATIC_ACTION_TYPE
 	}
@@ -117,7 +117,7 @@ impl AutomaticAction<Input, Output, Error> for HookAction {
 	}
 
 	fn run_inner(self) -> Result<Output, Error> {
-		let HookAction(input) = self;
+		let Self(input) = self;
 		run(input, "hook".into())
 	}
 }
@@ -146,7 +146,6 @@ fn run<C: RequestContext>(
 
 #[cfg(test)]
 mod tests {
-	use crate::business::action::auto_action::AUTOMATIC_ACTION_TYPE;
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::automatic_action_data::tests::AutomaticRequestContextBuilder;
 	use crate::core::action::data::automatic_action_data::AutomaticActionError;
@@ -159,11 +158,11 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
-				action_type: AUTOMATIC_ACTION_TYPE,
+				action_type: super::AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = super::InternalAction::run(RequestInput {
+			let result = super::Internal::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Error)".into(),
 					param2: 1,
@@ -186,11 +185,11 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
-				action_type: AUTOMATIC_ACTION_TYPE,
+				action_type: super::AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = super::InternalAction::run(RequestInput {
+			let result = super::Internal::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Ok)".into(),
 					param2: 2,
@@ -218,11 +217,11 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
-				action_type: AUTOMATIC_ACTION_TYPE,
+				action_type: super::AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = super::HookAction::run(RequestInput {
+			let result = super::Hook::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Error)".into(),
 					param2: 3,
@@ -245,11 +244,11 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
-				action_type: AUTOMATIC_ACTION_TYPE,
+				action_type: super::AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = super::HookAction::run(RequestInput {
+			let result = super::Hook::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Ok)".into(),
 					param2: 4,

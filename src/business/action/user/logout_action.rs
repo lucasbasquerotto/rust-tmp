@@ -67,7 +67,6 @@ impl UserAction<(), (), Error> for Action {
 
 #[cfg(test)]
 mod tests {
-	use super::USER_ACTION_TYPE;
 	use crate::core::action::data::{
 		action_data::{ActionContext, RequestInput},
 		user_action_data::{tests::UserRequestContextBuilder, UserOutputInfo},
@@ -79,7 +78,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: USER_ACTION_TYPE,
+				action_type: super::USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 			let result = super::Action::run(RequestInput { data: (), context });

@@ -83,7 +83,7 @@ impl UserAction<Input, Output, Error> for Action {
 	}
 
 	fn run_inner(self) -> Result<Output, Error> {
-		let Action(input) = &self;
+		let Self(input) = &self;
 		let Input { name, pass } = &input.data;
 		println!("TODO: login: {name} ({pass})");
 		let result = Output {
@@ -100,7 +100,6 @@ impl UserAction<Input, Output, Error> for Action {
 
 #[cfg(test)]
 mod tests {
-	use super::USER_ACTION_TYPE;
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserActionError;
@@ -125,7 +124,7 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
-						action_type: USER_ACTION_TYPE,
+						action_type: super::USER_ACTION_TYPE,
 						context,
 					},
 					error: super::Error::UserError(UserActionError::Authenticated),
@@ -139,7 +138,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: USER_ACTION_TYPE,
+				action_type: super::USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 

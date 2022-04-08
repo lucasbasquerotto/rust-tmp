@@ -70,7 +70,7 @@ impl ModeratorAction<(), (), Error> for Action {
 
 #[cfg(test)]
 pub mod tests {
-	use super::MODERATOR_ACTION_TYPE;
+	use crate::core::action::data::action_data::ActionContext;
 	use crate::core::action::data::action_data::ActionErrorInfo;
 	use crate::core::action::data::moderator_action_data::tests::{
 		ModeratorRequestContextBuilder, ModeratorSessionBuilder,
@@ -83,16 +83,12 @@ pub mod tests {
 	};
 	use crate::core::action::definition::action::Action;
 	use crate::tests::test_utils::tests::run_test;
-	use crate::{
-		business::action::echo::echo_warn_action::Error,
-		core::action::data::action_data::ActionContext,
-	};
 
 	fn moderator_context() -> ModeratorRequestContext {
 		ModeratorRequestContextBuilder::new()
 			.session(
 				ModeratorSessionBuilder::new()
-					.allowed_actions(vec![MODERATOR_ACTION_TYPE])
+					.allowed_actions(vec![super::MODERATOR_ACTION_TYPE])
 					.build(),
 			)
 			.build()
@@ -103,7 +99,7 @@ pub mod tests {
 		run_test(|_| {
 			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
-				action_type: MODERATOR_ACTION_TYPE,
+				action_type: super::MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -112,8 +108,8 @@ pub mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context,
-					error: Error::ModeratorError(ModeratorActionError::NotAllowed(
-						MODERATOR_ACTION_TYPE
+					error: super::Error::ModeratorError(ModeratorActionError::NotAllowed(
+						super::MODERATOR_ACTION_TYPE
 					)),
 				}),
 			);
@@ -125,7 +121,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = moderator_context();
 			let action_context = ActionContext {
-				action_type: MODERATOR_ACTION_TYPE,
+				action_type: super::MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -146,7 +142,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = moderator_context();
 			let action_context = ActionContext {
-				action_type: MODERATOR_ACTION_TYPE,
+				action_type: super::MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 

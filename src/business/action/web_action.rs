@@ -50,12 +50,12 @@ fn httpbin_base_url() -> String {
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub struct WebData {
+pub struct Input {
 	pub error: bool,
 	pub status: Option<u16>,
 }
 
-impl ActionInput for WebData {}
+impl ActionInput for Input {}
 
 ////////////////////////////////////////////////
 //////////////////// OUTPUT ////////////////////
@@ -65,35 +65,35 @@ impl ActionInput for WebData {}
 pub struct WebResultArgs {}
 
 #[derive(Debug, PartialEq, Deserialize)]
-pub struct WebResult {
+pub struct Output {
 	pub url: String,
 	pub args: WebResultArgs,
 }
 
-impl ActionOutput for WebResult {}
+impl ActionOutput for Output {}
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub enum UserWebError {
+pub enum UserError {
 	UserError(UserActionError),
 	WebError(WebSharedError),
 }
 
-impl ActionError for UserWebError {
+impl ActionError for UserError {
 	fn private_error(&self) -> DescriptiveError {
 		match &self {
-			UserWebError::UserError(error) => error.private_error(),
-			UserWebError::WebError(error) => error.private_error(),
+			UserError::UserError(error) => error.private_error(),
+			UserError::WebError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match &self {
-			UserWebError::UserError(error) => error.public_error(),
-			UserWebError::WebError(error) => error.public_error(),
+			UserError::UserError(error) => error.public_error(),
+			UserError::WebError(error) => error.public_error(),
 		}
 	}
 }
@@ -103,20 +103,20 @@ impl ActionError for UserWebError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct WebActionUser(UserRequestInput<WebData>);
+pub struct User(UserRequestInput<Input>);
 
-impl UserAction<WebData, WebResult, UserWebError> for WebActionUser {
+impl UserAction<Input, Output, UserError> for User {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<WebData>) -> Result<Self, UserWebError> {
-		input.map(Self).map_err(UserWebError::UserError)
+	fn new(input: UserActionInput<Input>) -> Result<Self, UserError> {
+		input.map(Self).map_err(UserError::UserError)
 	}
 
-	fn run_inner(self) -> Result<WebResult, UserWebError> {
-		let WebActionUser(input) = &self;
-		run(&input.data).map_err(UserWebError::WebError)
+	fn run_inner(self) -> Result<Output, UserError> {
+		let Self(input) = &self;
+		run(&input.data).map_err(UserError::WebError)
 	}
 }
 
@@ -125,23 +125,23 @@ impl UserAction<WebData, WebResult, UserWebError> for WebActionUser {
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub enum ModeratorWebError {
+pub enum ModeratorError {
 	ModeratorError(ModeratorActionError),
 	WebError(WebSharedError),
 }
 
-impl ActionError for ModeratorWebError {
+impl ActionError for ModeratorError {
 	fn private_error(&self) -> DescriptiveError {
 		match &self {
-			ModeratorWebError::ModeratorError(error) => error.private_error(),
-			ModeratorWebError::WebError(error) => error.private_error(),
+			ModeratorError::ModeratorError(error) => error.private_error(),
+			ModeratorError::WebError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match &self {
-			ModeratorWebError::ModeratorError(error) => error.public_error(),
-			ModeratorWebError::WebError(error) => error.public_error(),
+			ModeratorError::ModeratorError(error) => error.public_error(),
+			ModeratorError::WebError(error) => error.public_error(),
 		}
 	}
 }
@@ -151,20 +151,20 @@ impl ActionError for ModeratorWebError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct WebActionModerator(ModeratorRequestInput<WebData>);
+pub struct Moderator(ModeratorRequestInput<Input>);
 
-impl ModeratorAction<WebData, WebResult, ModeratorWebError> for WebActionModerator {
+impl ModeratorAction<Input, Output, ModeratorError> for Moderator {
 	fn action_type() -> ModeratorActionType {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorActionInput<WebData>) -> Result<Self, ModeratorWebError> {
-		input.map(Self).map_err(ModeratorWebError::ModeratorError)
+	fn new(input: ModeratorActionInput<Input>) -> Result<Self, ModeratorError> {
+		input.map(Self).map_err(ModeratorError::ModeratorError)
 	}
 
-	fn run_inner(self) -> Result<WebResult, ModeratorWebError> {
-		let WebActionModerator(input) = &self;
-		run(&input.data).map_err(ModeratorWebError::WebError)
+	fn run_inner(self) -> Result<Output, ModeratorError> {
+		let Self(input) = &self;
+		run(&input.data).map_err(ModeratorError::WebError)
 	}
 }
 
@@ -173,23 +173,23 @@ impl ModeratorAction<WebData, WebResult, ModeratorWebError> for WebActionModerat
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub enum AutomaticWebError {
+pub enum AutomaticError {
 	AutomaticError(AutomaticActionError),
 	WebError(WebSharedError),
 }
 
-impl ActionError for AutomaticWebError {
+impl ActionError for AutomaticError {
 	fn private_error(&self) -> DescriptiveError {
 		match &self {
-			AutomaticWebError::AutomaticError(error) => error.private_error(),
-			AutomaticWebError::WebError(error) => error.private_error(),
+			AutomaticError::AutomaticError(error) => error.private_error(),
+			AutomaticError::WebError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match &self {
-			AutomaticWebError::AutomaticError(error) => error.public_error(),
-			AutomaticWebError::WebError(error) => error.public_error(),
+			AutomaticError::AutomaticError(error) => error.public_error(),
+			AutomaticError::WebError(error) => error.public_error(),
 		}
 	}
 }
@@ -199,20 +199,20 @@ impl ActionError for AutomaticWebError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct WebActionAutomatic(AutomaticRequestInput<WebData>);
+pub struct Automatic(AutomaticRequestInput<Input>);
 
-impl AutomaticAction<WebData, WebResult, AutomaticWebError> for WebActionAutomatic {
+impl AutomaticAction<Input, Output, AutomaticError> for Automatic {
 	fn action_type() -> AutomaticActionType {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<WebData>) -> Result<Self, AutomaticWebError> {
-		input.map(Self).map_err(AutomaticWebError::AutomaticError)
+	fn new(input: AutomaticActionInput<Input>) -> Result<Self, AutomaticError> {
+		input.map(Self).map_err(AutomaticError::AutomaticError)
 	}
 
-	fn run_inner(self) -> Result<WebResult, AutomaticWebError> {
-		let WebActionAutomatic(input) = &self;
-		run(&input.data).map_err(AutomaticWebError::WebError)
+	fn run_inner(self) -> Result<Output, AutomaticError> {
+		let Self(input) = &self;
+		run(&input.data).map_err(AutomaticError::WebError)
 	}
 }
 
@@ -289,7 +289,7 @@ impl SharedErrorTrait<String> for reqwest::Error {
 ////////////////// FUNCTIONS ///////////////////
 ////////////////////////////////////////////////
 
-fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
+fn run(data: &Input) -> Result<Output, WebSharedError> {
 	let url = format!(
 		"{host}{suffix}",
 		host = httpbin_base_url(),
@@ -310,7 +310,7 @@ fn run(data: &WebData) -> Result<WebResult, WebSharedError> {
 				req.error_for_status()
 			}
 		})
-		.and_then(|req| req.json::<WebResult>())
+		.and_then(|req| req.json::<Output>())
 		.map_err(|error| error.to_error(url))
 }
 
@@ -323,12 +323,6 @@ mod tests {
 	use mockito::mock;
 
 	use crate::{
-		business::action::web_action::{
-			httpbin_base_url, AutomaticWebError, ModeratorWebError, UrlData, UserWebError,
-			WebActionAutomatic, WebActionModerator, WebActionUser, WebData, WebResult,
-			WebResultArgs, WebSharedError, AUTOMATIC_ACTION_TYPE, MODERATOR_ACTION_TYPE,
-			USER_ACTION_TYPE,
-		},
 		core::action::{
 			data::{
 				action_data::{ActionContext, ActionErrorInfo, ErrorInfo, RequestInput},
@@ -350,7 +344,7 @@ mod tests {
 		ModeratorRequestContextBuilder::new()
 			.session(
 				ModeratorSessionBuilder::new()
-					.allowed_actions(vec![MODERATOR_ACTION_TYPE])
+					.allowed_actions(vec![super::MODERATOR_ACTION_TYPE])
 					.build(),
 			)
 			.build()
@@ -361,7 +355,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
-				action_type: USER_ACTION_TYPE,
+				action_type: super::USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -378,8 +372,8 @@ mod tests {
 				)
 				.create();
 
-			let result = WebActionUser::run(RequestInput {
-				data: WebData {
+			let result = super::User::run(RequestInput {
+				data: super::Input {
 					error: false,
 					status: None,
 				},
@@ -390,9 +384,9 @@ mod tests {
 				&result,
 				&Ok(UserOutputInfo {
 					action_context,
-					data: WebResult {
+					data: super::Output {
 						url: "http://httpbin.org.mock/get".into(),
-						args: WebResultArgs {}
+						args: super::WebResultArgs {}
 					},
 				}),
 			);
@@ -404,7 +398,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: USER_ACTION_TYPE,
+				action_type: super::USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -421,8 +415,8 @@ mod tests {
 				)
 				.create();
 
-			let result = WebActionUser::run(RequestInput {
-				data: WebData {
+			let result = super::User::run(RequestInput {
+				data: super::Input {
 					error: false,
 					status: None,
 				},
@@ -433,9 +427,9 @@ mod tests {
 				&result,
 				&Ok(UserOutputInfo {
 					action_context,
-					data: WebResult {
+					data: super::Output {
 						url: "http://httpbin.org.mock/get".into(),
-						args: WebResultArgs {}
+						args: super::WebResultArgs {}
 					},
 				}),
 			);
@@ -447,7 +441,7 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: USER_ACTION_TYPE,
+				action_type: super::USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -455,8 +449,8 @@ mod tests {
 				.with_status(403)
 				.create();
 
-			let result = WebActionUser::run(RequestInput {
-				data: WebData {
+			let result = super::User::run(RequestInput {
+				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
@@ -467,16 +461,16 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context,
-					error: UserWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
-						UrlData {
+					error: super::UserError::WebError(super::WebSharedError::Reqwest(
+						ErrorInfo::mock(super::UrlData {
 							url: format!(
 								"{host}/{path}",
-								host = httpbin_base_url(),
+								host = super::httpbin_base_url(),
 								path = "status/403"
 							),
 							status: Some(403)
-						}
-					))),
+						})
+					)),
 				}),
 			);
 
@@ -494,12 +488,12 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
-				action_type: USER_ACTION_TYPE,
+				action_type: super::USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = WebActionUser::run(RequestInput {
-				data: WebData {
+			let result = super::User::run(RequestInput {
+				data: super::Input {
 					error: true,
 					status: None,
 				},
@@ -510,16 +504,16 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context,
-					error: UserWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
-						UrlData {
+					error: super::UserError::WebError(super::WebSharedError::Reqwest(
+						ErrorInfo::mock(super::UrlData {
 							url: format!(
 								"{host}/{path}",
-								host = httpbin_base_url(),
+								host = super::httpbin_base_url(),
 								path = "get/error"
 							),
 							status: None
-						}
-					))),
+						})
+					)),
 				}),
 			);
 
@@ -534,7 +528,7 @@ mod tests {
 		run_test(|_| {
 			let context = moderator_context();
 			let action_context = ActionContext {
-				action_type: MODERATOR_ACTION_TYPE,
+				action_type: super::MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -551,8 +545,8 @@ mod tests {
 				)
 				.create();
 
-			let result = WebActionModerator::run(RequestInput {
-				data: WebData {
+			let result = super::Moderator::run(RequestInput {
+				data: super::Input {
 					error: false,
 					status: None,
 				},
@@ -563,9 +557,9 @@ mod tests {
 				&result,
 				&Ok(ModeratorOutputInfo {
 					action_context,
-					data: WebResult {
+					data: super::Output {
 						url: "http://httpbin.org.mock/get".into(),
-						args: WebResultArgs {}
+						args: super::WebResultArgs {}
 					},
 				}),
 			);
@@ -581,8 +575,8 @@ mod tests {
 				.with_status(403)
 				.create();
 
-			let result = WebActionModerator::run(RequestInput {
-				data: WebData {
+			let result = super::Moderator::run(RequestInput {
+				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
@@ -593,19 +587,19 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
-						action_type: MODERATOR_ACTION_TYPE,
+						action_type: super::MODERATOR_ACTION_TYPE,
 						context,
 					},
-					error: ModeratorWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
-						UrlData {
+					error: super::ModeratorError::WebError(super::WebSharedError::Reqwest(
+						ErrorInfo::mock(super::UrlData {
 							url: format!(
 								"{host}/{path}",
-								host = httpbin_base_url(),
+								host = super::httpbin_base_url(),
 								path = "status/403"
 							),
 							status: Some(403)
-						}
-					))),
+						})
+					)),
 				}),
 			);
 
@@ -623,8 +617,8 @@ mod tests {
 		run_test(|_| {
 			let context = moderator_context();
 
-			let result = WebActionModerator::run(RequestInput {
-				data: WebData {
+			let result = super::Moderator::run(RequestInput {
+				data: super::Input {
 					error: true,
 					status: None,
 				},
@@ -635,19 +629,19 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
-						action_type: MODERATOR_ACTION_TYPE,
+						action_type: super::MODERATOR_ACTION_TYPE,
 						context,
 					},
-					error: ModeratorWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
-						UrlData {
+					error: super::ModeratorError::WebError(super::WebSharedError::Reqwest(
+						super::ErrorInfo::mock(super::UrlData {
 							url: format!(
 								"{host}/{path}",
-								host = httpbin_base_url(),
+								host = super::httpbin_base_url(),
 								path = "get/error"
 							),
 							status: None
-						}
-					))),
+						})
+					)),
 				}),
 			);
 
@@ -662,7 +656,7 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
-				action_type: AUTOMATIC_ACTION_TYPE,
+				action_type: super::AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -679,8 +673,8 @@ mod tests {
 				)
 				.create();
 
-			let result = WebActionAutomatic::run(RequestInput {
-				data: WebData {
+			let result = super::Automatic::run(RequestInput {
+				data: super::Input {
 					error: false,
 					status: None,
 				},
@@ -691,9 +685,9 @@ mod tests {
 				&result,
 				&Ok(AutomaticOutputInfo {
 					action_context,
-					data: WebResult {
+					data: super::Output {
 						url: "http://httpbin.org.mock/get".into(),
-						args: WebResultArgs {}
+						args: super::WebResultArgs {}
 					},
 				})
 			);
@@ -705,7 +699,7 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
-				action_type: AUTOMATIC_ACTION_TYPE,
+				action_type: super::AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -713,8 +707,8 @@ mod tests {
 				.with_status(403)
 				.create();
 
-			let result = WebActionAutomatic::run(RequestInput {
-				data: WebData {
+			let result = super::Automatic::run(RequestInput {
+				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
@@ -725,16 +719,16 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context,
-					error: AutomaticWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
-						UrlData {
+					error: super::AutomaticError::WebError(super::WebSharedError::Reqwest(
+						ErrorInfo::mock(super::UrlData {
 							url: format!(
 								"{host}/{path}",
-								host = httpbin_base_url(),
+								host = super::httpbin_base_url(),
 								path = "status/403"
 							),
 							status: Some(403)
-						}
-					))),
+						})
+					)),
 				}),
 			);
 
@@ -752,8 +746,8 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_internal();
 
-			let result = WebActionAutomatic::run(RequestInput {
-				data: WebData {
+			let result = super::Automatic::run(RequestInput {
+				data: super::Input {
 					error: true,
 					status: None,
 				},
@@ -764,19 +758,19 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
-						action_type: AUTOMATIC_ACTION_TYPE,
+						action_type: super::AUTOMATIC_ACTION_TYPE,
 						context,
 					},
-					error: AutomaticWebError::WebError(WebSharedError::Reqwest(ErrorInfo::mock(
-						UrlData {
+					error: super::AutomaticError::WebError(super::WebSharedError::Reqwest(
+						ErrorInfo::mock(super::UrlData {
 							url: format!(
 								"{host}/{path}",
-								host = httpbin_base_url(),
+								host = super::httpbin_base_url(),
 								path = "get/error"
 							),
 							status: None
-						}
-					))),
+						})
+					)),
 				}),
 			);
 

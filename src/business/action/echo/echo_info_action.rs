@@ -70,8 +70,8 @@ impl ModeratorAction<(), (), Error> for Action {
 
 #[cfg(test)]
 pub mod tests {
-	use crate::business::action::echo::echo_info_action::MODERATOR_ACTION_TYPE;
 	use crate::core::action::data::action_data::RequestInput;
+	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo};
 	use crate::core::action::data::moderator_action_data::tests::ModeratorRequestContextBuilder;
 	use crate::core::action::data::moderator_action_data::tests::ModeratorSessionBuilder;
 	use crate::core::action::data::moderator_action_data::ModeratorActionError;
@@ -79,16 +79,12 @@ pub mod tests {
 	use crate::core::action::data::moderator_action_data::ModeratorRequestContext;
 	use crate::core::action::definition::action::Action;
 	use crate::tests::test_utils::tests::run_test;
-	use crate::{
-		business::action::echo::echo_info_action::Error,
-		core::action::data::action_data::{ActionContext, ActionErrorInfo},
-	};
 
 	fn moderator_context() -> ModeratorRequestContext {
 		ModeratorRequestContextBuilder::new()
 			.session(
 				ModeratorSessionBuilder::new()
-					.allowed_actions(vec![MODERATOR_ACTION_TYPE])
+					.allowed_actions(vec![super::MODERATOR_ACTION_TYPE])
 					.build(),
 			)
 			.build()
@@ -99,7 +95,7 @@ pub mod tests {
 		run_test(|_| {
 			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
-				action_type: MODERATOR_ACTION_TYPE,
+				action_type: super::MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -108,8 +104,8 @@ pub mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context,
-					error: Error::ModeratorError(ModeratorActionError::NotAllowed(
-						MODERATOR_ACTION_TYPE
+					error: super::Error::ModeratorError(ModeratorActionError::NotAllowed(
+						super::MODERATOR_ACTION_TYPE
 					)),
 				}),
 			);
@@ -121,7 +117,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = moderator_context();
 			let action_context = ActionContext {
-				action_type: MODERATOR_ACTION_TYPE,
+				action_type: super::MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
@@ -142,7 +138,7 @@ pub mod tests {
 		run_test(|helper| {
 			let context = moderator_context();
 			let action_context = ActionContext {
-				action_type: MODERATOR_ACTION_TYPE,
+				action_type: super::MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
