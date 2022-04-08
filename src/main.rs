@@ -9,6 +9,7 @@ mod business;
 mod core;
 mod external;
 mod lib;
+mod shared;
 
 pub fn main() {}
 

@@ -4,7 +4,7 @@ use crate::{
 			action_type::user_action_type::UserActionType,
 			data::{
 				action_data::{DescriptiveError, ErrorData},
-				user_action_data::{UserActionError, UserNoAuthRequestInput},
+				user_action_data::{UserActionError, UserRequestInput},
 			},
 		},
 		external::definition::external::ExternalAction,
@@ -34,9 +34,7 @@ const USER_ACTION_TYPE: UserActionType = UserActionType::Register;
 
 #[derive(Debug, PartialEq)]
 pub struct Input {
-	pub name: String,
-	pub email: String,
-	pub pass: String,
+	pub id: UserId,
 }
 
 impl ActionInput for Input {}
@@ -46,9 +44,26 @@ impl ActionInput for Input {}
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub struct Output {
+pub struct ItemOutput {
 	pub id: UserId,
 	pub name: String,
+	pub email: String,
+}
+
+impl From<user_dao::SelectOutput> for ItemOutput {
+	fn from(data: user_dao::SelectOutput) -> Self {
+		let user_dao::SelectOutput {
+			id, name, email, ..
+		} = data;
+		Self { id, name, email }
+	}
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Output {
+	pub first: ItemOutput,
+	pub last: ItemOutput,
+	pub by_id: ItemOutput,
 }
 
 impl ActionOutput for Output {}
@@ -84,7 +99,7 @@ impl ActionError for Error {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct Action(UserNoAuthRequestInput<Input>);
+pub struct Action(UserRequestInput<Input>);
 
 impl UserAction<Input, Output, Error> for Action {
 	fn action_type() -> UserActionType {
@@ -92,24 +107,29 @@ impl UserAction<Input, Output, Error> for Action {
 	}
 
 	fn new(input: UserActionInput<Input>) -> Result<Self, Error> {
-		input
-			.and_then(|ok_input| ok_input.into())
-			.map(Self)
-			.map_err(Box::new)
-			.map_err(Error::UserError)
+		input.map(Self).map_err(Box::new).map_err(Error::UserError)
 	}
 
 	fn run_inner(self) -> Result<Output, Error> {
 		let Self(input) = self;
-		let Input { name, email, pass } = input.data;
-		let user_dao::InsertOutput { id } = user_dao::Insert::run(user_dao::InsertInput {
-			name: name.to_string(),
-			email,
-			pass,
-		})
-		.map_err(Box::new)
-		.map_err(Error::ExternalError)?;
-		let result = Output { id, name };
+		let Input { id } = input.data;
+
+		let first = user_dao::Select::run(user_dao::SelectInput::First)
+			.map_err(Box::new)
+			.map_err(Error::ExternalError)?
+			.into();
+
+		let last = user_dao::Select::run(user_dao::SelectInput::Last)
+			.map_err(Box::new)
+			.map_err(Error::ExternalError)?
+			.into();
+
+		let by_id = user_dao::Select::run(user_dao::SelectInput::ById(id))
+			.map_err(Box::new)
+			.map_err(Error::ExternalError)?
+			.into();
+
+		let result = Output { first, last, by_id };
 		Ok(result)
 	}
 }
@@ -120,9 +140,8 @@ impl UserAction<Input, Output, Error> for Action {
 
 #[cfg(test)]
 mod tests {
-	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
+	use crate::core::action::data::action_data::{ActionContext, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
-	use crate::core::action::data::user_action_data::UserActionError;
 	use crate::core::action::data::user_action_data::UserOutputInfo;
 	use crate::core::action::definition::action::Action;
 	use crate::core::external::definition::external::tests::ExternalMocker;
@@ -131,48 +150,35 @@ mod tests {
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
-	fn test_error_auth() {
-		run_test(|_| {
-			let context = UserRequestContextBuilder::build_auth();
-
-			let result = super::Action::run(RequestInput {
-				data: super::Input {
-					name: "User 01".into(),
-					email: "user-01@domain.test".into(),
-					pass: "p4$$w0rd".into(),
-				},
-				context: context.clone(),
-			});
-
-			assert_eq!(
-				&result,
-				&Err(ActionErrorInfo {
-					action_context: ActionContext {
-						action_type: super::USER_ACTION_TYPE,
-						context,
-					},
-					error: super::Error::UserError(Box::new(UserActionError::Authenticated)),
-				}),
-			);
-		});
-	}
-
-	#[test]
 	fn test_ok() {
 		run_test(|_| {
-			let name = "User 02";
-			let email = "user-02@domain.test";
-			let pass = "p4$$w0rd2";
-			let id = UserId(7);
-
-			let dao_input = user_dao::InsertInput {
-				name: name.into(),
-				email: email.into(),
-				pass: pass.into(),
+			let first = user_dao::SelectOutput {
+				id: UserId(11),
+				name: "User 20".into(),
+				email: "user-20@domain.test".into(),
+				encrypted_pass: "p4$$w0rd20".into(),
 			};
-			let dao_result = user_dao::InsertOutput { id };
 
-			let _m = user_dao::Insert::mock(dao_input, dao_result);
+			let by_id = user_dao::SelectOutput {
+				id: UserId(12),
+				name: "User 12".into(),
+				email: "user-12@domain.test".into(),
+				encrypted_pass: "p4$$w0rd12".into(),
+			};
+
+			let last = user_dao::SelectOutput {
+				id: UserId(13),
+				name: "User 13".into(),
+				email: "user-13@domain.test".into(),
+				encrypted_pass: "p4$$w0rd13".into(),
+			};
+
+			let _m_first = user_dao::Select::mock(user_dao::SelectInput::First, first.clone());
+
+			let _m_by_id =
+				user_dao::Select::mock(user_dao::SelectInput::ById(by_id.id), by_id.clone());
+
+			let _m_last = user_dao::Select::mock(user_dao::SelectInput::Last, last.clone());
 
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
@@ -181,11 +187,7 @@ mod tests {
 			};
 
 			let result = super::Action::run(RequestInput {
-				data: super::Input {
-					name: name.into(),
-					email: email.into(),
-					pass: pass.into(),
-				},
+				data: super::Input { id: by_id.id },
 				context,
 			});
 
@@ -194,8 +196,9 @@ mod tests {
 				&Ok(UserOutputInfo {
 					action_context,
 					data: super::Output {
-						id,
-						name: name.into(),
+						first: first.into(),
+						by_id: by_id.into(),
+						last: last.into()
 					},
 				}),
 			);

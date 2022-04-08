@@ -14,7 +14,7 @@ pub mod tests {
 		lib::data::str::Str,
 	};
 
-	fn test_external<I, O>(action: Str, method: MockExternalMethod, input: Option<I>) -> Option<O>
+	pub fn test_external<I, O>(action: Str, method: MockExternalMethod, input: I) -> O
 	where
 		I: serde::Serialize,
 		O: DeserializeOwned,
@@ -32,28 +32,18 @@ pub mod tests {
 			subpath = "mock/dao"
 		);
 
-		let client = reqwest::blocking::Client::new();
-		let builder = client.request(method, url).body(match input {
-			Some(input) => serde_json::to_string(&input).unwrap(),
-			None => "".to_string(),
-		});
-
-		builder
+		reqwest::blocking::Client::new()
+			.request(method, url)
+			.body(serde_json::to_string(&input).unwrap())
 			.send()
 			.unwrap()
 			.error_for_status()
 			.unwrap()
 			.json::<O>()
-			.map(Some)
-			.unwrap_or(None)
+			.unwrap()
 	}
 
-	fn mock_external<I, O>(
-		action: Str,
-		method: MockExternalMethod,
-		input: Option<I>,
-		output: Option<O>,
-	) -> Mock
+	pub fn mock_external<I, O>(action: Str, method: MockExternalMethod, input: I, output: O) -> Mock
 	where
 		I: serde::Serialize,
 		O: serde::Serialize,
@@ -66,13 +56,7 @@ pub mod tests {
 		};
 		let output = serde_json::to_string(&output).unwrap();
 		mock(method, format!("/mock/dao/{action}").as_ref())
-			.match_body(
-				match input {
-					Some(input) => serde_json::to_string(&input).unwrap(),
-					None => "".to_string(),
-				}
-				.as_ref(),
-			)
+			.match_body(serde_json::to_string(&input).unwrap().as_ref())
 			.with_body(output.as_ref())
 			.with_status(200)
 			.create()
@@ -85,7 +69,7 @@ pub mod tests {
 		T: ExternalTest<I, O>,
 	{
 		fn run(input: I) -> Result<O, ExternalException> {
-			Ok(test_external(Self::name(), Self::method(), Some(input)).unwrap())
+			Ok(test_external(Self::name(), Self::method(), input))
 		}
 	}
 
@@ -96,7 +80,115 @@ pub mod tests {
 		T: ExternalTest<I, O>,
 	{
 		fn mock(input: I, output: O) -> mockito::Mock {
-			mock_external(Self::name(), Self::method(), Some(input), Some(output))
+			mock_external(Self::name(), Self::method(), input, output)
 		}
+	}
+
+	#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+	struct TestInput {
+		nickname: Str,
+	}
+
+	#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+	struct TestOutput {
+		id: u64,
+		name: Str,
+	}
+
+	#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+	enum TestEnumInput {
+		First,
+		Last,
+	}
+
+	#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+	enum TestEnumOutput {
+		First,
+		Last,
+	}
+
+	#[test]
+	fn test_external_mock_call() {
+		let _m1 = mock_external("test".into(), MockExternalMethod::Insert, (), ());
+
+		let input1 = TestInput {
+			nickname: "test-01".into(),
+		};
+
+		let _m2 = mock_external(
+			"test-out".into(),
+			MockExternalMethod::Insert,
+			input1.clone(),
+			(),
+		);
+
+		let output1 = TestOutput {
+			id: 1,
+			name: "Test 01".into(),
+		};
+
+		let _m3 = mock_external(
+			"test-out".into(),
+			MockExternalMethod::Select,
+			(),
+			output1.clone(),
+		);
+
+		let input2 = TestInput {
+			nickname: "test-01".into(),
+		};
+
+		let output2 = TestOutput {
+			id: 2,
+			name: "Test 02".into(),
+		};
+
+		let _m4 = mock_external(
+			"test-out".into(),
+			MockExternalMethod::Select,
+			input2.clone(),
+			output2.clone(),
+		);
+
+		let _m5 = mock_external(
+			"test-enum".into(),
+			MockExternalMethod::Update,
+			TestEnumInput::First,
+			TestEnumOutput::First,
+		);
+
+		let _m6 = mock_external(
+			"test-enum".into(),
+			MockExternalMethod::Update,
+			TestEnumInput::Last,
+			TestEnumOutput::Last,
+		);
+
+		let result: () = test_external("test".into(), MockExternalMethod::Insert, ());
+		assert_eq!(&result, &(), "no input / no output");
+
+		let result: () = test_external("test-out".into(), MockExternalMethod::Insert, input1);
+		assert_eq!(&result, &(), "with input / no output");
+
+		let result: TestOutput = test_external("test-out".into(), MockExternalMethod::Select, ());
+		assert_eq!(&result, &output1, "no input / with output");
+
+		let result: TestOutput =
+			test_external("test-out".into(), MockExternalMethod::Select, input2);
+		assert_eq!(&result, &output2, "with input / with output");
+
+		let result: TestEnumOutput = test_external(
+			"test-enum".into(),
+			MockExternalMethod::Update,
+			TestEnumInput::First,
+		);
+		assert_eq!(&result, &TestEnumOutput::First, "first enum");
+
+		let result: TestEnumOutput = test_external(
+			"test-enum".into(),
+			MockExternalMethod::Update,
+			TestEnumInput::Last,
+		);
+		assert_eq!(&result, &TestEnumOutput::Last, "last enum");
 	}
 }

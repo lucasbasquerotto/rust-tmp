@@ -3,36 +3,63 @@
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RegisterData {
+pub struct InsertInput {
 	pub name: String,
 	pub email: String,
 	pub pass: String,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub enum SelectInput {
+	ById(UserId),
+	First,
+	Last,
 }
 
 ////////////////////////////////////////////////
 //////////////////// OUTPUT ////////////////////
 ////////////////////////////////////////////////
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RegisterResult {
-	pub id: u64,
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct InsertOutput {
+	pub id: UserId,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SelectOutput {
+	pub id: UserId,
+	pub name: String,
+	pub email: String,
+	pub encrypted_pass: String,
 }
 
 ////////////////////////////////////////////////
-/////////////////// ACTION /////////////////////
+/////////////////// ACTIONS ////////////////////
 ////////////////////////////////////////////////
 
-pub struct RegisterAction;
+pub struct Insert;
+
+pub struct Select;
+
+////////////////////////////////////////////////
+///////////////////// IMPL /////////////////////
+////////////////////////////////////////////////
 
 #[cfg(not(test))]
 pub mod main {
-	use super::{RegisterAction, RegisterData, RegisterResult};
 	use crate::core::external::{
 		data::external_exception::ExternalException, definition::external::ExternalAction,
 	};
 
-	impl ExternalAction<RegisterData, RegisterResult> for RegisterAction {
-		fn run(input: RegisterData) -> Result<RegisterResult, ExternalException> {
+	impl ExternalAction<super::InsertInput, super::InsertOutput> for super::Insert {
+		fn run(input: super::InsertInput) -> Result<super::InsertOutput, ExternalException> {
+			drop(input);
+			todo!()
+		}
+	}
+
+	impl ExternalAction<super::SelectInput, super::SelectOutput> for super::Select {
+		fn run(input: super::SelectInput) -> Result<super::SelectOutput, ExternalException> {
 			drop(input);
 			todo!()
 		}
@@ -43,21 +70,32 @@ pub mod main {
 //////////////////// TESTS /////////////////////
 ////////////////////////////////////////////////
 
+use crate::shared::data::user_data::UserId;
+
 #[cfg(test)]
 pub mod tests {
-	use super::{RegisterAction, RegisterData, RegisterResult};
 	use crate::{
 		core::external::definition::external::tests::{ExternalTest, MockExternalMethod},
 		lib::data::str::Str,
 	};
 
-	impl ExternalTest<RegisterData, RegisterResult> for RegisterAction {
+	impl ExternalTest<super::InsertInput, super::InsertOutput> for super::Insert {
 		fn name() -> Str {
-			"register".into()
+			"register-user".into()
 		}
 
 		fn method() -> MockExternalMethod {
 			MockExternalMethod::Insert
+		}
+	}
+
+	impl ExternalTest<super::SelectInput, super::SelectOutput> for super::Select {
+		fn name() -> Str {
+			"select-user".into()
+		}
+
+		fn method() -> MockExternalMethod {
+			MockExternalMethod::Select
 		}
 	}
 }
