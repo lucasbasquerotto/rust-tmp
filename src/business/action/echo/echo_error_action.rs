@@ -21,20 +21,20 @@ const MODERATOR_ACTION_TYPE: ModeratorActionType = ModeratorActionType::EchoErro
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub enum EchoErrorError {
+pub enum Error {
 	ModeratorError(ModeratorActionError),
 }
 
-impl ActionError for EchoErrorError {
+impl ActionError for Error {
 	fn private_error(&self) -> DescriptiveError {
 		match self {
-			EchoErrorError::ModeratorError(error) => error.private_error(),
+			Error::ModeratorError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			EchoErrorError::ModeratorError(error) => error.public_error(),
+			Error::ModeratorError(error) => error.public_error(),
 		}
 	}
 }
@@ -44,21 +44,21 @@ impl ActionError for EchoErrorError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct EchoErrorAction(ModeratorRequestInput<()>);
+pub struct Action(ModeratorRequestInput<()>);
 
-impl ModeratorAction<(), (), EchoErrorError> for EchoErrorAction {
+impl ModeratorAction<(), (), Error> for Action {
 	fn action_type() -> ModeratorActionType {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorActionInput<()>) -> Result<Self, EchoErrorError> {
+	fn new(input: ModeratorActionInput<()>) -> Result<Self, Error> {
 		match input {
-			Err(err) => Err(EchoErrorError::ModeratorError(err)),
+			Err(err) => Err(Error::ModeratorError(err)),
 			Ok(ok_input) => Ok(Self(ok_input)),
 		}
 	}
 
-	fn run_inner(self) -> Result<(), EchoErrorError> {
+	fn run_inner(self) -> Result<(), Error> {
 		error!("echo error action");
 		Ok(())
 	}
@@ -70,7 +70,6 @@ impl ModeratorAction<(), (), EchoErrorError> for EchoErrorAction {
 
 #[cfg(test)]
 pub mod tests {
-	use super::EchoErrorAction;
 	use super::MODERATOR_ACTION_TYPE;
 	use crate::core::action::data::action_data::RequestInput;
 	use crate::core::action::data::moderator_action_data::tests::ModeratorRequestContextBuilder;
@@ -81,7 +80,7 @@ pub mod tests {
 	use crate::core::action::definition::action::Action;
 	use crate::tests::test_utils::tests::run_test;
 	use crate::{
-		business::action::echo::echo_error_action::EchoErrorError,
+		business::action::echo::echo_error_action::Error,
 		core::action::data::action_data::{ActionContext, ActionErrorInfo},
 	};
 
@@ -104,12 +103,12 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = EchoErrorAction::run(RequestInput { data: (), context });
+			let result = super::Action::run(RequestInput { data: (), context });
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
 					action_context,
-					error: EchoErrorError::ModeratorError(ModeratorActionError::NotAllowed(
+					error: Error::ModeratorError(ModeratorActionError::NotAllowed(
 						MODERATOR_ACTION_TYPE
 					)),
 				}),
@@ -126,7 +125,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = EchoErrorAction::run(RequestInput { data: (), context });
+			let result = super::Action::run(RequestInput { data: (), context });
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {
@@ -147,7 +146,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = EchoErrorAction::run(RequestInput { data: (), context });
+			let result = super::Action::run(RequestInput { data: (), context });
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {

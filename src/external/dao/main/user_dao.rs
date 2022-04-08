@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RegisterDaoData {
+pub struct RegisterData {
 	pub name: String,
 	pub email: String,
 	pub pass: String,
@@ -14,7 +14,7 @@ pub struct RegisterDaoData {
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct RegisterDaoResult {
+pub struct RegisterResult {
 	pub id: u64,
 }
 
@@ -22,17 +22,17 @@ pub struct RegisterDaoResult {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-pub struct RegisterDaoAction;
+pub struct RegisterAction;
 
 #[cfg(not(test))]
 pub mod main {
-	use super::{RegisterDaoAction, RegisterDaoData, RegisterDaoResult};
+	use super::{RegisterAction, RegisterData, RegisterResult};
 	use crate::core::external::{
 		data::external_exception::ExternalException, definition::external::ExternalAction,
 	};
 
-	impl ExternalAction<RegisterDaoData, RegisterDaoResult> for RegisterDaoAction {
-		fn run(input: RegisterDaoData) -> Result<RegisterDaoResult, ExternalException> {
+	impl ExternalAction<RegisterData, RegisterResult> for RegisterAction {
+		fn run(input: RegisterData) -> Result<RegisterResult, ExternalException> {
 			drop(input);
 			todo!()
 		}
@@ -45,13 +45,13 @@ pub mod main {
 
 #[cfg(test)]
 pub mod tests {
-	use super::{RegisterDaoAction, RegisterDaoData, RegisterDaoResult};
+	use super::{RegisterAction, RegisterData, RegisterResult};
 	use crate::{
 		core::external::definition::external::tests::{ExternalTest, MockExternalMethod},
 		lib::data::str::Str,
 	};
 
-	impl ExternalTest<RegisterDaoData, RegisterDaoResult> for RegisterDaoAction {
+	impl ExternalTest<RegisterData, RegisterResult> for RegisterAction {
 		fn name() -> Str {
 			"register".into()
 		}

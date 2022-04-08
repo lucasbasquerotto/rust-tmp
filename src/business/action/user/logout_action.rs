@@ -21,20 +21,20 @@ const USER_ACTION_TYPE: UserActionType = UserActionType::Logout;
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub enum LogoutError {
+pub enum Error {
 	UserError(UserActionError),
 }
 
-impl ActionError for LogoutError {
+impl ActionError for Error {
 	fn private_error(&self) -> DescriptiveError {
 		match self {
-			LogoutError::UserError(error) => error.private_error(),
+			Error::UserError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			LogoutError::UserError(error) => error.public_error(),
+			Error::UserError(error) => error.public_error(),
 		}
 	}
 }
@@ -44,18 +44,18 @@ impl ActionError for LogoutError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct LogoutAction(UserRequestInput<()>);
+pub struct Action(UserRequestInput<()>);
 
-impl UserAction<(), (), LogoutError> for LogoutAction {
+impl UserAction<(), (), Error> for Action {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<()>) -> Result<Self, LogoutError> {
-		input.map(Self).map_err(LogoutError::UserError)
+	fn new(input: UserActionInput<()>) -> Result<Self, Error> {
+		input.map(Self).map_err(Error::UserError)
 	}
 
-	fn run_inner(self) -> Result<(), LogoutError> {
+	fn run_inner(self) -> Result<(), Error> {
 		println!("TODO: logout");
 		Ok(())
 	}
@@ -67,7 +67,6 @@ impl UserAction<(), (), LogoutError> for LogoutAction {
 
 #[cfg(test)]
 mod tests {
-	use super::LogoutAction;
 	use super::USER_ACTION_TYPE;
 	use crate::core::action::data::{
 		action_data::{ActionContext, RequestInput},
@@ -83,7 +82,7 @@ mod tests {
 				action_type: USER_ACTION_TYPE,
 				context: context.clone(),
 			};
-			let result = LogoutAction::run(RequestInput { data: (), context });
+			let result = super::Action::run(RequestInput { data: (), context });
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {

@@ -1,3 +1,10 @@
+use crate::core::{
+	action::{
+		data::user_action_data::UserActionInput,
+		definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
+	},
+	external::data::external_exception::ExternalException,
+};
 use crate::{
 	core::{
 		action::{
@@ -9,17 +16,7 @@ use crate::{
 		},
 		external::definition::external::ExternalAction,
 	},
-	external::dao::user::register_dao::{RegisterDaoData, RegisterDaoResult},
-};
-use crate::{
-	core::{
-		action::{
-			data::user_action_data::UserActionInput,
-			definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
-		},
-		external::data::external_exception::ExternalException,
-	},
-	external::dao::user::register_dao::RegisterDaoAction,
+	external::dao::main::user_dao,
 };
 
 ////////////////////////////////////////////////
@@ -33,48 +30,48 @@ const USER_ACTION_TYPE: UserActionType = UserActionType::Register;
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub struct RegisterData {
+pub struct Input {
 	pub name: String,
 	pub email: String,
 	pub pass: String,
 }
 
-impl ActionInput for RegisterData {}
+impl ActionInput for Input {}
 
 ////////////////////////////////////////////////
 //////////////////// OUTPUT ////////////////////
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub struct RegisterResult {
+pub struct Output {
 	pub id: u64,
 	pub name: String,
 }
 
-impl ActionOutput for RegisterResult {}
+impl ActionOutput for Output {}
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub enum RegisterError {
-	UserError(UserActionError),
-	ExternalError(ExternalException),
+pub enum Error {
+	UserError(Box<UserActionError>),
+	ExternalError(Box<ExternalException>),
 }
 
-impl ActionError for RegisterError {
+impl ActionError for Error {
 	fn private_error(&self) -> DescriptiveError {
 		match self {
-			RegisterError::UserError(error) => error.private_error(),
-			RegisterError::ExternalError(error) => error.private_error(),
+			Error::UserError(error) => error.private_error(),
+			Error::ExternalError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			RegisterError::UserError(error) => error.public_error(),
-			RegisterError::ExternalError(error) => error.public_error(),
+			Error::UserError(error) => error.public_error(),
+			Error::ExternalError(error) => error.public_error(),
 		}
 	}
 }
@@ -84,30 +81,33 @@ impl ActionError for RegisterError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct RegisterAction(UserNoAuthRequestInput<RegisterData>);
+pub struct RegisterAction(UserNoAuthRequestInput<Input>);
 
-impl UserAction<RegisterData, RegisterResult, RegisterError> for RegisterAction {
+impl UserAction<Input, Output, Error> for RegisterAction {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<RegisterData>) -> Result<Self, RegisterError> {
+	fn new(input: UserActionInput<Input>) -> Result<Self, Error> {
 		input
 			.and_then(|ok_input| ok_input.into())
 			.map(Self)
-			.map_err(RegisterError::UserError)
+			.map_err(Box::new)
+			.map_err(Error::UserError)
 	}
 
-	fn run_inner(self) -> Result<RegisterResult, RegisterError> {
+	fn run_inner(self) -> Result<Output, Error> {
 		let RegisterAction(input) = self;
-		let RegisterData { name, email, pass } = input.data;
-		let RegisterDaoResult { id } = RegisterDaoAction::run(RegisterDaoData {
-			name: name.to_string(),
-			email,
-			pass,
-		})
-		.map_err(RegisterError::ExternalError)?;
-		let result = RegisterResult { id, name };
+		let Input { name, email, pass } = input.data;
+		let user_dao::RegisterResult { id } =
+			user_dao::RegisterAction::run(user_dao::RegisterData {
+				name: name.to_string(),
+				email,
+				pass,
+			})
+			.map_err(Box::new)
+			.map_err(Error::ExternalError)?;
+		let result = Output { id, name };
 		Ok(result)
 	}
 }
@@ -118,17 +118,15 @@ impl UserAction<RegisterData, RegisterResult, RegisterError> for RegisterAction 
 
 #[cfg(test)]
 mod tests {
+	use super::RegisterAction;
 	use super::USER_ACTION_TYPE;
-	use super::{RegisterAction, RegisterData, RegisterError, RegisterResult};
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserActionError;
 	use crate::core::action::data::user_action_data::UserOutputInfo;
 	use crate::core::action::definition::action::Action;
 	use crate::core::external::definition::external::tests::ExternalMocker;
-	use crate::external::dao::user::register_dao::{
-		RegisterDaoAction, RegisterDaoData, RegisterDaoResult,
-	};
+	use crate::external::dao::main::user_dao;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[test]
@@ -137,7 +135,7 @@ mod tests {
 			let context = UserRequestContextBuilder::build_auth();
 
 			let result = RegisterAction::run(RequestInput {
-				data: RegisterData {
+				data: super::Input {
 					name: "User 01".into(),
 					email: "user-01@domain.test".into(),
 					pass: "p4$$w0rd".into(),
@@ -152,7 +150,7 @@ mod tests {
 						action_type: USER_ACTION_TYPE,
 						context,
 					},
-					error: RegisterError::UserError(UserActionError::Authenticated),
+					error: super::Error::UserError(Box::new(UserActionError::Authenticated)),
 				}),
 			);
 		});
@@ -166,14 +164,14 @@ mod tests {
 			let pass = "p4$$w0rd2";
 			let id = 7;
 
-			let dao_input = RegisterDaoData {
+			let dao_input = user_dao::RegisterData {
 				name: name.into(),
 				email: email.into(),
 				pass: pass.into(),
 			};
-			let dao_result = RegisterDaoResult { id };
+			let dao_result = user_dao::RegisterResult { id };
 
-			let _m = RegisterDaoAction::mock(dao_input, dao_result);
+			let _m = user_dao::RegisterAction::mock(dao_input, dao_result);
 
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
@@ -182,7 +180,7 @@ mod tests {
 			};
 
 			let result = RegisterAction::run(RequestInput {
-				data: RegisterData {
+				data: super::Input {
 					name: name.into(),
 					email: email.into(),
 					pass: pass.into(),
@@ -194,7 +192,7 @@ mod tests {
 				&result,
 				&Ok(UserOutputInfo {
 					action_context,
-					data: RegisterResult {
+					data: super::Output {
 						id,
 						name: name.into(),
 					},

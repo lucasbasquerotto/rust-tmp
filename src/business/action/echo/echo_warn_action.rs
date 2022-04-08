@@ -21,20 +21,20 @@ const MODERATOR_ACTION_TYPE: ModeratorActionType = ModeratorActionType::EchoWarn
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub enum EchoWarnError {
+pub enum Error {
 	ModeratorError(ModeratorActionError),
 }
 
-impl ActionError for EchoWarnError {
+impl ActionError for Error {
 	fn private_error(&self) -> DescriptiveError {
 		match self {
-			EchoWarnError::ModeratorError(error) => error.private_error(),
+			Error::ModeratorError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			EchoWarnError::ModeratorError(error) => error.public_error(),
+			Error::ModeratorError(error) => error.public_error(),
 		}
 	}
 }
@@ -44,21 +44,21 @@ impl ActionError for EchoWarnError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct EchoWarnAction(ModeratorRequestInput<()>);
+pub struct Action(ModeratorRequestInput<()>);
 
-impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction {
+impl ModeratorAction<(), (), Error> for Action {
 	fn action_type() -> ModeratorActionType {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorActionInput<()>) -> Result<Self, EchoWarnError> {
+	fn new(input: ModeratorActionInput<()>) -> Result<Self, Error> {
 		match input {
-			Err(err) => Err(EchoWarnError::ModeratorError(err)),
+			Err(err) => Err(Error::ModeratorError(err)),
 			Ok(ok_input) => Ok(Self(ok_input)),
 		}
 	}
 
-	fn run_inner(self) -> Result<(), EchoWarnError> {
+	fn run_inner(self) -> Result<(), Error> {
 		warn!("echo warn action");
 		Ok(())
 	}
@@ -70,7 +70,7 @@ impl ModeratorAction<(), (), EchoWarnError> for EchoWarnAction {
 
 #[cfg(test)]
 pub mod tests {
-	use super::{EchoWarnAction, MODERATOR_ACTION_TYPE};
+	use super::MODERATOR_ACTION_TYPE;
 	use crate::core::action::data::action_data::ActionErrorInfo;
 	use crate::core::action::data::moderator_action_data::tests::{
 		ModeratorRequestContextBuilder, ModeratorSessionBuilder,
@@ -84,7 +84,7 @@ pub mod tests {
 	use crate::core::action::definition::action::Action;
 	use crate::tests::test_utils::tests::run_test;
 	use crate::{
-		business::action::echo::echo_warn_action::EchoWarnError,
+		business::action::echo::echo_warn_action::Error,
 		core::action::data::action_data::ActionContext,
 	};
 
@@ -107,12 +107,12 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = EchoWarnAction::run(RequestInput { data: (), context });
+			let result = super::Action::run(RequestInput { data: (), context });
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
 					action_context,
-					error: EchoWarnError::ModeratorError(ModeratorActionError::NotAllowed(
+					error: Error::ModeratorError(ModeratorActionError::NotAllowed(
 						MODERATOR_ACTION_TYPE
 					)),
 				}),
@@ -129,7 +129,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = EchoWarnAction::run(RequestInput { data: (), context });
+			let result = super::Action::run(RequestInput { data: (), context });
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {
@@ -150,7 +150,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = EchoWarnAction::run(RequestInput { data: (), context });
+			let result = super::Action::run(RequestInput { data: (), context });
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {

@@ -21,44 +21,44 @@ const USER_ACTION_TYPE: UserActionType = UserActionType::Login;
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub struct LoginData {
+pub struct Input {
 	pub name: String,
 	pub pass: String,
 }
 
-impl ActionInput for LoginData {}
+impl ActionInput for Input {}
 
 ////////////////////////////////////////////////
 //////////////////// OUTPUT ////////////////////
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub struct LoginResult {
+pub struct Output {
 	pub id: u64,
 	pub name: String,
 }
 
-impl ActionOutput for LoginResult {}
+impl ActionOutput for Output {}
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub enum LoginError {
+pub enum Error {
 	UserError(UserActionError),
 }
 
-impl ActionError for LoginError {
+impl ActionError for Error {
 	fn private_error(&self) -> DescriptiveError {
 		match self {
-			LoginError::UserError(error) => error.private_error(),
+			Error::UserError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			LoginError::UserError(error) => error.public_error(),
+			Error::UserError(error) => error.public_error(),
 		}
 	}
 }
@@ -68,25 +68,25 @@ impl ActionError for LoginError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct LoginAction(UserNoAuthRequestInput<LoginData>);
+pub struct Action(UserNoAuthRequestInput<Input>);
 
-impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
+impl UserAction<Input, Output, Error> for Action {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<LoginData>) -> Result<Self, LoginError> {
+	fn new(input: UserActionInput<Input>) -> Result<Self, Error> {
 		input
 			.and_then(|ok_input| ok_input.into())
 			.map(Self)
-			.map_err(LoginError::UserError)
+			.map_err(Error::UserError)
 	}
 
-	fn run_inner(self) -> Result<LoginResult, LoginError> {
-		let LoginAction(input) = &self;
-		let LoginData { name, pass } = &input.data;
+	fn run_inner(self) -> Result<Output, Error> {
+		let Action(input) = &self;
+		let Input { name, pass } = &input.data;
 		println!("TODO: login: {name} ({pass})");
-		let result = LoginResult {
+		let result = Output {
 			id: 1,
 			name: name.into(),
 		};
@@ -101,7 +101,6 @@ impl UserAction<LoginData, LoginResult, LoginError> for LoginAction {
 #[cfg(test)]
 mod tests {
 	use super::USER_ACTION_TYPE;
-	use super::{LoginAction, LoginData, LoginError, LoginResult};
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserActionError;
@@ -114,8 +113,8 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_auth();
 
-			let result = LoginAction::run(RequestInput {
-				data: LoginData {
+			let result = super::Action::run(RequestInput {
+				data: super::Input {
 					name: "User 01".into(),
 					pass: "p4$$w0rd".into(),
 				},
@@ -129,7 +128,7 @@ mod tests {
 						action_type: USER_ACTION_TYPE,
 						context,
 					},
-					error: LoginError::UserError(UserActionError::Authenticated),
+					error: super::Error::UserError(UserActionError::Authenticated),
 				}),
 			);
 		});
@@ -144,8 +143,8 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = LoginAction::run(RequestInput {
-				data: LoginData {
+			let result = super::Action::run(RequestInput {
+				data: super::Input {
 					name: "User 02".into(),
 					pass: "p4$$w0rd2".into(),
 				},
@@ -156,7 +155,7 @@ mod tests {
 				&result,
 				&Ok(UserOutputInfo {
 					action_context,
-					data: LoginResult {
+					data: super::Output {
 						id: 1,
 						name: "User 02".into(),
 					},

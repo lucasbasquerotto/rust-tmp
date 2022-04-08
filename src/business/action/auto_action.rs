@@ -21,46 +21,46 @@ const AUTOMATIC_ACTION_TYPE: AutomaticActionType = AutomaticActionType::Auto;
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub struct AutoData {
+pub struct Input {
 	pub param1: String,
 	pub param2: u64,
 }
 
-impl ActionInput for AutoData {}
+impl ActionInput for Input {}
 
 ////////////////////////////////////////////////
 //////////////////// OUTPUT ////////////////////
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub struct AutoResult {
+pub struct Output {
 	pub id: u64,
 	pub auto: String,
 	pub param1: String,
 	pub param2: u64,
 }
 
-impl ActionOutput for AutoResult {}
+impl ActionOutput for Output {}
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
 #[derive(Debug, PartialEq)]
-pub enum AutoError {
+pub enum Error {
 	AutomaticError(AutomaticActionError),
 }
 
-impl ActionError for AutoError {
+impl ActionError for Error {
 	fn private_error(&self) -> DescriptiveError {
 		match self {
-			AutoError::AutomaticError(error) => error.private_error(),
+			Error::AutomaticError(error) => error.private_error(),
 		}
 	}
 
 	fn public_error(&self) -> Option<ErrorData> {
 		match self {
-			AutoError::AutomaticError(error) => error.public_error(),
+			Error::AutomaticError(error) => error.public_error(),
 		}
 	}
 }
@@ -70,22 +70,22 @@ impl ActionError for AutoError {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct AutoActionInternal(InternalRequestInput<AutoData>);
+pub struct InternalAction(InternalRequestInput<Input>);
 
-impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
+impl AutomaticAction<Input, Output, Error> for InternalAction {
 	fn action_type() -> AutomaticActionType {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<AutoData>) -> Result<Self, AutoError> {
+	fn new(input: AutomaticActionInput<Input>) -> Result<Self, Error> {
 		input
 			.and_then(|ok_input| ok_input.into())
 			.map(Self)
-			.map_err(AutoError::AutomaticError)
+			.map_err(Error::AutomaticError)
 	}
 
-	fn run_inner(self) -> Result<AutoResult, AutoError> {
-		let AutoActionInternal(input) = self;
+	fn run_inner(self) -> Result<Output, Error> {
+		let InternalAction(input) = self;
 		run(input, "internal".into())
 	}
 }
@@ -95,29 +95,29 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionInternal {
 ////////////////////////////////////////////////
 
 #[derive(Debug)]
-pub struct AutoActionHook(HookRequestInput<AutoData>);
+pub struct HookAction(HookRequestInput<Input>);
 
-impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
+impl AutomaticAction<Input, Output, Error> for HookAction {
 	fn action_type() -> AutomaticActionType {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<AutoData>) -> Result<Self, AutoError> {
+	fn new(input: AutomaticActionInput<Input>) -> Result<Self, Error> {
 		match input {
-			Err(err) => Err(AutoError::AutomaticError(err)),
+			Err(err) => Err(Error::AutomaticError(err)),
 			Ok(ok_input) => {
 				let real_input = ok_input.into();
 
 				match real_input {
-					Err(err) => Err(AutoError::AutomaticError(err)),
+					Err(err) => Err(Error::AutomaticError(err)),
 					Ok(real_ok_input) => Ok(Self(real_ok_input)),
 				}
 			}
 		}
 	}
 
-	fn run_inner(self) -> Result<AutoResult, AutoError> {
-		let AutoActionHook(input) = self;
+	fn run_inner(self) -> Result<Output, Error> {
+		let HookAction(input) = self;
 		run(input, "hook".into())
 	}
 }
@@ -127,11 +127,11 @@ impl AutomaticAction<AutoData, AutoResult, AutoError> for AutoActionHook {
 ////////////////////////////////////////////////
 
 fn run<C: RequestContext>(
-	input: RequestInput<AutoData, C>,
+	input: RequestInput<Input, C>,
 	type_name: String,
-) -> Result<AutoResult, AutoError> {
-	let AutoData { param1, param2 } = input.data;
-	let result = AutoResult {
+) -> Result<Output, Error> {
+	let Input { param1, param2 } = input.data;
+	let result = Output {
 		id: 1,
 		auto: type_name,
 		param1,
@@ -146,7 +146,6 @@ fn run<C: RequestContext>(
 
 #[cfg(test)]
 mod tests {
-	use super::{AutoActionHook, AutoActionInternal, AutoData, AutoError, AutoResult};
 	use crate::business::action::auto_action::AUTOMATIC_ACTION_TYPE;
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::automatic_action_data::tests::AutomaticRequestContextBuilder;
@@ -164,8 +163,8 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = AutoActionInternal::run(RequestInput {
-				data: AutoData {
+			let result = super::InternalAction::run(RequestInput {
+				data: super::Input {
 					param1: "Param 01 (Error)".into(),
 					param2: 1,
 				},
@@ -176,7 +175,7 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context,
-					error: AutoError::AutomaticError(AutomaticActionError::NotInternal),
+					error: super::Error::AutomaticError(AutomaticActionError::NotInternal),
 				}),
 			);
 		});
@@ -191,8 +190,8 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = AutoActionInternal::run(RequestInput {
-				data: AutoData {
+			let result = super::InternalAction::run(RequestInput {
+				data: super::Input {
 					param1: "Param 01 (Ok)".into(),
 					param2: 2,
 				},
@@ -203,7 +202,7 @@ mod tests {
 				&result,
 				&Ok(AutomaticOutputInfo {
 					action_context,
-					data: AutoResult {
+					data: super::Output {
 						id: 1,
 						auto: "internal".into(),
 						param1: "Param 01 (Ok)".into(),
@@ -223,8 +222,8 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = AutoActionHook::run(RequestInput {
-				data: AutoData {
+			let result = super::HookAction::run(RequestInput {
+				data: super::Input {
 					param1: "Param 01 (Error)".into(),
 					param2: 3,
 				},
@@ -235,7 +234,7 @@ mod tests {
 				&result,
 				&Err(ActionErrorInfo {
 					action_context,
-					error: AutoError::AutomaticError(AutomaticActionError::NotHook),
+					error: super::Error::AutomaticError(AutomaticActionError::NotHook),
 				}),
 			);
 		});
@@ -250,8 +249,8 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = AutoActionHook::run(RequestInput {
-				data: AutoData {
+			let result = super::HookAction::run(RequestInput {
+				data: super::Input {
 					param1: "Param 01 (Ok)".into(),
 					param2: 4,
 				},
@@ -262,7 +261,7 @@ mod tests {
 				&result,
 				&Ok(AutomaticOutputInfo {
 					action_context,
-					data: AutoResult {
+					data: super::Output {
 						id: 1,
 						auto: "hook".into(),
 						param1: "Param 01 (Ok)".into(),
