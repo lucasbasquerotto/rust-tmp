@@ -156,8 +156,6 @@ fn run<C: RequestContext>(
 
 #[cfg(test)]
 mod tests {
-	use futures::executor::block_on;
-
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::automatic_action_data::tests::AutomaticRequestContextBuilder;
 	use crate::core::action::data::automatic_action_data::AutomaticActionError;
@@ -165,22 +163,23 @@ mod tests {
 	use crate::core::action::definition::action::Action;
 	use crate::tests::test_utils::tests::run_test;
 
-	#[test]
-	fn test_internal_error_hook() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_internal_error_hook() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = block_on(super::Internal::run(RequestInput {
+			let result = super::Internal::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Error)".into(),
 					param2: 1,
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -189,25 +188,27 @@ mod tests {
 					error: super::Error::AutomaticError(AutomaticActionError::NotInternal),
 				}),
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_internal_ok() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_internal_ok() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = block_on(super::Internal::run(RequestInput {
+			let result = super::Internal::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Ok)".into(),
 					param2: 2,
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -221,25 +222,27 @@ mod tests {
 					},
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_hook_error_internal() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_hook_error_internal() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = block_on(super::Hook::run(RequestInput {
+			let result = super::Hook::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Error)".into(),
 					param2: 3,
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -248,25 +251,27 @@ mod tests {
 					error: super::Error::AutomaticError(AutomaticActionError::NotHook),
 				}),
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_hook_ok() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_hook_ok() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = block_on(super::Hook::run(RequestInput {
+			let result = super::Hook::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Ok)".into(),
 					param2: 4,
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -280,6 +285,7 @@ mod tests {
 					},
 				})
 			);
-		});
+		})
+		.await;
 	}
 }

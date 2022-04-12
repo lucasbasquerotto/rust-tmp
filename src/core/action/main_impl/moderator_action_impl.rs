@@ -122,8 +122,6 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use futures::executor::block_on;
-
 	use crate::core::action::data::moderator_action_data::tests::ModeratorRequestContextBuilder;
 	use crate::core::action::data::moderator_action_data::tests::ModeratorSessionBuilder;
 	use crate::core::action::data::moderator_action_data::ModeratorActionError;
@@ -178,16 +176,16 @@ pub mod tests {
 			.build()
 	}
 
-	#[test]
-	fn test_not_allowed() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_not_allowed() {
+		run_test(|_| async {
 			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
 			};
 
-			let result = block_on(TestAction::run(RequestInput { data: (), context }));
+			let result = TestAction::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -195,19 +193,20 @@ pub mod tests {
 					error: ModeratorActionError::NotAllowed(ModeratorActionType::Test),
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_ok() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_ok() {
+		run_test(|helper| async move {
 			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
 			};
 
-			let result = block_on(TestAction::run(RequestInput { data: (), context }));
+			let result = TestAction::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {
@@ -219,19 +218,20 @@ pub mod tests {
 				&helper.pop_log(),
 				&Some("INFO - moderator action test".into())
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_ok_admin() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_ok_admin() {
+		run_test(|helper| async move {
 			let context = ModeratorRequestContextBuilder::build_admin();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
 			};
 
-			let result = block_on(TestAction::run(RequestInput { data: (), context }));
+			let result = TestAction::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {
@@ -243,6 +243,7 @@ pub mod tests {
 				&helper.pop_log(),
 				&Some("INFO - moderator action test".into())
 			);
-		});
+		})
+		.await;
 	}
 }

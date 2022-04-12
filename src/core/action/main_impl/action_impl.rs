@@ -169,9 +169,9 @@ mod tests {
 		}
 	}
 
-	#[test]
-	fn test_1() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_1() {
+		run_test(|helper| async move {
 			let action_type = TestActionType(1);
 			let context = TestRequestContext("My error #01".into());
 			let error = TestActionError(action_type);
@@ -213,12 +213,13 @@ mod tests {
 					format!("ERROR - {action} {private} {public} {context} {data} {source}").into()
 				)
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_2() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_2() {
+		run_test(|helper| async move {
 			let action_type = TestActionType(2);
 			let context = TestRequestContext("My error #02".into());
 			let error = TestActionError(action_type);
@@ -255,6 +256,7 @@ mod tests {
 				&helper.pop_log(),
 				&Some(format!("ERROR - {action} {public} {context}").into())
 			);
-		});
+		})
+		.await;
 	}
 }

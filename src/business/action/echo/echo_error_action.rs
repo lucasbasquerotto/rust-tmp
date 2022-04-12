@@ -75,8 +75,6 @@ impl ModeratorAction<(), (), Error> for Action {
 
 #[cfg(test)]
 pub mod tests {
-	use futures::executor::block_on;
-
 	use crate::core::action::data::action_data::RequestInput;
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo};
 	use crate::core::action::data::moderator_action_data::tests::ModeratorRequestContextBuilder;
@@ -97,16 +95,16 @@ pub mod tests {
 			.build()
 	}
 
-	#[test]
-	fn test_not_allowed() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_not_allowed() {
+		run_test(|_| async {
 			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
 				action_type: super::MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = block_on(super::Action::run(RequestInput { data: (), context }));
+			let result = super::Action::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -116,19 +114,20 @@ pub mod tests {
 					)),
 				}),
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_ok() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_ok() {
+		run_test(|helper| async move {
 			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: super::MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = block_on(super::Action::run(RequestInput { data: (), context }));
+			let result = super::Action::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {
@@ -137,19 +136,20 @@ pub mod tests {
 				}),
 			);
 			assert_eq!(&helper.pop_log(), &Some("ERROR - echo error action".into()));
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_ok_admin() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_ok_admin() {
+		run_test(|helper| async move {
 			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: super::MODERATOR_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = block_on(super::Action::run(RequestInput { data: (), context }));
+			let result = super::Action::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {
@@ -158,6 +158,7 @@ pub mod tests {
 				}),
 			);
 			assert_eq!(&helper.pop_log(), &Some("ERROR - echo error action".into()));
-		});
+		})
+		.await;
 	}
 }

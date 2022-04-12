@@ -43,10 +43,11 @@ mod tests {
 		tests::test_utils::tests::run_test,
 	};
 
-	#[test]
-	fn main() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn main() {
+		run_test(|_| async {
 			test_enum_action_type(&ID_ACTION_MAP);
-		});
+		})
+		.await;
 	}
 }

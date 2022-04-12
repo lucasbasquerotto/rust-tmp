@@ -11,7 +11,8 @@ mod external;
 mod lib;
 mod shared;
 
-pub fn main() {}
+#[tokio::main]
+async fn main() {}
 
 #[cfg(test)]
 pub mod tests {
@@ -24,6 +25,6 @@ pub mod tests {
 		tests::init();
 	}
 
-	#[test]
-	pub fn main() {}
+	#[tokio::test]
+	async fn main() {}
 }

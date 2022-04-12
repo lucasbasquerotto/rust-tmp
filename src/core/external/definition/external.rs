@@ -1,7 +1,9 @@
-use crate::core::external::data::external_exception::ExternalException;
+use crate::core::{
+	action::definition::action::ActionResult, external::data::external_exception::ExternalException,
+};
 
 pub trait ExternalAction<I, O> {
-	fn run(input: I) -> Result<O, ExternalException>;
+	fn run(input: I) -> ActionResult<O, ExternalException>;
 }
 
 #[cfg(test)]

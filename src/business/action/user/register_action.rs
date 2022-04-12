@@ -112,6 +112,7 @@ impl UserAction<Input, Output, Error> for Action {
 				email,
 				pass,
 			})
+			.await
 			.map_err(Box::new)
 			.map_err(Error::ExternalError)?;
 			let result = Output { id, name };
@@ -126,8 +127,6 @@ impl UserAction<Input, Output, Error> for Action {
 
 #[cfg(test)]
 mod tests {
-	use futures::executor::block_on;
-
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserActionError;
@@ -138,19 +137,20 @@ mod tests {
 	use crate::shared::data::user_data::UserId;
 	use crate::tests::test_utils::tests::run_test;
 
-	#[test]
-	fn test_error_auth() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_error_auth() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_auth();
 
-			let result = block_on(super::Action::run(RequestInput {
+			let result = super::Action::run(RequestInput {
 				data: super::Input {
 					name: "User 01".into(),
 					email: "user-01@domain.test".into(),
 					pass: "p4$$w0rd".into(),
 				},
 				context: context.clone(),
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -162,12 +162,13 @@ mod tests {
 					error: super::Error::UserError(Box::new(UserActionError::Authenticated)),
 				}),
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_ok() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_ok() {
+		run_test(|_| async {
 			let name = "User 02";
 			let email = "user-02@domain.test";
 			let pass = "p4$$w0rd2";
@@ -188,14 +189,15 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = block_on(super::Action::run(RequestInput {
+			let result = super::Action::run(RequestInput {
 				data: super::Input {
 					name: name.into(),
 					email: email.into(),
 					pass: pass.into(),
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -207,6 +209,7 @@ mod tests {
 					},
 				}),
 			);
-		});
+		})
+		.await;
 	}
 }

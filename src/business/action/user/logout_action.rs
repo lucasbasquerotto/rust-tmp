@@ -70,23 +70,21 @@ impl UserAction<(), (), Error> for Action {
 
 #[cfg(test)]
 mod tests {
-	use futures::executor::block_on;
-
 	use crate::core::action::data::{
 		action_data::{ActionContext, RequestInput},
 		user_action_data::{tests::UserRequestContextBuilder, UserOutputInfo},
 	};
 	use crate::{core::action::definition::action::Action, tests::test_utils::tests::run_test};
 
-	#[test]
-	fn main() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn main() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
 				context: context.clone(),
 			};
-			let result = block_on(super::Action::run(RequestInput { data: (), context }));
+			let result = super::Action::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {
@@ -94,6 +92,7 @@ mod tests {
 					data: (),
 				}),
 			);
-		});
+		})
+		.await;
 	}
 }

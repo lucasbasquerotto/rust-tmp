@@ -303,8 +303,6 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use futures::executor::block_on;
-
 	use crate::core::action::data::action_data::ActionContext;
 	use crate::core::action::data::user_action_data::tests::{
 		UserAuthSessionBuilder, UserRequestContextBuilder, UserUnconfirmedSessionBuilder,
@@ -464,9 +462,9 @@ pub mod tests {
 		}
 	}
 
-	#[test]
-	fn test_input_context_no_auth() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_input_context_no_auth() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
@@ -475,12 +473,13 @@ pub mod tests {
 					.map(|ctx| RequestInput::<_, UserRequestContext>::from(ctx).context),
 				"Test input context reversible change"
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_input_context_auth() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_input_context_auth() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_auth();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
@@ -489,12 +488,13 @@ pub mod tests {
 					.map(|ctx| RequestInput::<_, UserRequestContext>::from(ctx).context),
 				"Test input context reversible change"
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_ok_no_auth() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_ok_no_auth() {
+		run_test(|helper| async move {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
@@ -509,7 +509,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestAction::run(RequestInput { data: (), context }));
+			let result = TestAction::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {
@@ -518,12 +518,13 @@ pub mod tests {
 				}),
 			);
 			assert_eq!(&helper.pop_log(), &Some("INFO - user action test".into()));
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_ok_auth() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_ok_auth() {
+		run_test(|helper| async move {
 			let context = UserRequestContextBuilder::new()
 				.session(UserSession::Auth(
 					UserAuthSessionBuilder::new().user_id(1).build(),
@@ -542,7 +543,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestAction::run(RequestInput { data: (), context }));
+			let result = TestAction::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {
@@ -554,12 +555,13 @@ pub mod tests {
 				&helper.pop_log(),
 				&Some("INFO - user action test: 1".into())
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_no_auth_not_allowed_authenticated() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_no_auth_not_allowed_authenticated() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
 				action_type: TestActionNoAuth::action_type(),
@@ -574,7 +576,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestActionNoAuth::run(RequestInput { data: (), context }));
+			let result = TestActionNoAuth::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -582,12 +584,13 @@ pub mod tests {
 					error: UserActionError::Authenticated,
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_no_auth_not_allowed_unconfirmed() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_no_auth_not_allowed_unconfirmed() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_unconfirmed();
 			let action_context = ActionContext {
 				action_type: TestActionNoAuth::action_type(),
@@ -602,7 +605,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestActionNoAuth::run(RequestInput { data: (), context }));
+			let result = TestActionNoAuth::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -610,12 +613,13 @@ pub mod tests {
 					error: UserActionError::Authenticated,
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_no_auth_ok() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_no_auth_ok() {
+		run_test(|helper| async move {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestActionNoAuth::action_type(),
@@ -630,7 +634,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestActionNoAuth::run(RequestInput { data: (), context }));
+			let result = TestActionNoAuth::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {
@@ -642,12 +646,13 @@ pub mod tests {
 				&helper.pop_log(),
 				&Some("INFO - user action test (no auth)".into())
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_auth_not_allowed_unauthenticated() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_auth_not_allowed_unauthenticated() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestActionAuth::action_type(),
@@ -662,7 +667,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestActionAuth::run(RequestInput { data: (), context }));
+			let result = TestActionAuth::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -670,12 +675,13 @@ pub mod tests {
 					error: UserActionError::Unauthenticated,
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_auth_not_allowed_unconfirmed() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_auth_not_allowed_unconfirmed() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_unconfirmed();
 			let action_context = ActionContext {
 				action_type: TestActionAuth::action_type(),
@@ -690,7 +696,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestActionAuth::run(RequestInput { data: (), context }));
+			let result = TestActionAuth::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -698,12 +704,13 @@ pub mod tests {
 					error: UserActionError::Unauthenticated,
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_auth_ok() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_auth_ok() {
+		run_test(|helper| async move {
 			let context = UserRequestContextBuilder::new()
 				.session(UserSession::Auth(
 					UserAuthSessionBuilder::new().user_id(3).build(),
@@ -722,7 +729,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestActionAuth::run(RequestInput { data: (), context }));
+			let result = TestActionAuth::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {
@@ -734,12 +741,13 @@ pub mod tests {
 				&helper.pop_log(),
 				&Some("INFO - user action test (auth): 3".into())
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_unconfirmed_not_allowed_unauthenticated() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_unconfirmed_not_allowed_unauthenticated() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestActionUnconfirmed::action_type(),
@@ -754,10 +762,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestActionUnconfirmed::run(RequestInput {
-				data: (),
-				context,
-			}));
+			let result = TestActionUnconfirmed::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -765,12 +770,13 @@ pub mod tests {
 					error: UserActionError::Unauthenticated,
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_unconfirmed_not_allowed_authenticated() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_unconfirmed_not_allowed_authenticated() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
 				action_type: TestActionUnconfirmed::action_type(),
@@ -785,10 +791,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestActionUnconfirmed::run(RequestInput {
-				data: (),
-				context,
-			}));
+			let result = TestActionUnconfirmed::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -796,12 +799,13 @@ pub mod tests {
 					error: UserActionError::Authenticated,
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_unconfirmed_ok() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_unconfirmed_ok() {
+		run_test(|helper| async move {
 			let context = UserRequestContextBuilder::new()
 				.session(UserSession::Unconfirmed(
 					UserUnconfirmedSessionBuilder::new().user_id(4).build(),
@@ -820,10 +824,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = block_on(TestActionUnconfirmed::run(RequestInput {
-				data: (),
-				context,
-			}));
+			let result = TestActionUnconfirmed::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {
@@ -835,6 +836,7 @@ pub mod tests {
 				&helper.pop_log(),
 				&Some("INFO - user action test (unconfirmed): 4".into())
 			);
-		});
+		})
+		.await;
 	}
 }

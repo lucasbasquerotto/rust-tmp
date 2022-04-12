@@ -223,8 +223,6 @@ where
 
 #[cfg(test)]
 pub mod tests {
-	use futures::executor::block_on;
-
 	use crate::core::action::data::automatic_action_data::tests::AutomaticRequestContextBuilder;
 	use crate::core::action::data::automatic_action_data::AutomaticOutputInfo;
 	use crate::core::action::data::automatic_action_data::{
@@ -337,9 +335,9 @@ pub mod tests {
 		}
 	}
 
-	#[test]
-	fn test_input_context_internal() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_input_context_internal() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
@@ -350,12 +348,13 @@ pub mod tests {
 				.map(|ctx| RequestInput::<(), AutomaticRequestContext>::from(ctx).context),
 				"Test input context reversible change"
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_input_context_hook() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_input_context_hook() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let input = RequestInput { context, data: () };
 			assert_eq!(
@@ -364,19 +363,20 @@ pub mod tests {
 					.map(|ctx| RequestInput::<(), AutomaticRequestContext>::from(ctx).context),
 				"Test input context reversible change"
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_ok_hook() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_ok_hook() {
+		run_test(|helper| async move {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
 			};
 
-			let result = block_on(TestAction::run(RequestInput { data: (), context }));
+			let result = TestAction::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -388,19 +388,20 @@ pub mod tests {
 				&helper.pop_log(),
 				&Some("INFO - automatic action test (hook)".into())
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_ok_internal() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_ok_internal() {
+		run_test(|helper| async move {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
 				context: context.clone(),
 			};
 
-			let result = block_on(TestAction::run(RequestInput { data: (), context }));
+			let result = TestAction::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -412,19 +413,20 @@ pub mod tests {
 				&helper.pop_log(),
 				&Some("INFO - automatic action test (internal)".into())
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_hook_not_allowed() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_hook_not_allowed() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: TestActionHook::action_type(),
 				context: context.clone(),
 			};
 
-			let result = block_on(TestActionHook::run(RequestInput { data: (), context }));
+			let result = TestActionHook::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -432,19 +434,20 @@ pub mod tests {
 					error: AutomaticActionError::NotHook,
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_hook_ok() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_hook_ok() {
+		run_test(|helper| async move {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: TestActionHook::action_type(),
 				context: context.clone(),
 			};
 
-			let result = block_on(TestActionHook::run(RequestInput { data: (), context }));
+			let result = TestActionHook::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -456,19 +459,20 @@ pub mod tests {
 				&helper.pop_log(),
 				&Some("INFO - automatic action test (only hook)".into())
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_internal_not_allowed() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_internal_not_allowed() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: TestActionInternal::action_type(),
 				context: context.clone(),
 			};
 
-			let result = block_on(TestActionInternal::run(RequestInput { data: (), context }));
+			let result = TestActionInternal::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -476,19 +480,20 @@ pub mod tests {
 					error: AutomaticActionError::NotInternal,
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_internal_ok() {
-		run_test(|helper| {
+	#[tokio::test]
+	async fn test_internal_ok() {
+		run_test(|helper| async move {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: TestActionInternal::action_type(),
 				context: context.clone(),
 			};
 
-			let result = block_on(TestActionInternal::run(RequestInput { data: (), context }));
+			let result = TestActionInternal::run(RequestInput { data: (), context }).await;
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -500,6 +505,7 @@ pub mod tests {
 				&helper.pop_log(),
 				&Some("INFO - automatic action test (only internal)".into())
 			);
-		});
+		})
+		.await;
 	}
 }

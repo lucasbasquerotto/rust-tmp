@@ -1,6 +1,7 @@
 #[cfg(test)]
 pub mod tests {
 	use crate::lib::data::str::Str;
+	use futures::Future;
 	use log::{Level, LevelFilter, Metadata, Record};
 	use std::sync::{Arc, Mutex};
 
@@ -31,6 +32,7 @@ pub mod tests {
 		fn flush(&self) {}
 	}
 
+	#[derive(Clone, Copy)]
 	pub struct TestHelper;
 
 	impl TestHelper {
@@ -48,10 +50,11 @@ pub mod tests {
 		log::set_max_level(LevelFilter::Info);
 	}
 
-	pub fn run_test<F: Fn(&TestHelper)>(function: F) {
+	pub async fn run_test<T: Future<Output = ()>, F: Fn(TestHelper) -> T>(function: F) {
 		let helper = TestHelper;
 		helper.clear_log();
-		function(&helper);
+		function(helper).await;
+		let helper = TestHelper;
 		assert_eq!(helper.pop_log(), None, "Verify that no log remained");
 	}
 }

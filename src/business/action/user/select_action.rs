@@ -123,16 +123,19 @@ impl UserAction<Input, Output, Error> for Action {
 			let Input { id } = input.data;
 
 			let first = user_dao::Select::run(user_dao::SelectInput::First)
+				.await
 				.map_err(Box::new)
 				.map_err(Error::ExternalError)?
 				.into();
 
 			let last = user_dao::Select::run(user_dao::SelectInput::Last)
+				.await
 				.map_err(Box::new)
 				.map_err(Error::ExternalError)?
 				.into();
 
 			let by_id = user_dao::Select::run(user_dao::SelectInput::ById(id))
+				.await
 				.map_err(Box::new)
 				.map_err(Error::ExternalError)?
 				.into();
@@ -149,8 +152,6 @@ impl UserAction<Input, Output, Error> for Action {
 
 #[cfg(test)]
 mod tests {
-	use futures::executor::block_on;
-
 	use crate::core::action::data::action_data::{ActionContext, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserOutputInfo;
@@ -160,9 +161,9 @@ mod tests {
 	use crate::shared::data::user_data::UserId;
 	use crate::tests::test_utils::tests::run_test;
 
-	#[test]
-	fn test_ok() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_ok() {
+		run_test(|_| async {
 			let first = user_dao::SelectOutput {
 				id: UserId(11),
 				name: "User 20".into(),
@@ -197,10 +198,11 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = block_on(super::Action::run(RequestInput {
+			let result = super::Action::run(RequestInput {
 				data: super::Input { id: by_id.id },
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -213,6 +215,7 @@ mod tests {
 					},
 				}),
 			);
-		});
+		})
+		.await;
 	}
 }

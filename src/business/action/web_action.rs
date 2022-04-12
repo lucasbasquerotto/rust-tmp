@@ -118,7 +118,7 @@ impl UserAction<Input, Output, UserError> for User {
 	fn run_inner(self) -> ActionResult<Output, UserError> {
 		Box::pin(async move {
 			let Self(input) = &self;
-			run(&input.data).map_err(UserError::WebError)
+			run(&input.data).await.map_err(UserError::WebError)
 		})
 	}
 }
@@ -173,7 +173,7 @@ impl ModeratorAction<Input, Output, ModeratorError> for Moderator {
 	fn run_inner(self) -> ActionResult<Output, ModeratorError> {
 		Box::pin(async move {
 			let Self(input) = &self;
-			run(&input.data).map_err(ModeratorError::WebError)
+			run(&input.data).await.map_err(ModeratorError::WebError)
 		})
 	}
 }
@@ -228,7 +228,7 @@ impl AutomaticAction<Input, Output, AutomaticError> for Automatic {
 	fn run_inner(self) -> ActionResult<Output, AutomaticError> {
 		Box::pin(async move {
 			let Self(input) = &self;
-			run(&input.data).map_err(AutomaticError::WebError)
+			run(&input.data).await.map_err(AutomaticError::WebError)
 		})
 	}
 }
@@ -306,7 +306,7 @@ impl SharedErrorTrait<String> for reqwest::Error {
 ////////////////// FUNCTIONS ///////////////////
 ////////////////////////////////////////////////
 
-fn run(data: &Input) -> Result<Output, WebSharedError> {
+async fn run(data: &Input) -> Result<Output, WebSharedError> {
 	let url = format!(
 		"{host}{suffix}",
 		host = httpbin_base_url(),
@@ -319,7 +319,8 @@ fn run(data: &Input) -> Result<Output, WebSharedError> {
 		}
 	);
 
-	reqwest::blocking::get(&url)
+	reqwest::get(&url)
+		.await
 		.and_then(|req| {
 			if data.error {
 				Ok(req)
@@ -327,7 +328,9 @@ fn run(data: &Input) -> Result<Output, WebSharedError> {
 				req.error_for_status()
 			}
 		})
-		.and_then(|req| req.json::<Output>())
+		.map_err(|error| error.to_error(url.to_string()))?
+		.json::<Output>()
+		.await
 		.map_err(|error| error.to_error(url))
 }
 
@@ -337,7 +340,6 @@ fn run(data: &Input) -> Result<Output, WebSharedError> {
 
 #[cfg(test)]
 mod tests {
-	use futures::executor::block_on;
 	use mockito::mock;
 
 	use crate::{
@@ -368,9 +370,9 @@ mod tests {
 			.build()
 	}
 
-	#[test]
-	fn test_user_auth_ok() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_user_auth_ok() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
@@ -390,13 +392,14 @@ mod tests {
 				)
 				.create();
 
-			let result = block_on(super::User::run(RequestInput {
+			let result = super::User::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -408,12 +411,13 @@ mod tests {
 					},
 				}),
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_user_no_auth_ok() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_user_no_auth_ok() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
@@ -433,13 +437,14 @@ mod tests {
 				)
 				.create();
 
-			let result = block_on(super::User::run(RequestInput {
+			let result = super::User::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -451,12 +456,13 @@ mod tests {
 					},
 				}),
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_user_status_error() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_user_status_error() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
@@ -467,13 +473,14 @@ mod tests {
 				.with_status(403)
 				.create();
 
-			let result = block_on(super::User::run(RequestInput {
+			let result = super::User::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -498,25 +505,27 @@ mod tests {
 				&public_error.as_ref().unwrap().msg,
 				&"Web Action - Forbidden"
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_user_no_status_error() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_user_no_status_error() {
+		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
 				context: context.clone(),
 			};
 
-			let result = block_on(super::User::run(RequestInput {
+			let result = super::User::run(RequestInput {
 				data: super::Input {
 					error: true,
 					status: None,
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -538,12 +547,13 @@ mod tests {
 			let public_error = &result.unwrap_err().error.public_error();
 
 			assert_eq!(&public_error.as_ref().unwrap().msg, &"Web error occured");
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_mod_ok() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_mod_ok() {
+		run_test(|_| async {
 			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: super::MODERATOR_ACTION_TYPE,
@@ -563,13 +573,14 @@ mod tests {
 				)
 				.create();
 
-			let result = block_on(super::Moderator::run(RequestInput {
+			let result = super::Moderator::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -581,25 +592,27 @@ mod tests {
 					},
 				}),
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_mod_status_error() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_mod_status_error() {
+		run_test(|_| async {
 			let context = moderator_context();
 
 			let _m = mock("GET", "/mock/http/status/403")
 				.with_status(403)
 				.create();
 
-			let result = block_on(super::Moderator::run(RequestInput {
+			let result = super::Moderator::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
 				context: context.clone(),
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -627,21 +640,23 @@ mod tests {
 				&public_error.as_ref().unwrap().msg,
 				&"Web Action - Forbidden"
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_mod_no_status_error() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_mod_no_status_error() {
+		run_test(|_| async {
 			let context = moderator_context();
 
-			let result = block_on(super::Moderator::run(RequestInput {
+			let result = super::Moderator::run(RequestInput {
 				data: super::Input {
 					error: true,
 					status: None,
 				},
 				context: context.clone(),
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -666,12 +681,13 @@ mod tests {
 			let public_error = &result.unwrap_err().error.public_error();
 
 			assert_eq!(&public_error.as_ref().unwrap().msg, &"Web error occured");
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_auto_internal_ok() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_auto_internal_ok() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
@@ -691,13 +707,14 @@ mod tests {
 				)
 				.create();
 
-			let result = block_on(super::Automatic::run(RequestInput {
+			let result = super::Automatic::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -709,12 +726,13 @@ mod tests {
 					},
 				})
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_auto_status_error() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_auto_status_error() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
@@ -725,13 +743,14 @@ mod tests {
 				.with_status(403)
 				.create();
 
-			let result = block_on(super::Automatic::run(RequestInput {
+			let result = super::Automatic::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
 				context,
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -756,21 +775,23 @@ mod tests {
 				&public_error.as_ref().unwrap().msg,
 				&"Web Action - Forbidden"
 			);
-		});
+		})
+		.await;
 	}
 
-	#[test]
-	fn test_auto_no_status_error() {
-		run_test(|_| {
+	#[tokio::test]
+	async fn test_auto_no_status_error() {
+		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_internal();
 
-			let result = block_on(super::Automatic::run(RequestInput {
+			let result = super::Automatic::run(RequestInput {
 				data: super::Input {
 					error: true,
 					status: None,
 				},
 				context: context.clone(),
-			}));
+			})
+			.await;
 
 			assert_eq!(
 				&result,
@@ -795,6 +816,7 @@ mod tests {
 			let public_error = &result.unwrap_err().error.public_error();
 
 			assert_eq!(&public_error.as_ref().unwrap().msg, &"Web error occured");
-		});
+		})
+		.await;
 	}
 }
