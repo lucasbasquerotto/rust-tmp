@@ -1,22 +1,25 @@
 use crate::{
-	core::action::definition::{
-		action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
-		action_helpers::DescriptiveInfo,
-	},
-	lib::data::str::Str,
-};
-use crate::{
 	core::action::{
 		action_type::general_action_type::ActionType,
 		data::{
 			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
 			moderator_action_data::{
 				ModeratorActionError, ModeratorErrorInfo, ModeratorOutputInfo,
-				ModeratorRequestContext, ModeratorRequestInput, ModeratorSession,
+				ModeratorRequestContext, ModeratorSession,
 			},
 		},
 	},
 	lib::data::result::AsyncResult,
+};
+use crate::{
+	core::action::{
+		data::moderator_action_data::ModeratorActionInput,
+		definition::{
+			action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
+			action_helpers::DescriptiveInfo,
+		},
+	},
+	lib::data::str::Str,
 };
 
 ////////////////////////////////////////////////
@@ -64,7 +67,7 @@ impl ActionError for ModeratorActionError {
 ////////////////////////////////////////////////
 
 impl<I: 'static, O, E, T>
-	Action<ModeratorRequestInput<I>, ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> for T
+	Action<ModeratorActionInput<I>, ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -73,24 +76,34 @@ where
 	Self: Sized,
 {
 	fn run(
-		input: ModeratorRequestInput<I>,
+		input: ModeratorActionInput<I>,
 	) -> AsyncResult<ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> {
 		Box::pin(async {
-			let context = &input.context;
+			let context = input
+				.as_ref()
+				.map(|ok_input| Some(ok_input.context.clone()))
+				.unwrap_or(None);
 			let action_context = ActionContext {
 				action_type: Self::action_type(),
 				context: context.clone(),
 			};
 			let action_type = Self::action_type();
-			let allowed =
-				context.session.admin || context.session.allowed_actions.contains(&action_type);
 
-			let action_result = if allowed {
-				Self::new(Box::pin(async { Ok(input) }))
-			} else {
-				Self::new(Box::pin(async move {
-					Err(ModeratorActionError::NotAllowed(action_type))
-				}))
+			let action_result = match input {
+				Ok(ok_input) => {
+					let allowed = ok_input.context.session.admin
+						|| ok_input
+							.context
+							.session
+							.allowed_actions
+							.contains(&action_type);
+					if allowed {
+						Self::new(Ok(ok_input))
+					} else {
+						Self::new(Err(ModeratorActionError::NotAllowed(action_type)))
+					}
+				}
+				Err(error) => Self::new(Err(error)),
 			}
 			.await;
 
@@ -150,10 +163,10 @@ pub mod tests {
 		}
 
 		fn new(
-			input: AsyncResult<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
+			input: Result<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
 		) -> AsyncResult<Self, ModeratorActionError> {
 			Box::pin(async {
-				match input.await {
+				match input {
 					Err(err) => Err(err),
 					Ok(ok_input) => Ok(Self(ok_input)),
 				}
@@ -184,10 +197,10 @@ pub mod tests {
 			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = TestAction::run(RequestInput { data: (), context }).await;
+			let result = TestAction::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -205,10 +218,10 @@ pub mod tests {
 			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = TestAction::run(RequestInput { data: (), context }).await;
+			let result = TestAction::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {
@@ -230,10 +243,10 @@ pub mod tests {
 			let context = ModeratorRequestContextBuilder::build_admin();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = TestAction::run(RequestInput { data: (), context }).await;
+			let result = TestAction::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {

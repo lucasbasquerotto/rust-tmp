@@ -56,7 +56,7 @@ impl ModeratorAction<(), (), Error> for Action {
 
 	fn new(input: ModeratorActionInput<()>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
-			match input.await {
+			match input {
 				Err(err) => Err(Error::ModeratorError(err)),
 				Ok(ok_input) => Ok(Self(ok_input)),
 			}
@@ -107,10 +107,10 @@ pub mod tests {
 			let context = ModeratorRequestContextBuilder::new().build();
 			let action_context = ActionContext {
 				action_type: super::MODERATOR_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = super::Action::run(RequestInput { data: (), context }).await;
+			let result = super::Action::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -130,10 +130,10 @@ pub mod tests {
 			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: super::MODERATOR_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = super::Action::run(RequestInput { data: (), context }).await;
+			let result = super::Action::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {
@@ -152,10 +152,10 @@ pub mod tests {
 			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: super::MODERATOR_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = super::Action::run(RequestInput { data: (), context }).await;
+			let result = super::Action::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {

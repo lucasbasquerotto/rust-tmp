@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use crate::core::action::{
+	data::automatic_action_data::AutomaticActionInput,
 	definition::action::{Action, ActionError, AutomaticAction},
 	definition::action::{ActionInput, ActionOutput},
 };
@@ -10,8 +11,7 @@ use crate::{
 			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
 			automatic_action_data::{
 				AutomaticActionError, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequest,
-				AutomaticRequestContext, AutomaticRequestInput, HookRequestContext,
-				InternalRequestContext,
+				AutomaticRequestContext, HookRequestContext, InternalRequestContext,
 			},
 		},
 		definition::action_helpers::DescriptiveInfo,
@@ -178,7 +178,7 @@ impl ActionError for AutomaticActionError {
 ////////////////////////////////////////////////
 
 impl<I: 'static, O, E, T>
-	Action<AutomaticRequestInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> for T
+	Action<AutomaticActionInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -186,15 +186,18 @@ where
 	T: AutomaticAction<I, O, E>,
 {
 	fn run(
-		input: AutomaticRequestInput<I>,
+		input: AutomaticActionInput<I>,
 	) -> AsyncResult<AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> {
 		Box::pin(async {
 			let action_context = ActionContext {
 				action_type: Self::action_type(),
-				context: input.context.clone(),
+				context: input
+					.as_ref()
+					.map(|ok_input| Some(ok_input.context.clone()))
+					.unwrap_or(None),
 			};
 
-			let action_result = Self::new(Box::pin(async { Ok(input) })).await;
+			let action_result = Self::new(input).await;
 
 			match action_result {
 				Ok(action) => {
@@ -258,12 +261,9 @@ pub mod tests {
 		}
 
 		fn new(
-			input: AsyncResult<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
+			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
 		) -> AsyncResult<Self, AutomaticActionError> {
-			Box::pin(async {
-				let ok_input = input.await?;
-				Ok(Self(ok_input))
-			})
+			Box::pin(async { Ok(Self(input?)) })
 		}
 
 		fn run_inner(self) -> AsyncResult<(), AutomaticActionError> {
@@ -283,10 +283,10 @@ pub mod tests {
 		}
 
 		fn new(
-			input: AsyncResult<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
+			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
 		) -> AsyncResult<Self, AutomaticActionError> {
 			Box::pin(async {
-				match input.await {
+				match input {
 					Err(err) => Err(err),
 					Ok(ok_input) => {
 						let real_input = ok_input.into();
@@ -314,10 +314,10 @@ pub mod tests {
 		}
 
 		fn new(
-			input: AsyncResult<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
+			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
 		) -> AsyncResult<Self, AutomaticActionError> {
 			Box::pin(async {
-				match input.await {
+				match input {
 					Err(err) => Err(err),
 					Ok(ok_input) => {
 						let real_input = ok_input.into();
@@ -377,10 +377,10 @@ pub mod tests {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = TestAction::run(RequestInput { data: (), context }).await;
+			let result = TestAction::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -402,10 +402,10 @@ pub mod tests {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = TestAction::run(RequestInput { data: (), context }).await;
+			let result = TestAction::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -427,10 +427,10 @@ pub mod tests {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: TestActionHook::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = TestActionHook::run(RequestInput { data: (), context }).await;
+			let result = TestActionHook::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -448,10 +448,10 @@ pub mod tests {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: TestActionHook::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = TestActionHook::run(RequestInput { data: (), context }).await;
+			let result = TestActionHook::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -473,10 +473,10 @@ pub mod tests {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: TestActionInternal::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = TestActionInternal::run(RequestInput { data: (), context }).await;
+			let result = TestActionInternal::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -494,10 +494,10 @@ pub mod tests {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: TestActionInternal::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = TestActionInternal::run(RequestInput { data: (), context }).await;
+			let result = TestActionInternal::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {

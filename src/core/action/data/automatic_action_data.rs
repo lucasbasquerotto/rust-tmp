@@ -1,11 +1,8 @@
-use crate::{
-	core::action::{
-		action_type::automatic_action_type::AutomaticActionType,
-		data::action_data::{
-			ActionErrorInfo, ActionResultInfo, Application, Request, RequestContext, RequestInput,
-		},
+use crate::core::action::{
+	action_type::automatic_action_type::AutomaticActionType,
+	data::action_data::{
+		ActionErrorInfo, ActionResultInfo, Application, Request, RequestContext, RequestInput,
 	},
-	lib::data::result::AsyncResult,
 };
 use std::fmt::Debug;
 
@@ -48,7 +45,7 @@ pub type InternalRequestInput<I> = RequestInput<I, InternalRequestContext>;
 
 pub type HookRequestInput<I> = RequestInput<I, HookRequestContext>;
 
-pub type AutomaticActionInput<I> = AsyncResult<AutomaticRequestInput<I>, AutomaticActionError>;
+pub type AutomaticActionInput<I> = Result<AutomaticRequestInput<I>, AutomaticActionError>;
 
 pub type AutomaticOutputInfo<D> = ActionResultInfo<AutomaticActionType, AutomaticRequestContext, D>;
 

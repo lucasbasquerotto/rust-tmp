@@ -114,7 +114,7 @@ impl UserAction<Input, Output, UserError> for User {
 	}
 
 	fn new(input: UserActionInput<Input>) -> AsyncResult<Self, UserError> {
-		Box::pin(async { input.await.map(Self).map_err(UserError::UserError) })
+		Box::pin(async { input.map(Self).map_err(UserError::UserError) })
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, UserError> {
@@ -164,12 +164,7 @@ impl ModeratorAction<Input, Output, ModeratorError> for Moderator {
 	}
 
 	fn new(input: ModeratorActionInput<Input>) -> AsyncResult<Self, ModeratorError> {
-		Box::pin(async {
-			input
-				.await
-				.map(Self)
-				.map_err(ModeratorError::ModeratorError)
-		})
+		Box::pin(async { input.map(Self).map_err(ModeratorError::ModeratorError) })
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, ModeratorError> {
@@ -219,12 +214,7 @@ impl AutomaticAction<Input, Output, AutomaticError> for Automatic {
 	}
 
 	fn new(input: AutomaticActionInput<Input>) -> AsyncResult<Self, AutomaticError> {
-		Box::pin(async {
-			input
-				.await
-				.map(Self)
-				.map_err(AutomaticError::AutomaticError)
-		})
+		Box::pin(async { input.map(Self).map_err(AutomaticError::AutomaticError) })
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, AutomaticError> {
@@ -378,7 +368,7 @@ mod tests {
 			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			let _m = mock("GET", "/mock/http/get")
@@ -394,13 +384,13 @@ mod tests {
 				)
 				.create();
 
-			let result = super::User::run(RequestInput {
+			let result = super::User::run(Ok(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -423,7 +413,7 @@ mod tests {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			let _m = mock("GET", "/mock/http/get")
@@ -439,13 +429,13 @@ mod tests {
 				)
 				.create();
 
-			let result = super::User::run(RequestInput {
+			let result = super::User::run(Ok(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -468,20 +458,20 @@ mod tests {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			let _m = mock("GET", "/mock/http/status/403")
 				.with_status(403)
 				.create();
 
-			let result = super::User::run(RequestInput {
+			let result = super::User::run(Ok(RequestInput {
 				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -517,16 +507,16 @@ mod tests {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = super::User::run(RequestInput {
+			let result = super::User::run(Ok(RequestInput {
 				data: super::Input {
 					error: true,
 					status: None,
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -559,7 +549,7 @@ mod tests {
 			let context = moderator_context();
 			let action_context = ActionContext {
 				action_type: super::MODERATOR_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			let _m = mock("GET", "/mock/http/get")
@@ -575,13 +565,13 @@ mod tests {
 				)
 				.create();
 
-			let result = super::Moderator::run(RequestInput {
+			let result = super::Moderator::run(Ok(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -607,13 +597,13 @@ mod tests {
 				.with_status(403)
 				.create();
 
-			let result = super::Moderator::run(RequestInput {
+			let result = super::Moderator::run(Ok(RequestInput {
 				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
 				context: context.clone(),
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -621,7 +611,7 @@ mod tests {
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
 						action_type: super::MODERATOR_ACTION_TYPE,
-						context,
+						context: Some(context),
 					},
 					error: super::ModeratorError::WebError(super::WebSharedError::Reqwest(
 						ErrorInfo::mock(super::UrlData {
@@ -651,13 +641,13 @@ mod tests {
 		run_test(|_| async {
 			let context = moderator_context();
 
-			let result = super::Moderator::run(RequestInput {
+			let result = super::Moderator::run(Ok(RequestInput {
 				data: super::Input {
 					error: true,
 					status: None,
 				},
 				context: context.clone(),
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -665,7 +655,7 @@ mod tests {
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
 						action_type: super::MODERATOR_ACTION_TYPE,
-						context,
+						context: Some(context),
 					},
 					error: super::ModeratorError::WebError(super::WebSharedError::Reqwest(
 						super::ErrorInfo::mock(super::UrlData {
@@ -693,7 +683,7 @@ mod tests {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			let _m = mock("GET", "/mock/http/get")
@@ -709,13 +699,13 @@ mod tests {
 				)
 				.create();
 
-			let result = super::Automatic::run(RequestInput {
+			let result = super::Automatic::run(Ok(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -738,20 +728,20 @@ mod tests {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			let _m = mock("GET", "/mock/http/status/403")
 				.with_status(403)
 				.create();
 
-			let result = super::Automatic::run(RequestInput {
+			let result = super::Automatic::run(Ok(RequestInput {
 				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -786,13 +776,13 @@ mod tests {
 		run_test(|_| async {
 			let context = AutomaticRequestContextBuilder::build_internal();
 
-			let result = super::Automatic::run(RequestInput {
+			let result = super::Automatic::run(Ok(RequestInput {
 				data: super::Input {
 					error: true,
 					status: None,
 				},
 				context: context.clone(),
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -800,7 +790,7 @@ mod tests {
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
 						action_type: super::AUTOMATIC_ACTION_TYPE,
-						context,
+						context: Some(context),
 					},
 					error: super::AutomaticError::WebError(super::WebSharedError::Reqwest(
 						ErrorInfo::mock(super::UrlData {

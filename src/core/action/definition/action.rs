@@ -10,13 +10,11 @@ use crate::{
 			action_data::{DescriptiveError, ErrorData},
 			automatic_action_data::{
 				AutomaticActionInput, AutomaticErrorInfo, AutomaticOutputInfo,
-				AutomaticRequestInput,
 			},
 			moderator_action_data::{
 				ModeratorActionInput, ModeratorErrorInfo, ModeratorOutputInfo,
-				ModeratorRequestInput,
 			},
-			user_action_data::{UserActionInput, UserErrorInfo, UserOutputInfo, UserRequestInput},
+			user_action_data::{UserActionInput, UserErrorInfo, UserOutputInfo},
 		},
 	},
 	lib::data::result::AsyncResult,
@@ -69,7 +67,7 @@ where
 ////////////////////////////////////////////////
 
 pub trait UserAction<I, O, E>:
-	Action<UserRequestInput<I>, UserOutputInfo<O>, UserErrorInfo<E>>
+	Action<UserActionInput<I>, UserOutputInfo<O>, UserErrorInfo<E>>
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -86,7 +84,7 @@ where
 ////////////////////////////////////////////////
 
 pub trait ModeratorAction<I, O, E>:
-	Action<ModeratorRequestInput<I>, ModeratorOutputInfo<O>, ModeratorErrorInfo<E>>
+	Action<ModeratorActionInput<I>, ModeratorOutputInfo<O>, ModeratorErrorInfo<E>>
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -103,7 +101,7 @@ where
 ////////////////////////////////////////////////
 
 pub trait AutomaticAction<I, O, E>:
-	Action<AutomaticRequestInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>>
+	Action<AutomaticActionInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>>
 where
 	I: ActionInput,
 	O: ActionOutput,

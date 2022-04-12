@@ -40,7 +40,7 @@ pub type ActionRequestResult<T> = Result<T, Option<ErrorData>>;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ActionContext<T: ActionType, C: RequestContext> {
 	pub action_type: T,
-	pub context: C,
+	pub context: Option<C>,
 }
 
 #[cfg(not(test))]

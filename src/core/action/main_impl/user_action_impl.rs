@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use crate::core::action::{
+	data::user_action_data::UserActionInput,
 	definition::action::{Action, ActionError, UserAction},
 	definition::action::{ActionInput, ActionOutput},
 };
@@ -10,8 +11,8 @@ use crate::{
 			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
 			user_action_data::{
 				UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
-				UserNoAuthRequestContext, UserOutputInfo, UserRequestContext, UserRequestInput,
-				UserSession, UserUnconfirmedRequestContext, UserUnconfirmedSession,
+				UserNoAuthRequestContext, UserOutputInfo, UserRequestContext, UserSession,
+				UserUnconfirmedRequestContext, UserUnconfirmedSession,
 			},
 		},
 		definition::action_helpers::DescriptiveInfo,
@@ -262,21 +263,24 @@ impl ActionError for UserActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-impl<I: 'static, O, E, T> Action<UserRequestInput<I>, UserOutputInfo<O>, UserErrorInfo<E>> for T
+impl<I: 'static, O, E, T> Action<UserActionInput<I>, UserOutputInfo<O>, UserErrorInfo<E>> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
 	E: ActionError,
 	T: UserAction<I, O, E>,
 {
-	fn run(input: UserRequestInput<I>) -> AsyncResult<UserOutputInfo<O>, UserErrorInfo<E>> {
+	fn run(input: UserActionInput<I>) -> AsyncResult<UserOutputInfo<O>, UserErrorInfo<E>> {
 		Box::pin(async {
 			let action_context = ActionContext {
 				action_type: Self::action_type(),
-				context: input.context.clone(),
+				context: input
+					.as_ref()
+					.map(|ok_input| Some(ok_input.context.clone()))
+					.unwrap_or(None),
 			};
 
-			match Self::new(Box::pin(async { Ok(input) })).await {
+			match Self::new(input).await {
 				Ok(action) => {
 					let result = action.run_inner().await;
 
@@ -343,12 +347,9 @@ pub mod tests {
 		}
 
 		fn new(
-			input: AsyncResult<RequestInput<(), UserRequestContext>, UserActionError>,
+			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> AsyncResult<Self, UserActionError> {
-			Box::pin(async {
-				let ok_input = input.await?;
-				Ok(Self(ok_input))
-			})
+			Box::pin(async { Ok(Self(input?)) })
 		}
 
 		fn run_inner(self) -> AsyncResult<(), UserActionError> {
@@ -373,10 +374,10 @@ pub mod tests {
 		}
 
 		fn new(
-			input: AsyncResult<RequestInput<(), UserRequestContext>, UserActionError>,
+			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> AsyncResult<Self, UserActionError> {
 			Box::pin(async {
-				match input.await {
+				match input {
 					Err(err) => Err(err),
 					Ok(ok_input) => {
 						let real_input = ok_input.into();
@@ -404,10 +405,10 @@ pub mod tests {
 		}
 
 		fn new(
-			input: AsyncResult<RequestInput<(), UserRequestContext>, UserActionError>,
+			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> AsyncResult<Self, UserActionError> {
 			Box::pin(async {
-				match input.await {
+				match input {
 					Err(err) => Err(err),
 					Ok(ok_input) => {
 						let real_input = ok_input.into();
@@ -438,10 +439,10 @@ pub mod tests {
 		}
 
 		fn new(
-			input: AsyncResult<RequestInput<(), UserRequestContext>, UserActionError>,
+			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> AsyncResult<Self, UserActionError> {
 			Box::pin(async {
-				match input.await {
+				match input {
 					Err(err) => Err(err),
 					Ok(ok_input) => {
 						let real_input = ok_input.into();
@@ -502,7 +503,7 @@ pub mod tests {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -513,7 +514,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestAction::run(RequestInput { data: (), context }).await;
+			let result = TestAction::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {
@@ -536,7 +537,7 @@ pub mod tests {
 				.build();
 			let action_context = ActionContext {
 				action_type: TestAction::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -547,7 +548,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestAction::run(RequestInput { data: (), context }).await;
+			let result = TestAction::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {
@@ -569,7 +570,7 @@ pub mod tests {
 			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
 				action_type: TestActionNoAuth::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -580,7 +581,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionNoAuth::run(RequestInput { data: (), context }).await;
+			let result = TestActionNoAuth::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -598,7 +599,7 @@ pub mod tests {
 			let context = UserRequestContextBuilder::build_unconfirmed();
 			let action_context = ActionContext {
 				action_type: TestActionNoAuth::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -609,7 +610,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionNoAuth::run(RequestInput { data: (), context }).await;
+			let result = TestActionNoAuth::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -627,7 +628,7 @@ pub mod tests {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestActionNoAuth::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -638,7 +639,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionNoAuth::run(RequestInput { data: (), context }).await;
+			let result = TestActionNoAuth::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {
@@ -660,7 +661,7 @@ pub mod tests {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestActionAuth::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -671,7 +672,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionAuth::run(RequestInput { data: (), context }).await;
+			let result = TestActionAuth::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -689,7 +690,7 @@ pub mod tests {
 			let context = UserRequestContextBuilder::build_unconfirmed();
 			let action_context = ActionContext {
 				action_type: TestActionAuth::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -700,7 +701,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionAuth::run(RequestInput { data: (), context }).await;
+			let result = TestActionAuth::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -722,7 +723,7 @@ pub mod tests {
 				.build();
 			let action_context = ActionContext {
 				action_type: TestActionAuth::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -733,7 +734,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionAuth::run(RequestInput { data: (), context }).await;
+			let result = TestActionAuth::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {
@@ -755,7 +756,7 @@ pub mod tests {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: TestActionUnconfirmed::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -766,7 +767,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionUnconfirmed::run(RequestInput { data: (), context }).await;
+			let result = TestActionUnconfirmed::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -784,7 +785,7 @@ pub mod tests {
 			let context = UserRequestContextBuilder::build_auth();
 			let action_context = ActionContext {
 				action_type: TestActionUnconfirmed::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -795,7 +796,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionUnconfirmed::run(RequestInput { data: (), context }).await;
+			let result = TestActionUnconfirmed::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -817,7 +818,7 @@ pub mod tests {
 				.build();
 			let action_context = ActionContext {
 				action_type: TestActionUnconfirmed::action_type(),
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
 			assert_eq!(
@@ -828,7 +829,7 @@ pub mod tests {
 				"Test context reversible change"
 			);
 
-			let result = TestActionUnconfirmed::run(RequestInput { data: (), context }).await;
+			let result = TestActionUnconfirmed::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {

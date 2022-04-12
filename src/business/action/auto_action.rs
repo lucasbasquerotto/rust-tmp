@@ -83,7 +83,6 @@ impl AutomaticAction<Input, Output, Error> for Internal {
 	fn new(input: AutomaticActionInput<Input>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
 			input
-				.await
 				.and_then(|ok_input| ok_input.into())
 				.map(Self)
 				.map_err(Error::AutomaticError)
@@ -112,7 +111,7 @@ impl AutomaticAction<Input, Output, Error> for Hook {
 
 	fn new(input: AutomaticActionInput<Input>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
-			match input.await {
+			match input {
 				Err(err) => Err(Error::AutomaticError(err)),
 				Ok(ok_input) => {
 					let real_input = ok_input.into();
@@ -171,16 +170,16 @@ mod tests {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = super::Internal::run(RequestInput {
+			let result = super::Internal::run(Ok(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Error)".into(),
 					param2: 1,
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -200,16 +199,16 @@ mod tests {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = super::Internal::run(RequestInput {
+			let result = super::Internal::run(Ok(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Ok)".into(),
 					param2: 2,
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -234,16 +233,16 @@ mod tests {
 			let context = AutomaticRequestContextBuilder::build_internal();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = super::Hook::run(RequestInput {
+			let result = super::Hook::run(Ok(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Error)".into(),
 					param2: 3,
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -263,16 +262,16 @@ mod tests {
 			let context = AutomaticRequestContextBuilder::build_hook();
 			let action_context = ActionContext {
 				action_type: super::AUTOMATIC_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = super::Hook::run(RequestInput {
+			let result = super::Hook::run(Ok(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Ok)".into(),
 					param2: 4,
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(

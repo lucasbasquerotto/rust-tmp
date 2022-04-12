@@ -55,7 +55,7 @@ impl UserAction<(), (), Error> for Action {
 	}
 
 	fn new(input: UserActionInput<()>) -> AsyncResult<Self, Error> {
-		Box::pin(async { input.await.map(Self).map_err(Error::UserError) })
+		Box::pin(async { input.map(Self).map_err(Error::UserError) })
 	}
 
 	fn run_inner(self) -> AsyncResult<(), Error> {
@@ -84,9 +84,9 @@ mod tests {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
-			let result = super::Action::run(RequestInput { data: (), context }).await;
+			let result = super::Action::run(Ok(RequestInput { data: (), context })).await;
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {

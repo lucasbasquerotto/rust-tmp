@@ -95,7 +95,6 @@ impl UserAction<Input, Output, Error> for Action {
 	fn new(input: UserActionInput<Input>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
 			input
-				.await
 				.and_then(|ok_input| ok_input.into())
 				.map(Self)
 				.map_err(Box::new)
@@ -142,14 +141,14 @@ mod tests {
 		run_test(|_| async {
 			let context = UserRequestContextBuilder::build_auth();
 
-			let result = super::Action::run(RequestInput {
+			let result = super::Action::run(Ok(RequestInput {
 				data: super::Input {
 					name: "User 01".into(),
 					email: "user-01@domain.test".into(),
 					pass: "p4$$w0rd".into(),
 				},
 				context: context.clone(),
-			})
+			}))
 			.await;
 
 			assert_eq!(
@@ -157,7 +156,7 @@ mod tests {
 				&Err(ActionErrorInfo {
 					action_context: ActionContext {
 						action_type: super::USER_ACTION_TYPE,
-						context,
+						context: Some(context),
 					},
 					error: super::Error::UserError(Box::new(UserActionError::Authenticated)),
 				}),
@@ -186,17 +185,17 @@ mod tests {
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
 				action_type: super::USER_ACTION_TYPE,
-				context: context.clone(),
+				context: Some(context.clone()),
 			};
 
-			let result = super::Action::run(RequestInput {
+			let result = super::Action::run(Ok(RequestInput {
 				data: super::Input {
 					name: name.into(),
 					email: email.into(),
 					pass: pass.into(),
 				},
 				context,
-			})
+			}))
 			.await;
 
 			assert_eq!(

@@ -50,10 +50,11 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 				.map(|data| data.msg)
 				.unwrap_or_else(|| "".into())
 		);
-		let context = format!(
-			"[context={context}]",
-			context = error_context.context.description(),
-		);
+		let context = error_context
+			.context
+			.as_ref()
+			.map(|context| format!("[context={context}]", context = context.description()))
+			.unwrap_or_else(|| "".into());
 		let data = private_error
 			.data
 			.as_ref()
@@ -177,7 +178,7 @@ mod tests {
 			let error = TestActionError(action_type);
 			let error_context = ActionContext {
 				action_type,
-				context,
+				context: Some(context),
 			};
 			let error_info = ActionErrorInfo {
 				action_context: error_context,
@@ -225,7 +226,7 @@ mod tests {
 			let error = TestActionError(action_type);
 			let error_context = ActionContext {
 				action_type,
-				context,
+				context: Some(context),
 			};
 			let error_info = ActionErrorInfo {
 				action_context: error_context,
