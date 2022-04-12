@@ -53,7 +53,7 @@ impl ModeratorAction<(), (), Error> for Action {
 	}
 
 	fn new(input: ModeratorActionInput<()>) -> ActionResult<Self, Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			match input.await {
 				Err(err) => Err(Error::ModeratorError(err)),
 				Ok(ok_input) => Ok(Self(ok_input)),
@@ -62,7 +62,7 @@ impl ModeratorAction<(), (), Error> for Action {
 	}
 
 	fn run_inner(self) -> ActionResult<(), Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			error!("echo error action");
 			Ok(())
 		})

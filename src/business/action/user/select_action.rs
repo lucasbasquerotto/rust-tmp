@@ -108,7 +108,7 @@ impl UserAction<Input, Output, Error> for Action {
 	}
 
 	fn new(input: UserActionInput<Input>) -> ActionResult<Self, Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			input
 				.await
 				.map(Self)
@@ -118,7 +118,7 @@ impl UserAction<Input, Output, Error> for Action {
 	}
 
 	fn run_inner(self) -> ActionResult<Output, Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			let Self(input) = self;
 			let Input { id } = input.data;
 

@@ -53,11 +53,11 @@ impl UserAction<(), (), Error> for Action {
 	}
 
 	fn new(input: UserActionInput<()>) -> ActionResult<Self, Error> {
-		Box::pin(async move { input.await.map(Self).map_err(Error::UserError) })
+		Box::pin(async { input.await.map(Self).map_err(Error::UserError) })
 	}
 
 	fn run_inner(self) -> ActionResult<(), Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			println!("TODO: logout");
 			Ok(())
 		})

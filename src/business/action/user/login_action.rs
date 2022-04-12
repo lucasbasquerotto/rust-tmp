@@ -77,7 +77,7 @@ impl UserAction<Input, Output, Error> for Action {
 	}
 
 	fn new(input: UserActionInput<Input>) -> ActionResult<Self, Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			input
 				.await
 				.and_then(|ok_input| ok_input.into())

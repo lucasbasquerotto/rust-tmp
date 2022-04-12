@@ -93,7 +93,7 @@ impl UserAction<Input, Output, Error> for Action {
 	}
 
 	fn new(input: UserActionInput<Input>) -> ActionResult<Self, Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			input
 				.await
 				.and_then(|ok_input| ok_input.into())
@@ -104,7 +104,7 @@ impl UserAction<Input, Output, Error> for Action {
 	}
 
 	fn run_inner(self) -> ActionResult<Output, Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			let Self(input) = self;
 			let Input { name, email, pass } = input.data;
 			let user_dao::InsertOutput { id } = user_dao::Insert::run(user_dao::InsertInput {

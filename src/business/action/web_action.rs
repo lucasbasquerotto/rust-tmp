@@ -112,7 +112,7 @@ impl UserAction<Input, Output, UserError> for User {
 	}
 
 	fn new(input: UserActionInput<Input>) -> ActionResult<Self, UserError> {
-		Box::pin(async move { input.await.map(Self).map_err(UserError::UserError) })
+		Box::pin(async { input.await.map(Self).map_err(UserError::UserError) })
 	}
 
 	fn run_inner(self) -> ActionResult<Output, UserError> {
@@ -162,7 +162,7 @@ impl ModeratorAction<Input, Output, ModeratorError> for Moderator {
 	}
 
 	fn new(input: ModeratorActionInput<Input>) -> ActionResult<Self, ModeratorError> {
-		Box::pin(async move {
+		Box::pin(async {
 			input
 				.await
 				.map(Self)
@@ -217,7 +217,7 @@ impl AutomaticAction<Input, Output, AutomaticError> for Automatic {
 	}
 
 	fn new(input: AutomaticActionInput<Input>) -> ActionResult<Self, AutomaticError> {
-		Box::pin(async move {
+		Box::pin(async {
 			input
 				.await
 				.map(Self)

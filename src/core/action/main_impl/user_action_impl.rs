@@ -267,13 +267,13 @@ where
 	T: UserAction<I, O, E>,
 {
 	fn run(input: UserRequestInput<I>) -> ActionResult<UserOutputInfo<O>, UserErrorInfo<E>> {
-		Box::pin(async move {
+		Box::pin(async {
 			let action_context = ActionContext {
 				action_type: Self::action_type(),
 				context: input.context.clone(),
 			};
 
-			match Self::new(Box::pin(async move { Ok(input) })).await {
+			match Self::new(Box::pin(async { Ok(input) })).await {
 				Ok(action) => {
 					let result = action.run_inner().await;
 
@@ -343,7 +343,7 @@ pub mod tests {
 		fn new(
 			input: ActionResult<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> ActionResult<Self, UserActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				let ok_input = input.await?;
 				Ok(Self(ok_input))
 			})
@@ -373,7 +373,7 @@ pub mod tests {
 		fn new(
 			input: ActionResult<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> ActionResult<Self, UserActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				match input.await {
 					Err(err) => Err(err),
 					Ok(ok_input) => {
@@ -389,7 +389,7 @@ pub mod tests {
 		}
 
 		fn run_inner(self) -> ActionResult<(), UserActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				info!("user action test (no auth)");
 				Ok(())
 			})
@@ -404,7 +404,7 @@ pub mod tests {
 		fn new(
 			input: ActionResult<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> ActionResult<Self, UserActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				match input.await {
 					Err(err) => Err(err),
 					Ok(ok_input) => {
@@ -438,7 +438,7 @@ pub mod tests {
 		fn new(
 			input: ActionResult<RequestInput<(), UserRequestContext>, UserActionError>,
 		) -> ActionResult<Self, UserActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				match input.await {
 					Err(err) => Err(err),
 					Ok(ok_input) => {

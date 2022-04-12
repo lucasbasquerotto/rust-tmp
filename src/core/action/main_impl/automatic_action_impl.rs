@@ -185,13 +185,13 @@ where
 	fn run(
 		input: AutomaticRequestInput<I>,
 	) -> ActionResult<AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> {
-		Box::pin(async move {
+		Box::pin(async {
 			let action_context = ActionContext {
 				action_type: Self::action_type(),
 				context: input.context.clone(),
 			};
 
-			let action_result = Self::new(Box::pin(async move { Ok(input) })).await;
+			let action_result = Self::new(Box::pin(async { Ok(input) })).await;
 
 			match action_result {
 				Ok(action) => {
@@ -258,7 +258,7 @@ pub mod tests {
 		fn new(
 			input: ActionResult<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
 		) -> ActionResult<Self, AutomaticActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				let ok_input = input.await?;
 				Ok(Self(ok_input))
 			})
@@ -283,7 +283,7 @@ pub mod tests {
 		fn new(
 			input: ActionResult<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
 		) -> ActionResult<Self, AutomaticActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				match input.await {
 					Err(err) => Err(err),
 					Ok(ok_input) => {
@@ -299,7 +299,7 @@ pub mod tests {
 		}
 
 		fn run_inner(self) -> ActionResult<(), AutomaticActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				info!("automatic action test (only hook)");
 				Ok(())
 			})
@@ -314,7 +314,7 @@ pub mod tests {
 		fn new(
 			input: ActionResult<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
 		) -> ActionResult<Self, AutomaticActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				match input.await {
 					Err(err) => Err(err),
 					Ok(ok_input) => {
@@ -330,7 +330,7 @@ pub mod tests {
 		}
 
 		fn run_inner(self) -> ActionResult<(), AutomaticActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				info!("automatic action test (only internal)");
 				Ok(())
 			})

@@ -79,7 +79,7 @@ impl AutomaticAction<Input, Output, Error> for Internal {
 	}
 
 	fn new(input: AutomaticActionInput<Input>) -> ActionResult<Self, Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			input
 				.await
 				.and_then(|ok_input| ok_input.into())
@@ -89,7 +89,7 @@ impl AutomaticAction<Input, Output, Error> for Internal {
 	}
 
 	fn run_inner(self) -> ActionResult<Output, Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			let Self(input) = self;
 			run(input, "internal".into())
 		})
@@ -109,7 +109,7 @@ impl AutomaticAction<Input, Output, Error> for Hook {
 	}
 
 	fn new(input: AutomaticActionInput<Input>) -> ActionResult<Self, Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			match input.await {
 				Err(err) => Err(Error::AutomaticError(err)),
 				Ok(ok_input) => {
@@ -125,7 +125,7 @@ impl AutomaticAction<Input, Output, Error> for Hook {
 	}
 
 	fn run_inner(self) -> ActionResult<Output, Error> {
-		Box::pin(async move {
+		Box::pin(async {
 			let Self(input) = self;
 			run(input, "hook".into())
 		})

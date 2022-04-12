@@ -73,7 +73,7 @@ where
 	fn run(
 		input: ModeratorRequestInput<I>,
 	) -> ActionResult<ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> {
-		Box::pin(async move {
+		Box::pin(async {
 			let context = &input.context;
 			let action_context = ActionContext {
 				action_type: Self::action_type(),
@@ -84,7 +84,7 @@ where
 				context.session.admin || context.session.allowed_actions.contains(&action_type);
 
 			let action_result = if allowed {
-				Self::new(Box::pin(async move { Ok(input) }))
+				Self::new(Box::pin(async { Ok(input) }))
 			} else {
 				Self::new(Box::pin(async move {
 					Err(ModeratorActionError::NotAllowed(action_type))
@@ -152,7 +152,7 @@ pub mod tests {
 		fn new(
 			input: ActionResult<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
 		) -> ActionResult<Self, ModeratorActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				match input.await {
 					Err(err) => Err(err),
 					Ok(ok_input) => Ok(Self(ok_input)),
@@ -161,7 +161,7 @@ pub mod tests {
 		}
 
 		fn run_inner(self) -> ActionResult<(), ModeratorActionError> {
-			Box::pin(async move {
+			Box::pin(async {
 				info!("moderator action test");
 				Ok(())
 			})
