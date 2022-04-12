@@ -1,23 +1,25 @@
 use crate::core::action::{
-	action_type::{
-		automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
-		user_action_type::UserActionType,
-	},
-	data::{
-		action_data::{DescriptiveError, ErrorData, ErrorInfo},
-		automatic_action_data::{AutomaticActionError, AutomaticRequestInput},
-		moderator_action_data::{
-			ModeratorActionError, ModeratorActionInput, ModeratorRequestInput,
-		},
-		user_action_data::{UserActionError, UserActionInput, UserRequestInput},
-	},
-	definition::action::ActionResult,
-};
-use crate::core::action::{
 	data::automatic_action_data::AutomaticActionInput,
 	definition::action::{
 		ActionError, ActionInput, ActionOutput, AutomaticAction, ModeratorAction, UserAction,
 	},
+};
+use crate::{
+	core::action::{
+		action_type::{
+			automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
+			user_action_type::UserActionType,
+		},
+		data::{
+			action_data::{DescriptiveError, ErrorData, ErrorInfo},
+			automatic_action_data::{AutomaticActionError, AutomaticRequestInput},
+			moderator_action_data::{
+				ModeratorActionError, ModeratorActionInput, ModeratorRequestInput,
+			},
+			user_action_data::{UserActionError, UserActionInput, UserRequestInput},
+		},
+	},
+	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -111,11 +113,11 @@ impl UserAction<Input, Output, UserError> for User {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<Input>) -> ActionResult<Self, UserError> {
+	fn new(input: UserActionInput<Input>) -> AsyncResult<Self, UserError> {
 		Box::pin(async { input.await.map(Self).map_err(UserError::UserError) })
 	}
 
-	fn run_inner(self) -> ActionResult<Output, UserError> {
+	fn run_inner(self) -> AsyncResult<Output, UserError> {
 		Box::pin(async move {
 			let Self(input) = &self;
 			run(&input.data).await.map_err(UserError::WebError)
@@ -161,7 +163,7 @@ impl ModeratorAction<Input, Output, ModeratorError> for Moderator {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorActionInput<Input>) -> ActionResult<Self, ModeratorError> {
+	fn new(input: ModeratorActionInput<Input>) -> AsyncResult<Self, ModeratorError> {
 		Box::pin(async {
 			input
 				.await
@@ -170,7 +172,7 @@ impl ModeratorAction<Input, Output, ModeratorError> for Moderator {
 		})
 	}
 
-	fn run_inner(self) -> ActionResult<Output, ModeratorError> {
+	fn run_inner(self) -> AsyncResult<Output, ModeratorError> {
 		Box::pin(async move {
 			let Self(input) = &self;
 			run(&input.data).await.map_err(ModeratorError::WebError)
@@ -216,7 +218,7 @@ impl AutomaticAction<Input, Output, AutomaticError> for Automatic {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<Input>) -> ActionResult<Self, AutomaticError> {
+	fn new(input: AutomaticActionInput<Input>) -> AsyncResult<Self, AutomaticError> {
 		Box::pin(async {
 			input
 				.await
@@ -225,7 +227,7 @@ impl AutomaticAction<Input, Output, AutomaticError> for Automatic {
 		})
 	}
 
-	fn run_inner(self) -> ActionResult<Output, AutomaticError> {
+	fn run_inner(self) -> AsyncResult<Output, AutomaticError> {
 		Box::pin(async move {
 			let Self(input) = &self;
 			run(&input.data).await.map_err(AutomaticError::WebError)

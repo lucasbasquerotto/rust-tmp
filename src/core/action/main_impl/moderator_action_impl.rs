@@ -1,20 +1,22 @@
-use crate::core::action::{
-	action_type::general_action_type::ActionType,
-	data::{
-		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
-		moderator_action_data::{
-			ModeratorActionError, ModeratorErrorInfo, ModeratorOutputInfo, ModeratorRequestContext,
-			ModeratorRequestInput, ModeratorSession,
-		},
-	},
-	definition::action::ActionResult,
-};
 use crate::{
 	core::action::definition::{
 		action::{Action, ActionError, ActionInput, ActionOutput, ModeratorAction},
 		action_helpers::DescriptiveInfo,
 	},
 	lib::data::str::Str,
+};
+use crate::{
+	core::action::{
+		action_type::general_action_type::ActionType,
+		data::{
+			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
+			moderator_action_data::{
+				ModeratorActionError, ModeratorErrorInfo, ModeratorOutputInfo,
+				ModeratorRequestContext, ModeratorRequestInput, ModeratorSession,
+			},
+		},
+	},
+	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -72,7 +74,7 @@ where
 {
 	fn run(
 		input: ModeratorRequestInput<I>,
-	) -> ActionResult<ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> {
+	) -> AsyncResult<ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> {
 		Box::pin(async {
 			let context = &input.context;
 			let action_context = ActionContext {
@@ -131,12 +133,12 @@ pub mod tests {
 		moderator_action_data::ModeratorRequestContext,
 	};
 	use crate::core::action::definition::action::Action;
-	use crate::core::action::definition::action::ActionResult;
 	use crate::core::action::definition::action::ModeratorAction;
 	use crate::core::action::{
 		action_type::moderator_action_type::ModeratorActionType,
 		data::action_data::{ActionContext, ActionErrorInfo},
 	};
+	use crate::lib::data::result::AsyncResult;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]
@@ -148,8 +150,8 @@ pub mod tests {
 		}
 
 		fn new(
-			input: ActionResult<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
-		) -> ActionResult<Self, ModeratorActionError> {
+			input: AsyncResult<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
+		) -> AsyncResult<Self, ModeratorActionError> {
 			Box::pin(async {
 				match input.await {
 					Err(err) => Err(err),
@@ -158,7 +160,7 @@ pub mod tests {
 			})
 		}
 
-		fn run_inner(self) -> ActionResult<(), ModeratorActionError> {
+		fn run_inner(self) -> AsyncResult<(), ModeratorActionError> {
 			Box::pin(async {
 				info!("moderator action test");
 				Ok(())

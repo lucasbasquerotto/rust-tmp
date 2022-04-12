@@ -1,19 +1,22 @@
 use std::borrow::Cow;
 
 use crate::core::action::{
-	data::{
-		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
-		user_action_data::{
-			UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
-			UserNoAuthRequestContext, UserOutputInfo, UserRequestContext, UserRequestInput,
-			UserSession, UserUnconfirmedRequestContext, UserUnconfirmedSession,
-		},
-	},
-	definition::{action::ActionResult, action_helpers::DescriptiveInfo},
-};
-use crate::core::action::{
 	definition::action::{Action, ActionError, UserAction},
 	definition::action::{ActionInput, ActionOutput},
+};
+use crate::{
+	core::action::{
+		data::{
+			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
+			user_action_data::{
+				UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
+				UserNoAuthRequestContext, UserOutputInfo, UserRequestContext, UserRequestInput,
+				UserSession, UserUnconfirmedRequestContext, UserUnconfirmedSession,
+			},
+		},
+		definition::action_helpers::DescriptiveInfo,
+	},
+	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -266,7 +269,7 @@ where
 	E: ActionError,
 	T: UserAction<I, O, E>,
 {
-	fn run(input: UserRequestInput<I>) -> ActionResult<UserOutputInfo<O>, UserErrorInfo<E>> {
+	fn run(input: UserRequestInput<I>) -> AsyncResult<UserOutputInfo<O>, UserErrorInfo<E>> {
 		Box::pin(async {
 			let action_context = ActionContext {
 				action_type: Self::action_type(),
@@ -314,11 +317,12 @@ pub mod tests {
 	use crate::core::action::data::{
 		action_data::RequestInput, user_action_data::UserRequestContext,
 	};
+	use crate::core::action::definition::action::Action;
 	use crate::core::action::definition::action::UserAction;
-	use crate::core::action::definition::action::{Action, ActionResult};
 	use crate::core::action::{
 		action_type::user_action_type::UserActionType, data::action_data::ActionErrorInfo,
 	};
+	use crate::lib::data::result::AsyncResult;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]
@@ -339,15 +343,15 @@ pub mod tests {
 		}
 
 		fn new(
-			input: ActionResult<RequestInput<(), UserRequestContext>, UserActionError>,
-		) -> ActionResult<Self, UserActionError> {
+			input: AsyncResult<RequestInput<(), UserRequestContext>, UserActionError>,
+		) -> AsyncResult<Self, UserActionError> {
 			Box::pin(async {
 				let ok_input = input.await?;
 				Ok(Self(ok_input))
 			})
 		}
 
-		fn run_inner(self) -> ActionResult<(), UserActionError> {
+		fn run_inner(self) -> AsyncResult<(), UserActionError> {
 			Box::pin(async move {
 				match self.0.context.session {
 					UserSession::Auth(UserAuthSession { user_id, .. }) => {
@@ -369,8 +373,8 @@ pub mod tests {
 		}
 
 		fn new(
-			input: ActionResult<RequestInput<(), UserRequestContext>, UserActionError>,
-		) -> ActionResult<Self, UserActionError> {
+			input: AsyncResult<RequestInput<(), UserRequestContext>, UserActionError>,
+		) -> AsyncResult<Self, UserActionError> {
 			Box::pin(async {
 				match input.await {
 					Err(err) => Err(err),
@@ -386,7 +390,7 @@ pub mod tests {
 			})
 		}
 
-		fn run_inner(self) -> ActionResult<(), UserActionError> {
+		fn run_inner(self) -> AsyncResult<(), UserActionError> {
 			Box::pin(async {
 				info!("user action test (no auth)");
 				Ok(())
@@ -400,8 +404,8 @@ pub mod tests {
 		}
 
 		fn new(
-			input: ActionResult<RequestInput<(), UserRequestContext>, UserActionError>,
-		) -> ActionResult<Self, UserActionError> {
+			input: AsyncResult<RequestInput<(), UserRequestContext>, UserActionError>,
+		) -> AsyncResult<Self, UserActionError> {
 			Box::pin(async {
 				match input.await {
 					Err(err) => Err(err),
@@ -417,7 +421,7 @@ pub mod tests {
 			})
 		}
 
-		fn run_inner(self) -> ActionResult<(), UserActionError> {
+		fn run_inner(self) -> AsyncResult<(), UserActionError> {
 			Box::pin(async move {
 				info!(
 					"user action test (auth): {user_id}",
@@ -434,8 +438,8 @@ pub mod tests {
 		}
 
 		fn new(
-			input: ActionResult<RequestInput<(), UserRequestContext>, UserActionError>,
-		) -> ActionResult<Self, UserActionError> {
+			input: AsyncResult<RequestInput<(), UserRequestContext>, UserActionError>,
+		) -> AsyncResult<Self, UserActionError> {
 			Box::pin(async {
 				match input.await {
 					Err(err) => Err(err),
@@ -451,7 +455,7 @@ pub mod tests {
 			})
 		}
 
-		fn run_inner(self) -> ActionResult<(), UserActionError> {
+		fn run_inner(self) -> AsyncResult<(), UserActionError> {
 			Box::pin(async move {
 				info!(
 					"user action test (unconfirmed): {user_id}",

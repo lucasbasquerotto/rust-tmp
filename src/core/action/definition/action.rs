@@ -1,4 +1,4 @@
-use std::{fmt::Debug, future::Future, pin::Pin};
+use std::fmt::Debug;
 
 use crate::{
 	core::action::{
@@ -19,6 +19,7 @@ use crate::{
 			user_action_data::{UserActionInput, UserErrorInfo, UserOutputInfo, UserRequestInput},
 		},
 	},
+	lib::data::result::AsyncResult,
 	lib::data::str::Str,
 };
 
@@ -56,13 +57,11 @@ pub trait ActionError: Debug {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-pub type ActionResult<O, E> = Pin<Box<dyn Future<Output = Result<O, E>>>>;
-
 pub trait Action<I, O, E>: Debug
 where
 	Self: Sized,
 {
-	fn run(input: I) -> ActionResult<O, E>;
+	fn run(input: I) -> AsyncResult<O, E>;
 }
 
 ////////////////////////////////////////////////
@@ -78,8 +77,8 @@ where
 	Self: Sized,
 {
 	fn action_type() -> UserActionType;
-	fn new(input: UserActionInput<I>) -> ActionResult<Self, E>;
-	fn run_inner(self) -> ActionResult<O, E>;
+	fn new(input: UserActionInput<I>) -> AsyncResult<Self, E>;
+	fn run_inner(self) -> AsyncResult<O, E>;
 }
 
 ////////////////////////////////////////////////
@@ -95,8 +94,8 @@ where
 	Self: Sized,
 {
 	fn action_type() -> ModeratorActionType;
-	fn new(input: ModeratorActionInput<I>) -> ActionResult<Self, E>;
-	fn run_inner(self) -> ActionResult<O, E>;
+	fn new(input: ModeratorActionInput<I>) -> AsyncResult<Self, E>;
+	fn run_inner(self) -> AsyncResult<O, E>;
 }
 
 ////////////////////////////////////////////////
@@ -112,6 +111,6 @@ where
 	Self: Sized,
 {
 	fn action_type() -> AutomaticActionType;
-	fn new(input: AutomaticActionInput<I>) -> ActionResult<Self, E>;
-	fn run_inner(self) -> ActionResult<O, E>;
+	fn new(input: AutomaticActionInput<I>) -> AsyncResult<Self, E>;
+	fn run_inner(self) -> AsyncResult<O, E>;
 }

@@ -1,14 +1,16 @@
 use crate::core::action::{
-	action_type::automatic_action_type::AutomaticActionType,
-	data::{
-		action_data::{DescriptiveError, ErrorData, RequestContext, RequestInput},
-		automatic_action_data::{AutomaticActionError, HookRequestInput, InternalRequestInput},
-	},
-	definition::action::ActionResult,
-};
-use crate::core::action::{
 	data::automatic_action_data::AutomaticActionInput,
 	definition::action::{ActionError, ActionInput, ActionOutput, AutomaticAction},
+};
+use crate::{
+	core::action::{
+		action_type::automatic_action_type::AutomaticActionType,
+		data::{
+			action_data::{DescriptiveError, ErrorData, RequestContext, RequestInput},
+			automatic_action_data::{AutomaticActionError, HookRequestInput, InternalRequestInput},
+		},
+	},
+	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -78,7 +80,7 @@ impl AutomaticAction<Input, Output, Error> for Internal {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<Input>) -> ActionResult<Self, Error> {
+	fn new(input: AutomaticActionInput<Input>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
 			input
 				.await
@@ -88,7 +90,7 @@ impl AutomaticAction<Input, Output, Error> for Internal {
 		})
 	}
 
-	fn run_inner(self) -> ActionResult<Output, Error> {
+	fn run_inner(self) -> AsyncResult<Output, Error> {
 		Box::pin(async {
 			let Self(input) = self;
 			run(input, "internal".into())
@@ -108,7 +110,7 @@ impl AutomaticAction<Input, Output, Error> for Hook {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<Input>) -> ActionResult<Self, Error> {
+	fn new(input: AutomaticActionInput<Input>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
 			match input.await {
 				Err(err) => Err(Error::AutomaticError(err)),
@@ -124,7 +126,7 @@ impl AutomaticAction<Input, Output, Error> for Hook {
 		})
 	}
 
-	fn run_inner(self) -> ActionResult<Output, Error> {
+	fn run_inner(self) -> AsyncResult<Output, Error> {
 		Box::pin(async {
 			let Self(input) = self;
 			run(input, "hook".into())

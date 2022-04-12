@@ -1,14 +1,16 @@
 use crate::core::action::{
-	action_type::user_action_type::UserActionType,
-	data::{
-		action_data::{DescriptiveError, ErrorData},
-		user_action_data::{UserActionError, UserNoAuthRequestInput},
-	},
-	definition::action::ActionResult,
-};
-use crate::core::action::{
 	data::user_action_data::UserActionInput,
 	definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
+};
+use crate::{
+	core::action::{
+		action_type::user_action_type::UserActionType,
+		data::{
+			action_data::{DescriptiveError, ErrorData},
+			user_action_data::{UserActionError, UserNoAuthRequestInput},
+		},
+	},
+	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -76,7 +78,7 @@ impl UserAction<Input, Output, Error> for Action {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<Input>) -> ActionResult<Self, Error> {
+	fn new(input: UserActionInput<Input>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
 			input
 				.await
@@ -86,7 +88,7 @@ impl UserAction<Input, Output, Error> for Action {
 		})
 	}
 
-	fn run_inner(self) -> ActionResult<Output, Error> {
+	fn run_inner(self) -> AsyncResult<Output, Error> {
 		Box::pin(async move {
 			let Self(input) = &self;
 			let Input { name, pass } = &input.data;

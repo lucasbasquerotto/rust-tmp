@@ -1,14 +1,16 @@
 use crate::core::action::{
-	action_type::moderator_action_type::ModeratorActionType,
-	data::{
-		action_data::{DescriptiveError, ErrorData},
-		moderator_action_data::{ModeratorActionError, ModeratorRequestInput},
-	},
-	definition::action::ActionResult,
-};
-use crate::core::action::{
 	data::moderator_action_data::ModeratorActionInput,
 	definition::action::{ActionError, ModeratorAction},
+};
+use crate::{
+	core::action::{
+		action_type::moderator_action_type::ModeratorActionType,
+		data::{
+			action_data::{DescriptiveError, ErrorData},
+			moderator_action_data::{ModeratorActionError, ModeratorRequestInput},
+		},
+	},
+	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -52,7 +54,7 @@ impl ModeratorAction<(), (), Error> for Action {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorActionInput<()>) -> ActionResult<Self, Error> {
+	fn new(input: ModeratorActionInput<()>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
 			match input.await {
 				Err(err) => Err(Error::ModeratorError(err)),
@@ -61,7 +63,7 @@ impl ModeratorAction<(), (), Error> for Action {
 		})
 	}
 
-	fn run_inner(self) -> ActionResult<(), Error> {
+	fn run_inner(self) -> AsyncResult<(), Error> {
 		Box::pin(async {
 			warn!("echo warn action");
 			Ok(())

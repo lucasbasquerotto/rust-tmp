@@ -1,7 +1,9 @@
-use crate::core::action::{
-	action_type::moderator_action_type::ModeratorActionType,
-	data::action_data::{ActionErrorInfo, ActionResultInfo, RequestContext, RequestInput},
-	definition::action::ActionResult,
+use crate::{
+	core::action::{
+		action_type::moderator_action_type::ModeratorActionType,
+		data::action_data::{ActionErrorInfo, ActionResultInfo, RequestContext, RequestInput},
+	},
+	lib::data::result::AsyncResult,
 };
 
 use super::action_data::{Application, Request, Session};
@@ -30,7 +32,7 @@ impl RequestContext for ModeratorRequestContext {}
 
 pub type ModeratorRequestInput<I> = RequestInput<I, ModeratorRequestContext>;
 
-pub type ModeratorActionInput<I> = ActionResult<ModeratorRequestInput<I>, ModeratorActionError>;
+pub type ModeratorActionInput<I> = AsyncResult<ModeratorRequestInput<I>, ModeratorActionError>;
 
 pub type ModeratorOutputInfo<D> = ActionResultInfo<ModeratorActionType, ModeratorRequestContext, D>;
 

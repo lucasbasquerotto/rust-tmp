@@ -47,22 +47,22 @@ pub struct Select;
 
 #[cfg(not(test))]
 pub mod main {
-	use crate::core::{
-		action::definition::action::ActionResult,
-		external::{
+	use crate::{
+		core::external::{
 			data::external_exception::ExternalException, definition::external::ExternalAction,
 		},
+		lib::data::result::AsyncResult,
 	};
 
 	impl ExternalAction<super::InsertInput, super::InsertOutput> for super::Insert {
-		fn run(input: super::InsertInput) -> ActionResult<super::InsertOutput, ExternalException> {
+		fn run(input: super::InsertInput) -> AsyncResult<super::InsertOutput, ExternalException> {
 			drop(input);
 			todo!()
 		}
 	}
 
 	impl ExternalAction<super::SelectInput, super::SelectOutput> for super::Select {
-		fn run(input: super::SelectInput) -> ActionResult<super::SelectOutput, ExternalException> {
+		fn run(input: super::SelectInput) -> AsyncResult<super::SelectOutput, ExternalException> {
 			drop(input);
 			todo!()
 		}

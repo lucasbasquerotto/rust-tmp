@@ -1,3 +1,3 @@
-use std::borrow::Cow;
+use std::{borrow::Cow};
 
 pub type Str = Cow<'static, str>;

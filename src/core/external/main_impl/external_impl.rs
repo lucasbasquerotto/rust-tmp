@@ -4,17 +4,14 @@ pub mod tests {
 	use serde::de::DeserializeOwned;
 
 	use crate::{
-		core::{
-			action::definition::action::ActionResult,
-			external::{
-				data::external_exception::ExternalException,
-				definition::external::{
-					tests::{ExternalMocker, ExternalTest, MockExternalMethod},
-					ExternalAction,
-				},
+		core::external::{
+			data::external_exception::ExternalException,
+			definition::external::{
+				tests::{ExternalMocker, ExternalTest, MockExternalMethod},
+				ExternalAction,
 			},
 		},
-		lib::data::str::Str,
+		lib::data::{result::AsyncResult, str::Str},
 	};
 
 	pub async fn test_external<I, O>(action: Str, method: MockExternalMethod, input: I) -> O
@@ -73,7 +70,7 @@ pub mod tests {
 		O: DeserializeOwned,
 		T: ExternalTest<I, O>,
 	{
-		fn run(input: I) -> ActionResult<O, ExternalException> {
+		fn run(input: I) -> AsyncResult<O, ExternalException> {
 			Box::pin(async { Ok(test_external(Self::name(), Self::method(), input).await) })
 		}
 	}

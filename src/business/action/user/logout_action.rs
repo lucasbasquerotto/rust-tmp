@@ -1,14 +1,16 @@
 use crate::core::action::{
-	action_type::user_action_type::UserActionType,
-	data::{
-		action_data::{DescriptiveError, ErrorData},
-		user_action_data::{UserActionError, UserRequestInput},
-	},
-	definition::action::ActionResult,
-};
-use crate::core::action::{
 	data::user_action_data::UserActionInput,
 	definition::action::{ActionError, UserAction},
+};
+use crate::{
+	core::action::{
+		action_type::user_action_type::UserActionType,
+		data::{
+			action_data::{DescriptiveError, ErrorData},
+			user_action_data::{UserActionError, UserRequestInput},
+		},
+	},
+	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -52,11 +54,11 @@ impl UserAction<(), (), Error> for Action {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<()>) -> ActionResult<Self, Error> {
+	fn new(input: UserActionInput<()>) -> AsyncResult<Self, Error> {
 		Box::pin(async { input.await.map(Self).map_err(Error::UserError) })
 	}
 
-	fn run_inner(self) -> ActionResult<(), Error> {
+	fn run_inner(self) -> AsyncResult<(), Error> {
 		Box::pin(async {
 			println!("TODO: logout");
 			Ok(())
