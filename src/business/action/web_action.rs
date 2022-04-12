@@ -11,6 +11,7 @@ use crate::core::action::{
 		},
 		user_action_data::{UserActionError, UserActionInput, UserRequestInput},
 	},
+	definition::action::ActionResult,
 };
 use crate::core::action::{
 	data::automatic_action_data::AutomaticActionInput,
@@ -110,13 +111,15 @@ impl UserAction<Input, Output, UserError> for User {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<Input>) -> Result<Self, UserError> {
-		input.map(Self).map_err(UserError::UserError)
+	fn new(input: UserActionInput<Input>) -> ActionResult<Self, UserError> {
+		Box::pin(async move { input.await.map(Self).map_err(UserError::UserError) })
 	}
 
-	fn run_inner(self) -> Result<Output, UserError> {
-		let Self(input) = &self;
-		run(&input.data).map_err(UserError::WebError)
+	fn run_inner(self) -> ActionResult<Output, UserError> {
+		Box::pin(async move {
+			let Self(input) = &self;
+			run(&input.data).map_err(UserError::WebError)
+		})
 	}
 }
 
@@ -158,13 +161,20 @@ impl ModeratorAction<Input, Output, ModeratorError> for Moderator {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorActionInput<Input>) -> Result<Self, ModeratorError> {
-		input.map(Self).map_err(ModeratorError::ModeratorError)
+	fn new(input: ModeratorActionInput<Input>) -> ActionResult<Self, ModeratorError> {
+		Box::pin(async move {
+			input
+				.await
+				.map(Self)
+				.map_err(ModeratorError::ModeratorError)
+		})
 	}
 
-	fn run_inner(self) -> Result<Output, ModeratorError> {
-		let Self(input) = &self;
-		run(&input.data).map_err(ModeratorError::WebError)
+	fn run_inner(self) -> ActionResult<Output, ModeratorError> {
+		Box::pin(async move {
+			let Self(input) = &self;
+			run(&input.data).map_err(ModeratorError::WebError)
+		})
 	}
 }
 
@@ -206,13 +216,20 @@ impl AutomaticAction<Input, Output, AutomaticError> for Automatic {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<Input>) -> Result<Self, AutomaticError> {
-		input.map(Self).map_err(AutomaticError::AutomaticError)
+	fn new(input: AutomaticActionInput<Input>) -> ActionResult<Self, AutomaticError> {
+		Box::pin(async move {
+			input
+				.await
+				.map(Self)
+				.map_err(AutomaticError::AutomaticError)
+		})
 	}
 
-	fn run_inner(self) -> Result<Output, AutomaticError> {
-		let Self(input) = &self;
-		run(&input.data).map_err(AutomaticError::WebError)
+	fn run_inner(self) -> ActionResult<Output, AutomaticError> {
+		Box::pin(async move {
+			let Self(input) = &self;
+			run(&input.data).map_err(AutomaticError::WebError)
+		})
 	}
 }
 
@@ -320,6 +337,7 @@ fn run(data: &Input) -> Result<Output, WebSharedError> {
 
 #[cfg(test)]
 mod tests {
+	use futures::executor::block_on;
 	use mockito::mock;
 
 	use crate::{
@@ -372,13 +390,13 @@ mod tests {
 				)
 				.create();
 
-			let result = super::User::run(RequestInput {
+			let result = block_on(super::User::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -415,13 +433,13 @@ mod tests {
 				)
 				.create();
 
-			let result = super::User::run(RequestInput {
+			let result = block_on(super::User::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -449,13 +467,13 @@ mod tests {
 				.with_status(403)
 				.create();
 
-			let result = super::User::run(RequestInput {
+			let result = block_on(super::User::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -492,13 +510,13 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = super::User::run(RequestInput {
+			let result = block_on(super::User::run(RequestInput {
 				data: super::Input {
 					error: true,
 					status: None,
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -545,13 +563,13 @@ mod tests {
 				)
 				.create();
 
-			let result = super::Moderator::run(RequestInput {
+			let result = block_on(super::Moderator::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -575,13 +593,13 @@ mod tests {
 				.with_status(403)
 				.create();
 
-			let result = super::Moderator::run(RequestInput {
+			let result = block_on(super::Moderator::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
 				context: context.clone(),
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -617,13 +635,13 @@ mod tests {
 		run_test(|_| {
 			let context = moderator_context();
 
-			let result = super::Moderator::run(RequestInput {
+			let result = block_on(super::Moderator::run(RequestInput {
 				data: super::Input {
 					error: true,
 					status: None,
 				},
 				context: context.clone(),
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -673,13 +691,13 @@ mod tests {
 				)
 				.create();
 
-			let result = super::Automatic::run(RequestInput {
+			let result = block_on(super::Automatic::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: None,
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -707,13 +725,13 @@ mod tests {
 				.with_status(403)
 				.create();
 
-			let result = super::Automatic::run(RequestInput {
+			let result = block_on(super::Automatic::run(RequestInput {
 				data: super::Input {
 					error: false,
 					status: Some(403),
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -746,13 +764,13 @@ mod tests {
 		run_test(|_| {
 			let context = AutomaticRequestContextBuilder::build_internal();
 
-			let result = super::Automatic::run(RequestInput {
+			let result = block_on(super::Automatic::run(RequestInput {
 				data: super::Input {
 					error: true,
 					status: None,
 				},
 				context: context.clone(),
-			});
+			}));
 
 			assert_eq!(
 				&result,

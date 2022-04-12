@@ -4,6 +4,7 @@ use crate::core::action::{
 		action_data::{DescriptiveError, ErrorData},
 		moderator_action_data::{ModeratorActionError, ModeratorRequestInput},
 	},
+	definition::action::ActionResult,
 };
 use crate::core::action::{
 	data::moderator_action_data::ModeratorActionInput,
@@ -51,16 +52,20 @@ impl ModeratorAction<(), (), Error> for Action {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorActionInput<()>) -> Result<Self, Error> {
-		match input {
-			Err(err) => Err(Error::ModeratorError(err)),
-			Ok(ok_input) => Ok(Self(ok_input)),
-		}
+	fn new(input: ModeratorActionInput<()>) -> ActionResult<Self, Error> {
+		Box::pin(async move {
+			match input.await {
+				Err(err) => Err(Error::ModeratorError(err)),
+				Ok(ok_input) => Ok(Self(ok_input)),
+			}
+		})
 	}
 
-	fn run_inner(self) -> Result<(), Error> {
-		error!("echo error action");
-		Ok(())
+	fn run_inner(self) -> ActionResult<(), Error> {
+		Box::pin(async move {
+			error!("echo error action");
+			Ok(())
+		})
 	}
 }
 
@@ -70,6 +75,8 @@ impl ModeratorAction<(), (), Error> for Action {
 
 #[cfg(test)]
 pub mod tests {
+	use futures::executor::block_on;
+
 	use crate::core::action::data::action_data::RequestInput;
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo};
 	use crate::core::action::data::moderator_action_data::tests::ModeratorRequestContextBuilder;
@@ -99,7 +106,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = super::Action::run(RequestInput { data: (), context });
+			let result = block_on(super::Action::run(RequestInput { data: (), context }));
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -121,7 +128,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = super::Action::run(RequestInput { data: (), context });
+			let result = block_on(super::Action::run(RequestInput { data: (), context }));
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {
@@ -142,7 +149,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = super::Action::run(RequestInput { data: (), context });
+			let result = block_on(super::Action::run(RequestInput { data: (), context }));
 			assert_eq!(
 				&result,
 				&Ok(ModeratorOutputInfo {

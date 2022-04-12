@@ -4,6 +4,7 @@ use crate::core::action::{
 		action_data::{DescriptiveError, ErrorData},
 		user_action_data::{UserActionError, UserNoAuthRequestInput},
 	},
+	definition::action::ActionResult,
 };
 use crate::core::action::{
 	data::user_action_data::UserActionInput,
@@ -75,22 +76,27 @@ impl UserAction<Input, Output, Error> for Action {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<Input>) -> Result<Self, Error> {
-		input
-			.and_then(|ok_input| ok_input.into())
-			.map(Self)
-			.map_err(Error::UserError)
+	fn new(input: UserActionInput<Input>) -> ActionResult<Self, Error> {
+		Box::pin(async move {
+			input
+				.await
+				.and_then(|ok_input| ok_input.into())
+				.map(Self)
+				.map_err(Error::UserError)
+		})
 	}
 
-	fn run_inner(self) -> Result<Output, Error> {
-		let Self(input) = &self;
-		let Input { name, pass } = &input.data;
-		println!("TODO: login: {name} ({pass})");
-		let result = Output {
-			id: 1,
-			name: name.into(),
-		};
-		Ok(result)
+	fn run_inner(self) -> ActionResult<Output, Error> {
+		Box::pin(async move {
+			let Self(input) = &self;
+			let Input { name, pass } = &input.data;
+			println!("TODO: login: {name} ({pass})");
+			let result = Output {
+				id: 1,
+				name: name.into(),
+			};
+			Ok(result)
+		})
 	}
 }
 
@@ -100,6 +106,8 @@ impl UserAction<Input, Output, Error> for Action {
 
 #[cfg(test)]
 mod tests {
+	use futures::executor::block_on;
+
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserActionError;
@@ -112,13 +120,13 @@ mod tests {
 		run_test(|_| {
 			let context = UserRequestContextBuilder::build_auth();
 
-			let result = super::Action::run(RequestInput {
+			let result = block_on(super::Action::run(RequestInput {
 				data: super::Input {
 					name: "User 01".into(),
 					pass: "p4$$w0rd".into(),
 				},
 				context: context.clone(),
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -142,13 +150,13 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = super::Action::run(RequestInput {
+			let result = block_on(super::Action::run(RequestInput {
 				data: super::Input {
 					name: "User 02".into(),
 					pass: "p4$$w0rd2".into(),
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,

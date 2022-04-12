@@ -4,6 +4,7 @@ use crate::core::action::{
 		action_data::{DescriptiveError, ErrorData, RequestContext, RequestInput},
 		automatic_action_data::{AutomaticActionError, HookRequestInput, InternalRequestInput},
 	},
+	definition::action::ActionResult,
 };
 use crate::core::action::{
 	data::automatic_action_data::AutomaticActionInput,
@@ -77,16 +78,21 @@ impl AutomaticAction<Input, Output, Error> for Internal {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<Input>) -> Result<Self, Error> {
-		input
-			.and_then(|ok_input| ok_input.into())
-			.map(Self)
-			.map_err(Error::AutomaticError)
+	fn new(input: AutomaticActionInput<Input>) -> ActionResult<Self, Error> {
+		Box::pin(async move {
+			input
+				.await
+				.and_then(|ok_input| ok_input.into())
+				.map(Self)
+				.map_err(Error::AutomaticError)
+		})
 	}
 
-	fn run_inner(self) -> Result<Output, Error> {
-		let Self(input) = self;
-		run(input, "internal".into())
+	fn run_inner(self) -> ActionResult<Output, Error> {
+		Box::pin(async move {
+			let Self(input) = self;
+			run(input, "internal".into())
+		})
 	}
 }
 
@@ -102,23 +108,27 @@ impl AutomaticAction<Input, Output, Error> for Hook {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<Input>) -> Result<Self, Error> {
-		match input {
-			Err(err) => Err(Error::AutomaticError(err)),
-			Ok(ok_input) => {
-				let real_input = ok_input.into();
+	fn new(input: AutomaticActionInput<Input>) -> ActionResult<Self, Error> {
+		Box::pin(async move {
+			match input.await {
+				Err(err) => Err(Error::AutomaticError(err)),
+				Ok(ok_input) => {
+					let real_input = ok_input.into();
 
-				match real_input {
-					Err(err) => Err(Error::AutomaticError(err)),
-					Ok(real_ok_input) => Ok(Self(real_ok_input)),
+					match real_input {
+						Err(err) => Err(Error::AutomaticError(err)),
+						Ok(real_ok_input) => Ok(Self(real_ok_input)),
+					}
 				}
 			}
-		}
+		})
 	}
 
-	fn run_inner(self) -> Result<Output, Error> {
-		let Self(input) = self;
-		run(input, "hook".into())
+	fn run_inner(self) -> ActionResult<Output, Error> {
+		Box::pin(async move {
+			let Self(input) = self;
+			run(input, "hook".into())
+		})
 	}
 }
 
@@ -146,6 +156,8 @@ fn run<C: RequestContext>(
 
 #[cfg(test)]
 mod tests {
+	use futures::executor::block_on;
+
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::automatic_action_data::tests::AutomaticRequestContextBuilder;
 	use crate::core::action::data::automatic_action_data::AutomaticActionError;
@@ -162,13 +174,13 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = super::Internal::run(RequestInput {
+			let result = block_on(super::Internal::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Error)".into(),
 					param2: 1,
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -189,13 +201,13 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = super::Internal::run(RequestInput {
+			let result = block_on(super::Internal::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Ok)".into(),
 					param2: 2,
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -221,13 +233,13 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = super::Hook::run(RequestInput {
+			let result = block_on(super::Hook::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Error)".into(),
 					param2: 3,
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,
@@ -248,13 +260,13 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = super::Hook::run(RequestInput {
+			let result = block_on(super::Hook::run(RequestInput {
 				data: super::Input {
 					param1: "Param 01 (Ok)".into(),
 					param2: 4,
 				},
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,

@@ -4,6 +4,7 @@ use super::action_data::{Application, Request, Session};
 use crate::core::action::{
 	action_type::user_action_type::UserActionType,
 	data::action_data::{ActionErrorInfo, ActionResultInfo, RequestContext, RequestInput},
+	definition::action::ActionResult,
 };
 
 ////////////////////////////////////////////////
@@ -83,7 +84,7 @@ pub type UserAuthRequestInput<I> = RequestInput<I, UserAuthRequestContext>;
 
 pub type UserNoAuthRequestInput<I> = RequestInput<I, UserNoAuthRequestContext>;
 
-pub type UserActionInput<I> = Result<UserRequestInput<I>, UserActionError>;
+pub type UserActionInput<I> = ActionResult<UserRequestInput<I>, UserActionError>;
 
 pub type UserOutputInfo<D> = ActionResultInfo<UserActionType, UserRequestContext, D>;
 

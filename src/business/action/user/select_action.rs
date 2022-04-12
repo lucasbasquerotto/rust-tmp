@@ -6,6 +6,7 @@ use crate::{
 				action_data::{DescriptiveError, ErrorData},
 				user_action_data::{UserActionError, UserRequestInput},
 			},
+			definition::action::ActionResult,
 		},
 		external::definition::external::ExternalAction,
 	},
@@ -106,31 +107,39 @@ impl UserAction<Input, Output, Error> for Action {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<Input>) -> Result<Self, Error> {
-		input.map(Self).map_err(Box::new).map_err(Error::UserError)
+	fn new(input: UserActionInput<Input>) -> ActionResult<Self, Error> {
+		Box::pin(async move {
+			input
+				.await
+				.map(Self)
+				.map_err(Box::new)
+				.map_err(Error::UserError)
+		})
 	}
 
-	fn run_inner(self) -> Result<Output, Error> {
-		let Self(input) = self;
-		let Input { id } = input.data;
+	fn run_inner(self) -> ActionResult<Output, Error> {
+		Box::pin(async move {
+			let Self(input) = self;
+			let Input { id } = input.data;
 
-		let first = user_dao::Select::run(user_dao::SelectInput::First)
-			.map_err(Box::new)
-			.map_err(Error::ExternalError)?
-			.into();
+			let first = user_dao::Select::run(user_dao::SelectInput::First)
+				.map_err(Box::new)
+				.map_err(Error::ExternalError)?
+				.into();
 
-		let last = user_dao::Select::run(user_dao::SelectInput::Last)
-			.map_err(Box::new)
-			.map_err(Error::ExternalError)?
-			.into();
+			let last = user_dao::Select::run(user_dao::SelectInput::Last)
+				.map_err(Box::new)
+				.map_err(Error::ExternalError)?
+				.into();
 
-		let by_id = user_dao::Select::run(user_dao::SelectInput::ById(id))
-			.map_err(Box::new)
-			.map_err(Error::ExternalError)?
-			.into();
+			let by_id = user_dao::Select::run(user_dao::SelectInput::ById(id))
+				.map_err(Box::new)
+				.map_err(Error::ExternalError)?
+				.into();
 
-		let result = Output { first, last, by_id };
-		Ok(result)
+			let result = Output { first, last, by_id };
+			Ok(result)
+		})
 	}
 }
 
@@ -140,6 +149,8 @@ impl UserAction<Input, Output, Error> for Action {
 
 #[cfg(test)]
 mod tests {
+	use futures::executor::block_on;
+
 	use crate::core::action::data::action_data::{ActionContext, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserOutputInfo;
@@ -186,10 +197,10 @@ mod tests {
 				context: context.clone(),
 			};
 
-			let result = super::Action::run(RequestInput {
+			let result = block_on(super::Action::run(RequestInput {
 				data: super::Input { id: by_id.id },
 				context,
-			});
+			}));
 
 			assert_eq!(
 				&result,

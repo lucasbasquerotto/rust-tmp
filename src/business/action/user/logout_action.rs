@@ -4,6 +4,7 @@ use crate::core::action::{
 		action_data::{DescriptiveError, ErrorData},
 		user_action_data::{UserActionError, UserRequestInput},
 	},
+	definition::action::ActionResult,
 };
 use crate::core::action::{
 	data::user_action_data::UserActionInput,
@@ -51,13 +52,15 @@ impl UserAction<(), (), Error> for Action {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<()>) -> Result<Self, Error> {
-		input.map(Self).map_err(Error::UserError)
+	fn new(input: UserActionInput<()>) -> ActionResult<Self, Error> {
+		Box::pin(async move { input.await.map(Self).map_err(Error::UserError) })
 	}
 
-	fn run_inner(self) -> Result<(), Error> {
-		println!("TODO: logout");
-		Ok(())
+	fn run_inner(self) -> ActionResult<(), Error> {
+		Box::pin(async move {
+			println!("TODO: logout");
+			Ok(())
+		})
 	}
 }
 
@@ -67,6 +70,8 @@ impl UserAction<(), (), Error> for Action {
 
 #[cfg(test)]
 mod tests {
+	use futures::executor::block_on;
+
 	use crate::core::action::data::{
 		action_data::{ActionContext, RequestInput},
 		user_action_data::{tests::UserRequestContextBuilder, UserOutputInfo},
@@ -81,7 +86,7 @@ mod tests {
 				action_type: super::USER_ACTION_TYPE,
 				context: context.clone(),
 			};
-			let result = super::Action::run(RequestInput { data: (), context });
+			let result = block_on(super::Action::run(RequestInput { data: (), context }));
 			assert_eq!(
 				&result,
 				&Ok(UserOutputInfo {

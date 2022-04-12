@@ -9,7 +9,7 @@ use crate::core::action::{
 			InternalRequestContext,
 		},
 	},
-	definition::action_helpers::DescriptiveInfo,
+	definition::{action::ActionResult, action_helpers::DescriptiveInfo},
 };
 use crate::core::action::{
 	definition::action::{Action, ActionError, AutomaticAction},
@@ -174,8 +174,8 @@ impl ActionError for AutomaticActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
-impl<I, O, E, T> Action<AutomaticRequestInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>>
-	for T
+impl<I: 'static, O, E, T>
+	Action<AutomaticRequestInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> for T
 where
 	I: ActionInput,
 	O: ActionOutput,
@@ -184,24 +184,36 @@ where
 {
 	fn run(
 		input: AutomaticRequestInput<I>,
-	) -> Result<AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> {
-		let action_context = ActionContext {
-			action_type: Self::action_type(),
-			context: input.context.clone(),
-		};
+	) -> ActionResult<AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> {
+		Box::pin(async move {
+			let action_context = ActionContext {
+				action_type: Self::action_type(),
+				context: input.context.clone(),
+			};
 
-		let result = Self::new(Ok(input)).and_then(|action| action.run_inner());
+			let action_result = Self::new(Box::pin(async move { Ok(input) })).await;
 
-		match result {
-			Ok(data) => Ok(AutomaticOutputInfo {
-				action_context,
-				data,
-			}),
-			Err(error) => Err(AutomaticErrorInfo {
-				action_context,
-				error,
-			}),
-		}
+			match action_result {
+				Ok(action) => {
+					let result = action.run_inner().await;
+
+					match result {
+						Ok(data) => Ok(AutomaticOutputInfo {
+							action_context,
+							data,
+						}),
+						Err(error) => Err(AutomaticErrorInfo {
+							action_context,
+							error,
+						}),
+					}
+				}
+				Err(error) => Err(AutomaticErrorInfo {
+					action_context,
+					error,
+				}),
+			}
+		})
 	}
 }
 
@@ -211,6 +223,8 @@ where
 
 #[cfg(test)]
 pub mod tests {
+	use futures::executor::block_on;
+
 	use crate::core::action::data::automatic_action_data::tests::AutomaticRequestContextBuilder;
 	use crate::core::action::data::automatic_action_data::AutomaticOutputInfo;
 	use crate::core::action::data::automatic_action_data::{
@@ -219,8 +233,8 @@ pub mod tests {
 	use crate::core::action::data::{
 		action_data::RequestInput, automatic_action_data::AutomaticRequestContext,
 	};
-	use crate::core::action::definition::action::Action;
 	use crate::core::action::definition::action::AutomaticAction;
+	use crate::core::action::definition::action::{Action, ActionResult};
 	use crate::core::action::{
 		action_type::automatic_action_type::AutomaticActionType,
 		data::action_data::{ActionContext, ActionErrorInfo},
@@ -242,18 +256,22 @@ pub mod tests {
 		}
 
 		fn new(
-			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
-		) -> Result<Self, AutomaticActionError> {
-			let ok_input = input?;
-			Ok(Self(ok_input))
+			input: ActionResult<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
+		) -> ActionResult<Self, AutomaticActionError> {
+			Box::pin(async move {
+				let ok_input = input.await?;
+				Ok(Self(ok_input))
+			})
 		}
 
-		fn run_inner(self) -> Result<(), AutomaticActionError> {
-			match self.0.context.request {
-				AutomaticRequest::Internal => info!("automatic action test (internal)"),
-				AutomaticRequest::Hook(_) => info!("automatic action test (hook)"),
-			};
-			Ok(())
+		fn run_inner(self) -> ActionResult<(), AutomaticActionError> {
+			Box::pin(async move {
+				match self.0.context.request {
+					AutomaticRequest::Internal => info!("automatic action test (internal)"),
+					AutomaticRequest::Hook(_) => info!("automatic action test (hook)"),
+				};
+				Ok(())
+			})
 		}
 	}
 
@@ -263,24 +281,28 @@ pub mod tests {
 		}
 
 		fn new(
-			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
-		) -> Result<Self, AutomaticActionError> {
-			match input {
-				Err(err) => Err(err),
-				Ok(ok_input) => {
-					let real_input = ok_input.into();
+			input: ActionResult<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
+		) -> ActionResult<Self, AutomaticActionError> {
+			Box::pin(async move {
+				match input.await {
+					Err(err) => Err(err),
+					Ok(ok_input) => {
+						let real_input = ok_input.into();
 
-					match real_input {
-						Err(err) => Err(err),
-						Ok(real_ok_input) => Ok(Self(real_ok_input)),
+						match real_input {
+							Err(err) => Err(err),
+							Ok(real_ok_input) => Ok(Self(real_ok_input)),
+						}
 					}
 				}
-			}
+			})
 		}
 
-		fn run_inner(self) -> Result<(), AutomaticActionError> {
-			info!("automatic action test (only hook)");
-			Ok(())
+		fn run_inner(self) -> ActionResult<(), AutomaticActionError> {
+			Box::pin(async move {
+				info!("automatic action test (only hook)");
+				Ok(())
+			})
 		}
 	}
 
@@ -290,24 +312,28 @@ pub mod tests {
 		}
 
 		fn new(
-			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
-		) -> Result<Self, AutomaticActionError> {
-			match input {
-				Err(err) => Err(err),
-				Ok(ok_input) => {
-					let real_input = ok_input.into();
+			input: ActionResult<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
+		) -> ActionResult<Self, AutomaticActionError> {
+			Box::pin(async move {
+				match input.await {
+					Err(err) => Err(err),
+					Ok(ok_input) => {
+						let real_input = ok_input.into();
 
-					match real_input {
-						Err(err) => Err(err),
-						Ok(real_ok_input) => Ok(Self(real_ok_input)),
+						match real_input {
+							Err(err) => Err(err),
+							Ok(real_ok_input) => Ok(Self(real_ok_input)),
+						}
 					}
 				}
-			}
+			})
 		}
 
-		fn run_inner(self) -> Result<(), AutomaticActionError> {
-			info!("automatic action test (only internal)");
-			Ok(())
+		fn run_inner(self) -> ActionResult<(), AutomaticActionError> {
+			Box::pin(async move {
+				info!("automatic action test (only internal)");
+				Ok(())
+			})
 		}
 	}
 
@@ -350,7 +376,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = TestAction::run(RequestInput { data: (), context });
+			let result = block_on(TestAction::run(RequestInput { data: (), context }));
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -374,7 +400,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = TestAction::run(RequestInput { data: (), context });
+			let result = block_on(TestAction::run(RequestInput { data: (), context }));
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -398,7 +424,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = TestActionHook::run(RequestInput { data: (), context });
+			let result = block_on(TestActionHook::run(RequestInput { data: (), context }));
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -418,7 +444,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = TestActionHook::run(RequestInput { data: (), context });
+			let result = block_on(TestActionHook::run(RequestInput { data: (), context }));
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
@@ -442,7 +468,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = TestActionInternal::run(RequestInput { data: (), context });
+			let result = block_on(TestActionInternal::run(RequestInput { data: (), context }));
 			assert_eq!(
 				&result,
 				&Err(ActionErrorInfo {
@@ -462,7 +488,7 @@ pub mod tests {
 				context: context.clone(),
 			};
 
-			let result = TestActionInternal::run(RequestInput { data: (), context });
+			let result = block_on(TestActionInternal::run(RequestInput { data: (), context }));
 			assert_eq!(
 				&result,
 				&Ok(AutomaticOutputInfo {
