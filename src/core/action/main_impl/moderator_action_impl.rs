@@ -79,15 +79,17 @@ where
 		input: ModeratorActionInput<I>,
 	) -> AsyncResult<ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> {
 		Box::pin(async {
+			let action_type = Self::action_type();
+
 			let context = input
 				.as_ref()
 				.map(|ok_input| Some(ok_input.context.clone()))
 				.unwrap_or(None);
+
 			let action_context = ActionContext {
-				action_type: Self::action_type(),
-				context: context.clone(),
+				action_type,
+				context,
 			};
-			let action_type = Self::action_type();
 
 			match input {
 				Ok(ok_input) => {

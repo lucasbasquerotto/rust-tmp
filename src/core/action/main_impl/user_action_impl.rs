@@ -268,12 +268,14 @@ where
 {
 	fn run(input: UserActionInput<I>) -> AsyncResult<UserOutputInfo<O>, UserErrorInfo<E>> {
 		Box::pin(async {
+			let context = input
+				.as_ref()
+				.map(|ok_input| Some(ok_input.context.clone()))
+				.unwrap_or(None);
+
 			let action_context = ActionContext {
 				action_type: Self::action_type(),
-				context: input
-					.as_ref()
-					.map(|ok_input| Some(ok_input.context.clone()))
-					.unwrap_or(None),
+				context,
 			};
 
 			match input {
