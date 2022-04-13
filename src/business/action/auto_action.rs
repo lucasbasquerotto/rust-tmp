@@ -87,7 +87,11 @@ impl AutomaticAction<Input, Output, Error> for Internal {
 	}
 
 	fn new(input: AutomaticRequestInput<Input>) -> AsyncResult<Self, Error> {
-		Box::pin(async { InternalInputResult::from(input).map(Self).map(Ok)? })
+		Box::pin(async {
+			InternalInputResult::from(input)
+				.map(Self)
+				.map_err(Error::from)
+		})
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, Error> {
@@ -111,7 +115,7 @@ impl AutomaticAction<Input, Output, Error> for Hook {
 	}
 
 	fn new(input: AutomaticRequestInput<Input>) -> AsyncResult<Self, Error> {
-		Box::pin(async { HookInputResult::from(input).map(Self).map(Ok)? })
+		Box::pin(async { HookInputResult::from(input).map(Self).map_err(Error::from) })
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, Error> {
