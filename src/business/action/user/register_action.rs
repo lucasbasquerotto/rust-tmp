@@ -105,11 +105,7 @@ impl UserAction<Input, Output, Error> for Action {
 	}
 
 	fn new(input: UserRequestInput<Input>) -> AsyncResult<Self, Error> {
-		Box::pin(async {
-			UserNoAuthInputResult::from(input)
-				.map(Self)
-				.map_err(Error::from)
-		})
+		Box::pin(async { UserNoAuthInputResult::from(input).map(Self).map(Ok)? })
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, Error> {
@@ -121,8 +117,7 @@ impl UserAction<Input, Output, Error> for Action {
 				email,
 				pass,
 			})
-			.await
-			.map_err(Error::from)?;
+			.await?;
 			let result = Output { id, name };
 			Ok(result)
 		})

@@ -102,6 +102,12 @@ impl From<UserActionError> for UserError {
 	}
 }
 
+impl From<WebSharedError> for UserError {
+	fn from(error: WebSharedError) -> Self {
+		Self::WebError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -121,7 +127,7 @@ impl UserAction<Input, Output, UserError> for User {
 	fn run_inner(self) -> AsyncResult<Output, UserError> {
 		Box::pin(async move {
 			let Self(input) = &self;
-			run(&input.data).await.map_err(UserError::WebError)
+			Ok(run(&input.data).await?)
 		})
 	}
 }
@@ -158,6 +164,12 @@ impl From<ModeratorActionError> for ModeratorError {
 	}
 }
 
+impl From<WebSharedError> for ModeratorError {
+	fn from(error: WebSharedError) -> Self {
+		Self::WebError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -177,7 +189,7 @@ impl ModeratorAction<Input, Output, ModeratorError> for Moderator {
 	fn run_inner(self) -> AsyncResult<Output, ModeratorError> {
 		Box::pin(async move {
 			let Self(input) = &self;
-			run(&input.data).await.map_err(ModeratorError::WebError)
+			Ok(run(&input.data).await?)
 		})
 	}
 }
@@ -214,6 +226,12 @@ impl From<AutomaticActionError> for AutomaticError {
 	}
 }
 
+impl From<WebSharedError> for AutomaticError {
+	fn from(error: WebSharedError) -> Self {
+		Self::WebError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -233,7 +251,7 @@ impl AutomaticAction<Input, Output, AutomaticError> for Automatic {
 	fn run_inner(self) -> AsyncResult<Output, AutomaticError> {
 		Box::pin(async move {
 			let Self(input) = &self;
-			run(&input.data).await.map_err(AutomaticError::WebError)
+			Ok(run(&input.data).await?)
 		})
 	}
 }

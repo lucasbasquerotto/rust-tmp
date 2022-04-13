@@ -98,6 +98,12 @@ impl From<UserActionError> for Error {
 	}
 }
 
+impl From<ExternalException> for Error {
+	fn from(error: ExternalException) -> Self {
+		Self::ExternalError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -120,18 +126,15 @@ impl UserAction<Input, Output, Error> for Action {
 			let Input { id } = input.data;
 
 			let first = user_dao::Select::run(user_dao::SelectInput::First)
-				.await
-				.map_err(Error::ExternalError)?
+				.await?
 				.into();
 
 			let last = user_dao::Select::run(user_dao::SelectInput::Last)
-				.await
-				.map_err(Error::ExternalError)?
+				.await?
 				.into();
 
 			let by_id = user_dao::Select::run(user_dao::SelectInput::ById(id))
-				.await
-				.map_err(Error::ExternalError)?
+				.await?
 				.into();
 
 			let result = Output { first, last, by_id };
