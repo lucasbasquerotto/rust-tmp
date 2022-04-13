@@ -1,14 +1,18 @@
 use std::borrow::Cow;
 
 use crate::core::action::{
-	data::user_action_data::UserActionInput,
+	data::user_action_data::{
+		UserActionInput, UserAuthInputResult, UserAuthRequestInput, UserNoAuthInputResult,
+		UserNoAuthRequestInput, UserRequestInput, UserUnconfirmedInputResult,
+		UserUnconfirmedRequestInput,
+	},
 	definition::action::{Action, ActionError, UserAction},
 	definition::action::{ActionInput, ActionOutput},
 };
 use crate::{
 	core::action::{
 		data::{
-			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
+			action_data::{ActionContext, DescriptiveError, ErrorData},
 			user_action_data::{
 				UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
 				UserNoAuthRequestContext, UserOutputInfo, UserRequestContext, UserSession,
@@ -24,7 +28,7 @@ use crate::{
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
 
-impl<I: ActionInput> ActionInput for RequestInput<I, UserRequestContext> {}
+impl<I: ActionInput> ActionInput for UserRequestInput<I> {}
 
 impl DescriptiveInfo for UserSession {
 	fn description(&self) -> Cow<'_, str> {
@@ -84,21 +88,19 @@ impl From<UserNoAuthRequestContext> for UserRequestContext {
 	}
 }
 
-impl<I> From<RequestInput<I, UserRequestContext>>
-	for Result<RequestInput<I, UserNoAuthRequestContext>, UserActionError>
-{
-	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
+impl<I> From<UserRequestInput<I>> for UserNoAuthInputResult<I> {
+	fn from(from: UserRequestInput<I>) -> Self {
 		let context: Result<UserNoAuthRequestContext, UserActionError> = from.context.into();
 		let context = context?;
-		Ok(RequestInput {
+		Ok(UserNoAuthRequestInput {
 			context,
 			data: from.data,
 		})
 	}
 }
 
-impl<T> From<RequestInput<T, UserNoAuthRequestContext>> for RequestInput<T, UserRequestContext> {
-	fn from(from: RequestInput<T, UserNoAuthRequestContext>) -> Self {
+impl<T> From<UserNoAuthRequestInput<T>> for UserRequestInput<T> {
+	fn from(from: UserNoAuthRequestInput<T>) -> Self {
 		let context = from.context.into();
 		Self {
 			context,
@@ -147,23 +149,19 @@ impl From<UserUnconfirmedRequestContext> for UserRequestContext {
 	}
 }
 
-impl<I> From<RequestInput<I, UserRequestContext>>
-	for Result<RequestInput<I, UserUnconfirmedRequestContext>, UserActionError>
-{
-	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
+impl<I> From<UserRequestInput<I>> for UserUnconfirmedInputResult<I> {
+	fn from(from: UserRequestInput<I>) -> Self {
 		let context: Result<UserUnconfirmedRequestContext, UserActionError> = from.context.into();
 		let context = context?;
-		Ok(RequestInput {
+		Ok(UserUnconfirmedRequestInput {
 			context,
 			data: from.data,
 		})
 	}
 }
 
-impl<T> From<RequestInput<T, UserUnconfirmedRequestContext>>
-	for RequestInput<T, UserRequestContext>
-{
-	fn from(from: RequestInput<T, UserUnconfirmedRequestContext>) -> Self {
+impl<T> From<UserUnconfirmedRequestInput<T>> for UserRequestInput<T> {
+	fn from(from: UserUnconfirmedRequestInput<T>) -> Self {
 		let context = from.context.into();
 		Self {
 			context,
@@ -212,21 +210,19 @@ impl From<UserAuthRequestContext> for UserRequestContext {
 	}
 }
 
-impl<I> From<RequestInput<I, UserRequestContext>>
-	for Result<RequestInput<I, UserAuthRequestContext>, UserActionError>
-{
-	fn from(from: RequestInput<I, UserRequestContext>) -> Self {
+impl<I> From<UserRequestInput<I>> for UserAuthInputResult<I> {
+	fn from(from: UserRequestInput<I>) -> Self {
 		let context: Result<UserAuthRequestContext, UserActionError> = from.context.into();
 		let context = context?;
-		Ok(RequestInput {
+		Ok(UserAuthRequestInput {
 			context,
 			data: from.data,
 		})
 	}
 }
 
-impl<T> From<RequestInput<T, UserAuthRequestContext>> for RequestInput<T, UserRequestContext> {
-	fn from(from: RequestInput<T, UserAuthRequestContext>) -> Self {
+impl<T> From<UserAuthRequestInput<T>> for UserRequestInput<T> {
+	fn from(from: UserAuthRequestInput<T>) -> Self {
 		let context = from.context.into();
 		Self {
 			context,
@@ -267,7 +263,7 @@ impl<I: 'static, O, E, T> Action<UserActionInput<I>, UserOutputInfo<O>, UserErro
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError,
+	E: ActionError + From<UserActionError>,
 	T: UserAction<I, O, E>,
 {
 	fn run(input: UserActionInput<I>) -> AsyncResult<UserOutputInfo<O>, UserErrorInfo<E>> {
@@ -280,15 +276,25 @@ where
 					.unwrap_or(None),
 			};
 
-			match Self::new(input).await {
-				Ok(action) => {
-					let result = action.run_inner().await;
+			match input {
+				Ok(ok_input) => {
+					let action_result = Self::new(ok_input).await;
 
-					match result {
-						Ok(data) => Ok(UserOutputInfo {
-							action_context,
-							data,
-						}),
+					match action_result {
+						Ok(action) => {
+							let result = action.run_inner().await;
+
+							match result {
+								Ok(data) => Ok(UserOutputInfo {
+									action_context,
+									data,
+								}),
+								Err(error) => Err(UserErrorInfo {
+									action_context,
+									error,
+								}),
+							}
+						}
 						Err(error) => Err(UserErrorInfo {
 							action_context,
 							error,
@@ -297,7 +303,7 @@ where
 				}
 				Err(error) => Err(UserErrorInfo {
 					action_context,
-					error,
+					error: E::from(error),
 				}),
 			}
 		})
@@ -346,10 +352,8 @@ pub mod tests {
 			UserActionType::Test
 		}
 
-		fn new(
-			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
-		) -> AsyncResult<Self, UserActionError> {
-			Box::pin(async { Ok(Self(input?)) })
+		fn new(input: RequestInput<(), UserRequestContext>) -> AsyncResult<Self, UserActionError> {
+			Box::pin(async { Ok(Self(input)) })
 		}
 
 		fn run_inner(self) -> AsyncResult<(), UserActionError> {
@@ -373,20 +377,13 @@ pub mod tests {
 			UserActionType::Test
 		}
 
-		fn new(
-			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
-		) -> AsyncResult<Self, UserActionError> {
+		fn new(input: RequestInput<(), UserRequestContext>) -> AsyncResult<Self, UserActionError> {
 			Box::pin(async {
-				match input {
-					Err(err) => Err(err),
-					Ok(ok_input) => {
-						let real_input = ok_input.into();
+				let real_input = input.into();
 
-						match real_input {
-							Err(err) => Err(err),
-							Ok(real_ok_input) => Ok(Self(real_ok_input)),
-						}
-					}
+				match real_input {
+					Err(err) => Err(err),
+					Ok(ok_input) => Ok(Self(ok_input)),
 				}
 			})
 		}
@@ -404,20 +401,13 @@ pub mod tests {
 			UserActionType::Test
 		}
 
-		fn new(
-			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
-		) -> AsyncResult<Self, UserActionError> {
+		fn new(input: RequestInput<(), UserRequestContext>) -> AsyncResult<Self, UserActionError> {
 			Box::pin(async {
-				match input {
-					Err(err) => Err(err),
-					Ok(ok_input) => {
-						let real_input = ok_input.into();
+				let real_input = input.into();
 
-						match real_input {
-							Err(err) => Err(err),
-							Ok(real_ok_input) => Ok(Self(real_ok_input)),
-						}
-					}
+				match real_input {
+					Err(err) => Err(err),
+					Ok(ok_input) => Ok(Self(ok_input)),
 				}
 			})
 		}
@@ -438,20 +428,13 @@ pub mod tests {
 			UserActionType::Test
 		}
 
-		fn new(
-			input: Result<RequestInput<(), UserRequestContext>, UserActionError>,
-		) -> AsyncResult<Self, UserActionError> {
+		fn new(input: RequestInput<(), UserRequestContext>) -> AsyncResult<Self, UserActionError> {
 			Box::pin(async {
-				match input {
-					Err(err) => Err(err),
-					Ok(ok_input) => {
-						let real_input = ok_input.into();
+				let real_input = input.into();
 
-						match real_input {
-							Err(err) => Err(err),
-							Ok(real_ok_input) => Ok(Self(real_ok_input)),
-						}
-					}
+				match real_input {
+					Err(err) => Err(err),
+					Ok(ok_input) => Ok(Self(ok_input)),
 				}
 			})
 		}

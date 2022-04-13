@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 
 use crate::core::action::{
-	data::automatic_action_data::AutomaticActionInput,
+	data::automatic_action_data::{
+		AutomaticActionInput, AutomaticRequestInput, HookInputResult, HookRequestInput,
+		InternalInputResult, InternalRequestInput,
+	},
 	definition::action::{Action, ActionError, AutomaticAction},
 	definition::action::{ActionInput, ActionOutput},
 };
@@ -69,10 +72,8 @@ impl From<InternalRequestContext> for AutomaticRequestContext {
 	}
 }
 
-impl<I> From<RequestInput<I, AutomaticRequestContext>>
-	for Result<RequestInput<I, InternalRequestContext>, AutomaticActionError>
-{
-	fn from(from: RequestInput<I, AutomaticRequestContext>) -> Self {
+impl<I> From<AutomaticRequestInput<I>> for InternalInputResult<I> {
+	fn from(from: AutomaticRequestInput<I>) -> Self {
 		let context: Result<InternalRequestContext, AutomaticActionError> = from.context.into();
 		let context = context?;
 		Ok(RequestInput {
@@ -82,7 +83,7 @@ impl<I> From<RequestInput<I, AutomaticRequestContext>>
 	}
 }
 
-impl<T> From<RequestInput<T, InternalRequestContext>> for RequestInput<T, AutomaticRequestContext> {
+impl<T> From<InternalRequestInput<T>> for AutomaticRequestInput<T> {
 	fn from(from: RequestInput<T, InternalRequestContext>) -> Self {
 		let context = from.context.into();
 		Self {
@@ -128,10 +129,8 @@ impl From<HookRequestContext> for AutomaticRequestContext {
 	}
 }
 
-impl<I> From<RequestInput<I, AutomaticRequestContext>>
-	for Result<RequestInput<I, HookRequestContext>, AutomaticActionError>
-{
-	fn from(from: RequestInput<I, AutomaticRequestContext>) -> Self {
+impl<I> From<AutomaticRequestInput<I>> for HookInputResult<I> {
+	fn from(from: AutomaticRequestInput<I>) -> Self {
 		let context: Result<HookRequestContext, AutomaticActionError> = from.context.into();
 		let context = context?;
 		Ok(RequestInput {
@@ -141,8 +140,8 @@ impl<I> From<RequestInput<I, AutomaticRequestContext>>
 	}
 }
 
-impl<T> From<RequestInput<T, HookRequestContext>> for RequestInput<T, AutomaticRequestContext> {
-	fn from(from: RequestInput<T, HookRequestContext>) -> Self {
+impl<T> From<HookRequestInput<T>> for AutomaticRequestInput<T> {
+	fn from(from: HookRequestInput<T>) -> Self {
 		let context = from.context.into();
 		Self {
 			context,
@@ -182,7 +181,7 @@ impl<I: 'static, O, E, T>
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError,
+	E: ActionError + From<AutomaticActionError>,
 	T: AutomaticAction<I, O, E>,
 {
 	fn run(
@@ -197,17 +196,25 @@ where
 					.unwrap_or(None),
 			};
 
-			let action_result = Self::new(input).await;
+			match input {
+				Ok(ok_input) => {
+					let action_result = Self::new(ok_input).await;
 
-			match action_result {
-				Ok(action) => {
-					let result = action.run_inner().await;
+					match action_result {
+						Ok(action) => {
+							let result = action.run_inner().await;
 
-					match result {
-						Ok(data) => Ok(AutomaticOutputInfo {
-							action_context,
-							data,
-						}),
+							match result {
+								Ok(data) => Ok(AutomaticOutputInfo {
+									action_context,
+									data,
+								}),
+								Err(error) => Err(AutomaticErrorInfo {
+									action_context,
+									error,
+								}),
+							}
+						}
 						Err(error) => Err(AutomaticErrorInfo {
 							action_context,
 							error,
@@ -216,7 +223,7 @@ where
 				}
 				Err(error) => Err(AutomaticErrorInfo {
 					action_context,
-					error,
+					error: E::from(error),
 				}),
 			}
 		})
@@ -261,9 +268,9 @@ pub mod tests {
 		}
 
 		fn new(
-			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
+			input: RequestInput<(), AutomaticRequestContext>,
 		) -> AsyncResult<Self, AutomaticActionError> {
-			Box::pin(async { Ok(Self(input?)) })
+			Box::pin(async { Ok(Self(input)) })
 		}
 
 		fn run_inner(self) -> AsyncResult<(), AutomaticActionError> {
@@ -283,19 +290,14 @@ pub mod tests {
 		}
 
 		fn new(
-			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
+			input: RequestInput<(), AutomaticRequestContext>,
 		) -> AsyncResult<Self, AutomaticActionError> {
 			Box::pin(async {
-				match input {
-					Err(err) => Err(err),
-					Ok(ok_input) => {
-						let real_input = ok_input.into();
+				let real_input = input.into();
 
-						match real_input {
-							Err(err) => Err(err),
-							Ok(real_ok_input) => Ok(Self(real_ok_input)),
-						}
-					}
+				match real_input {
+					Err(err) => Err(err),
+					Ok(real_ok_input) => Ok(Self(real_ok_input)),
 				}
 			})
 		}
@@ -314,19 +316,14 @@ pub mod tests {
 		}
 
 		fn new(
-			input: Result<RequestInput<(), AutomaticRequestContext>, AutomaticActionError>,
+			input: RequestInput<(), AutomaticRequestContext>,
 		) -> AsyncResult<Self, AutomaticActionError> {
 			Box::pin(async {
-				match input {
-					Err(err) => Err(err),
-					Ok(ok_input) => {
-						let real_input = ok_input.into();
+				let real_input = input.into();
 
-						match real_input {
-							Err(err) => Err(err),
-							Ok(real_ok_input) => Ok(Self(real_ok_input)),
-						}
-					}
+				match real_input {
+					Err(err) => Err(err),
+					Ok(real_ok_input) => Ok(Self(real_ok_input)),
 				}
 			})
 		}

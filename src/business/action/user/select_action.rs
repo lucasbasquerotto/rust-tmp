@@ -1,5 +1,12 @@
 use crate::{
 	core::{
+		action::definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
+		external::data::external_exception::ExternalException,
+	},
+	shared::data::user_data::UserId,
+};
+use crate::{
+	core::{
 		action::{
 			action_type::user_action_type::UserActionType,
 			data::{
@@ -11,16 +18,6 @@ use crate::{
 	},
 	external::dao::main::user_dao,
 	lib::data::result::AsyncResult,
-};
-use crate::{
-	core::{
-		action::{
-			data::user_action_data::UserActionInput,
-			definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
-		},
-		external::data::external_exception::ExternalException,
-	},
-	shared::data::user_data::UserId,
 };
 
 ////////////////////////////////////////////////
@@ -75,8 +72,8 @@ impl ActionOutput for Output {}
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-	UserError(Box<UserActionError>),
-	ExternalError(Box<ExternalException>),
+	UserError(UserActionError),
+	ExternalError(ExternalException),
 }
 
 impl ActionError for Error {
@@ -95,6 +92,12 @@ impl ActionError for Error {
 	}
 }
 
+impl From<UserActionError> for Error {
+	fn from(error: UserActionError) -> Self {
+		Self::UserError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -107,8 +110,8 @@ impl UserAction<Input, Output, Error> for Action {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<Input>) -> AsyncResult<Self, Error> {
-		Box::pin(async { input.map(Self).map_err(Box::new).map_err(Error::UserError) })
+	fn new(input: UserRequestInput<Input>) -> AsyncResult<Self, Error> {
+		Box::pin(async { Ok(Self(input)) })
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, Error> {
@@ -118,19 +121,16 @@ impl UserAction<Input, Output, Error> for Action {
 
 			let first = user_dao::Select::run(user_dao::SelectInput::First)
 				.await
-				.map_err(Box::new)
 				.map_err(Error::ExternalError)?
 				.into();
 
 			let last = user_dao::Select::run(user_dao::SelectInput::Last)
 				.await
-				.map_err(Box::new)
 				.map_err(Error::ExternalError)?
 				.into();
 
 			let by_id = user_dao::Select::run(user_dao::SelectInput::ById(id))
 				.await
-				.map_err(Box::new)
 				.map_err(Error::ExternalError)?
 				.into();
 

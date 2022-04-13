@@ -4,7 +4,7 @@ use crate::{
 			action_type::user_action_type::UserActionType,
 			data::{
 				action_data::{DescriptiveError, ErrorData},
-				user_action_data::{UserActionError, UserNoAuthRequestInput},
+				user_action_data::{UserActionError, UserNoAuthRequestInput, UserRequestInput},
 			},
 		},
 		external::definition::external::ExternalAction,
@@ -15,7 +15,7 @@ use crate::{
 use crate::{
 	core::{
 		action::{
-			data::user_action_data::UserActionInput,
+			data::user_action_data::UserNoAuthInputResult,
 			definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
 		},
 		external::data::external_exception::ExternalException,
@@ -60,8 +60,8 @@ impl ActionOutput for Output {}
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
-	UserError(Box<UserActionError>),
-	ExternalError(Box<ExternalException>),
+	UserError(UserActionError),
+	ExternalError(ExternalException),
 }
 
 impl ActionError for Error {
@@ -80,6 +80,18 @@ impl ActionError for Error {
 	}
 }
 
+impl From<UserActionError> for Error {
+	fn from(error: UserActionError) -> Self {
+		Self::UserError(error)
+	}
+}
+
+impl From<ExternalException> for Error {
+	fn from(error: ExternalException) -> Self {
+		Self::ExternalError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -92,13 +104,11 @@ impl UserAction<Input, Output, Error> for Action {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<Input>) -> AsyncResult<Self, Error> {
+	fn new(input: UserRequestInput<Input>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
-			input
-				.and_then(|ok_input| ok_input.into())
+			UserNoAuthInputResult::from(input)
 				.map(Self)
-				.map_err(Box::new)
-				.map_err(Error::UserError)
+				.map_err(Error::from)
 		})
 	}
 
@@ -112,8 +122,7 @@ impl UserAction<Input, Output, Error> for Action {
 				pass,
 			})
 			.await
-			.map_err(Box::new)
-			.map_err(Error::ExternalError)?;
+			.map_err(Error::from)?;
 			let result = Output { id, name };
 			Ok(result)
 		})
@@ -158,7 +167,7 @@ mod tests {
 						action_type: super::USER_ACTION_TYPE,
 						context: Some(context),
 					},
-					error: super::Error::UserError(Box::new(UserActionError::Authenticated)),
+					error: super::Error::UserError(UserActionError::Authenticated),
 				}),
 			);
 		})

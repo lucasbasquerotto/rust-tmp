@@ -1,7 +1,4 @@
-use crate::core::action::{
-	data::user_action_data::UserActionInput,
-	definition::action::{ActionError, UserAction},
-};
+use crate::core::action::definition::action::{ActionError, UserAction};
 use crate::{
 	core::action::{
 		action_type::user_action_type::UserActionType,
@@ -42,6 +39,12 @@ impl ActionError for Error {
 	}
 }
 
+impl From<UserActionError> for Error {
+	fn from(error: UserActionError) -> Self {
+		Self::UserError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -54,8 +57,8 @@ impl UserAction<(), (), Error> for Action {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<()>) -> AsyncResult<Self, Error> {
-		Box::pin(async { input.map(Self).map_err(Error::UserError) })
+	fn new(input: UserRequestInput<()>) -> AsyncResult<Self, Error> {
+		Box::pin(async { Ok(Self(input)) })
 	}
 
 	fn run_inner(self) -> AsyncResult<(), Error> {

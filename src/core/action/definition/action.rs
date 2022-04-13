@@ -9,12 +9,16 @@ use crate::{
 		data::{
 			action_data::{DescriptiveError, ErrorData},
 			automatic_action_data::{
-				AutomaticActionInput, AutomaticErrorInfo, AutomaticOutputInfo,
+				AutomaticActionError, AutomaticActionInput, AutomaticErrorInfo,
+				AutomaticOutputInfo, AutomaticRequestInput,
 			},
 			moderator_action_data::{
-				ModeratorActionInput, ModeratorErrorInfo, ModeratorOutputInfo,
+				ModeratorActionError, ModeratorActionInput, ModeratorErrorInfo,
+				ModeratorOutputInfo, ModeratorRequestInput,
 			},
-			user_action_data::{UserActionInput, UserErrorInfo, UserOutputInfo},
+			user_action_data::{
+				UserActionError, UserActionInput, UserErrorInfo, UserOutputInfo, UserRequestInput,
+			},
 		},
 	},
 	lib::data::result::AsyncResult,
@@ -71,11 +75,11 @@ pub trait UserAction<I, O, E>:
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError,
+	E: ActionError + From<UserActionError>,
 	Self: Sized,
 {
 	fn action_type() -> UserActionType;
-	fn new(input: UserActionInput<I>) -> AsyncResult<Self, E>;
+	fn new(input: UserRequestInput<I>) -> AsyncResult<Self, E>;
 	fn run_inner(self) -> AsyncResult<O, E>;
 }
 
@@ -88,11 +92,11 @@ pub trait ModeratorAction<I, O, E>:
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError,
+	E: ActionError + From<ModeratorActionError>,
 	Self: Sized,
 {
 	fn action_type() -> ModeratorActionType;
-	fn new(input: ModeratorActionInput<I>) -> AsyncResult<Self, E>;
+	fn new(input: ModeratorRequestInput<I>) -> AsyncResult<Self, E>;
 	fn run_inner(self) -> AsyncResult<O, E>;
 }
 
@@ -105,10 +109,10 @@ pub trait AutomaticAction<I, O, E>:
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError,
+	E: ActionError + From<AutomaticActionError>,
 	Self: Sized,
 {
 	fn action_type() -> AutomaticActionType;
-	fn new(input: AutomaticActionInput<I>) -> AsyncResult<Self, E>;
+	fn new(input: AutomaticRequestInput<I>) -> AsyncResult<Self, E>;
 	fn run_inner(self) -> AsyncResult<O, E>;
 }

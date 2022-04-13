@@ -1,5 +1,5 @@
 use crate::core::action::{
-	data::automatic_action_data::AutomaticActionInput,
+	data::automatic_action_data::{AutomaticRequestInput, HookInputResult, InternalInputResult},
 	definition::action::{ActionError, ActionInput, ActionOutput, AutomaticAction},
 };
 use crate::{
@@ -68,6 +68,12 @@ impl ActionError for Error {
 	}
 }
 
+impl From<AutomaticActionError> for Error {
+	fn from(error: AutomaticActionError) -> Self {
+		Self::AutomaticError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -80,12 +86,11 @@ impl AutomaticAction<Input, Output, Error> for Internal {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<Input>) -> AsyncResult<Self, Error> {
+	fn new(input: AutomaticRequestInput<Input>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
-			input
-				.and_then(|ok_input| ok_input.into())
+			InternalInputResult::from(input)
 				.map(Self)
-				.map_err(Error::AutomaticError)
+				.map_err(Error::from)
 		})
 	}
 
@@ -109,20 +114,8 @@ impl AutomaticAction<Input, Output, Error> for Hook {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<Input>) -> AsyncResult<Self, Error> {
-		Box::pin(async {
-			match input {
-				Err(err) => Err(Error::AutomaticError(err)),
-				Ok(ok_input) => {
-					let real_input = ok_input.into();
-
-					match real_input {
-						Err(err) => Err(Error::AutomaticError(err)),
-						Ok(real_ok_input) => Ok(Self(real_ok_input)),
-					}
-				}
-			}
-		})
+	fn new(input: AutomaticRequestInput<Input>) -> AsyncResult<Self, Error> {
+		Box::pin(async { HookInputResult::from(input).map(Self).map_err(Error::from) })
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, Error> {

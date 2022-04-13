@@ -1,7 +1,4 @@
-use crate::core::action::{
-	data::moderator_action_data::ModeratorActionInput,
-	definition::action::{ActionError, ModeratorAction},
-};
+use crate::core::action::definition::action::{ActionError, ModeratorAction};
 use crate::{
 	core::action::{
 		action_type::moderator_action_type::ModeratorActionType,
@@ -42,6 +39,12 @@ impl ActionError for Error {
 	}
 }
 
+impl From<ModeratorActionError> for Error {
+	fn from(error: ModeratorActionError) -> Self {
+		Self::ModeratorError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -54,13 +57,8 @@ impl ModeratorAction<(), (), Error> for Action {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorActionInput<()>) -> AsyncResult<Self, Error> {
-		Box::pin(async {
-			match input {
-				Err(err) => Err(Error::ModeratorError(err)),
-				Ok(ok_input) => Ok(Self(ok_input)),
-			}
-		})
+	fn new(input: ModeratorRequestInput<()>) -> AsyncResult<Self, Error> {
+		Box::pin(async { Ok(Self(input)) })
 	}
 
 	fn run_inner(self) -> AsyncResult<(), Error> {

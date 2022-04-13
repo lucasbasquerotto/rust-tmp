@@ -1,5 +1,5 @@
 use crate::core::action::{
-	data::user_action_data::UserActionInput,
+	data::user_action_data::{UserNoAuthInputResult, UserRequestInput},
 	definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
 };
 use crate::{
@@ -66,6 +66,12 @@ impl ActionError for Error {
 	}
 }
 
+impl From<UserActionError> for Error {
+	fn from(error: UserActionError) -> Self {
+		Self::UserError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -78,12 +84,11 @@ impl UserAction<Input, Output, Error> for Action {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<Input>) -> AsyncResult<Self, Error> {
+	fn new(input: UserRequestInput<Input>) -> AsyncResult<Self, Error> {
 		Box::pin(async {
-			input
-				.and_then(|ok_input| ok_input.into())
+			UserNoAuthInputResult::from(input)
 				.map(Self)
-				.map_err(Error::UserError)
+				.map_err(Error::from)
 		})
 	}
 

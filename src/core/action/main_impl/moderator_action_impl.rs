@@ -71,7 +71,7 @@ impl<I: 'static, O, E, T>
 where
 	I: ActionInput,
 	O: ActionOutput,
-	E: ActionError,
+	E: ActionError + From<ModeratorActionError>,
 	T: ModeratorAction<I, O, E>,
 	Self: Sized,
 {
@@ -89,7 +89,7 @@ where
 			};
 			let action_type = Self::action_type();
 
-			let action_result = match input {
+			match input {
 				Ok(ok_input) => {
 					let allowed = ok_input.context.session.admin
 						|| ok_input
@@ -97,34 +97,40 @@ where
 							.session
 							.allowed_actions
 							.contains(&action_type);
-					if allowed {
-						Self::new(Ok(ok_input))
+
+					if !allowed {
+						Err(ModeratorErrorInfo {
+							action_context,
+							error: E::from(ModeratorActionError::NotAllowed(action_type)),
+						})
 					} else {
-						Self::new(Err(ModeratorActionError::NotAllowed(action_type)))
-					}
-				}
-				Err(error) => Self::new(Err(error)),
-			}
-			.await;
+						let action_result = Self::new(ok_input).await;
 
-			match action_result {
-				Ok(action) => {
-					let result = action.run_inner().await;
+						match action_result {
+							Ok(action) => {
+								let result = action.run_inner().await;
 
-					match result {
-						Ok(data) => Ok(ModeratorOutputInfo {
-							action_context,
-							data,
-						}),
-						Err(error) => Err(ModeratorErrorInfo {
-							action_context,
-							error,
-						}),
+								match result {
+									Ok(data) => Ok(ModeratorOutputInfo {
+										action_context,
+										data,
+									}),
+									Err(error) => Err(ModeratorErrorInfo {
+										action_context,
+										error,
+									}),
+								}
+							}
+							Err(error) => Err(ModeratorErrorInfo {
+								action_context,
+								error,
+							}),
+						}
 					}
 				}
 				Err(error) => Err(ModeratorErrorInfo {
 					action_context,
-					error,
+					error: E::from(error),
 				}),
 			}
 		})
@@ -163,14 +169,9 @@ pub mod tests {
 		}
 
 		fn new(
-			input: Result<RequestInput<(), ModeratorRequestContext>, ModeratorActionError>,
+			input: RequestInput<(), ModeratorRequestContext>,
 		) -> AsyncResult<Self, ModeratorActionError> {
-			Box::pin(async {
-				match input {
-					Err(err) => Err(err),
-					Ok(ok_input) => Ok(Self(ok_input)),
-				}
-			})
+			Box::pin(async { Ok(Self(input)) })
 		}
 
 		fn run_inner(self) -> AsyncResult<(), ModeratorActionError> {

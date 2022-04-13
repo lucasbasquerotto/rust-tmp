@@ -1,8 +1,5 @@
-use crate::core::action::{
-	data::automatic_action_data::AutomaticActionInput,
-	definition::action::{
-		ActionError, ActionInput, ActionOutput, AutomaticAction, ModeratorAction, UserAction,
-	},
+use crate::core::action::definition::action::{
+	ActionError, ActionInput, ActionOutput, AutomaticAction, ModeratorAction, UserAction,
 };
 use crate::{
 	core::action::{
@@ -13,10 +10,8 @@ use crate::{
 		data::{
 			action_data::{DescriptiveError, ErrorData, ErrorInfo},
 			automatic_action_data::{AutomaticActionError, AutomaticRequestInput},
-			moderator_action_data::{
-				ModeratorActionError, ModeratorActionInput, ModeratorRequestInput,
-			},
-			user_action_data::{UserActionError, UserActionInput, UserRequestInput},
+			moderator_action_data::{ModeratorActionError, ModeratorRequestInput},
+			user_action_data::{UserActionError, UserRequestInput},
 		},
 	},
 	lib::data::result::AsyncResult,
@@ -101,6 +96,12 @@ impl ActionError for UserError {
 	}
 }
 
+impl From<UserActionError> for UserError {
+	fn from(error: UserActionError) -> Self {
+		Self::UserError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -113,8 +114,8 @@ impl UserAction<Input, Output, UserError> for User {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserActionInput<Input>) -> AsyncResult<Self, UserError> {
-		Box::pin(async { input.map(Self).map_err(UserError::UserError) })
+	fn new(input: UserRequestInput<Input>) -> AsyncResult<Self, UserError> {
+		Box::pin(async { Ok(Self(input)) })
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, UserError> {
@@ -151,6 +152,12 @@ impl ActionError for ModeratorError {
 	}
 }
 
+impl From<ModeratorActionError> for ModeratorError {
+	fn from(error: ModeratorActionError) -> Self {
+		Self::ModeratorError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -163,8 +170,8 @@ impl ModeratorAction<Input, Output, ModeratorError> for Moderator {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorActionInput<Input>) -> AsyncResult<Self, ModeratorError> {
-		Box::pin(async { input.map(Self).map_err(ModeratorError::ModeratorError) })
+	fn new(input: ModeratorRequestInput<Input>) -> AsyncResult<Self, ModeratorError> {
+		Box::pin(async { Ok(Self(input)) })
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, ModeratorError> {
@@ -201,6 +208,12 @@ impl ActionError for AutomaticError {
 	}
 }
 
+impl From<AutomaticActionError> for AutomaticError {
+	fn from(error: AutomaticActionError) -> Self {
+		Self::AutomaticError(error)
+	}
+}
+
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
@@ -213,8 +226,8 @@ impl AutomaticAction<Input, Output, AutomaticError> for Automatic {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticActionInput<Input>) -> AsyncResult<Self, AutomaticError> {
-		Box::pin(async { input.map(Self).map_err(AutomaticError::AutomaticError) })
+	fn new(input: AutomaticRequestInput<Input>) -> AsyncResult<Self, AutomaticError> {
+		Box::pin(async { Ok(Self(input)) })
 	}
 
 	fn run_inner(self) -> AsyncResult<Output, AutomaticError> {

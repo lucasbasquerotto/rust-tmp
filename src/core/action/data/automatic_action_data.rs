@@ -43,7 +43,11 @@ pub type AutomaticRequestInput<I> = RequestInput<I, AutomaticRequestContext>;
 
 pub type InternalRequestInput<I> = RequestInput<I, InternalRequestContext>;
 
+pub type InternalInputResult<I> = Result<InternalRequestInput<I>, AutomaticActionError>;
+
 pub type HookRequestInput<I> = RequestInput<I, HookRequestContext>;
+
+pub type HookInputResult<I> = Result<HookRequestInput<I>, AutomaticActionError>;
 
 pub type AutomaticActionInput<I> = Result<AutomaticRequestInput<I>, AutomaticActionError>;
 

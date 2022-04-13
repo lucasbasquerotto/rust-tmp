@@ -81,7 +81,15 @@ pub type UserRequestInput<I> = RequestInput<I, UserRequestContext>;
 #[allow(dead_code)]
 pub type UserAuthRequestInput<I> = RequestInput<I, UserAuthRequestContext>;
 
+pub type UserAuthInputResult<I> = Result<UserAuthRequestInput<I>, UserActionError>;
+
 pub type UserNoAuthRequestInput<I> = RequestInput<I, UserNoAuthRequestContext>;
+
+pub type UserNoAuthInputResult<I> = Result<UserNoAuthRequestInput<I>, UserActionError>;
+
+pub type UserUnconfirmedRequestInput<I> = RequestInput<I, UserUnconfirmedRequestContext>;
+
+pub type UserUnconfirmedInputResult<I> = Result<UserUnconfirmedRequestInput<I>, UserActionError>;
 
 pub type UserActionInput<I> = Result<UserRequestInput<I>, UserActionError>;
 
