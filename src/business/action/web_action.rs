@@ -81,7 +81,7 @@ pub enum UserError {
 }
 
 impl ActionError for UserError {
-	fn private_error(&self) -> DescriptiveError {
+	fn private_error(&self) -> Option<DescriptiveError> {
 		match &self {
 			UserError::UserError(error) => error.private_error(),
 			UserError::WebError(error) => error.private_error(),
@@ -143,7 +143,7 @@ pub enum ModeratorError {
 }
 
 impl ActionError for ModeratorError {
-	fn private_error(&self) -> DescriptiveError {
+	fn private_error(&self) -> Option<DescriptiveError> {
 		match &self {
 			ModeratorError::ModeratorError(error) => error.private_error(),
 			ModeratorError::WebError(error) => error.private_error(),
@@ -205,7 +205,7 @@ pub enum AutomaticError {
 }
 
 impl ActionError for AutomaticError {
-	fn private_error(&self) -> DescriptiveError {
+	fn private_error(&self) -> Option<DescriptiveError> {
 		match &self {
 			AutomaticError::AutomaticError(error) => error.private_error(),
 			AutomaticError::WebError(error) => error.private_error(),
@@ -272,9 +272,9 @@ pub enum WebSharedError {
 }
 
 impl ActionError for WebSharedError {
-	fn private_error(&self) -> DescriptiveError {
+	fn private_error(&self) -> Option<DescriptiveError> {
 		match &self {
-			WebSharedError::Reqwest(source) => DescriptiveError::source(source),
+			WebSharedError::Reqwest(source) => Some(DescriptiveError::source(source)),
 		}
 	}
 

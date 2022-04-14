@@ -43,9 +43,9 @@ impl DescriptiveInfo for ModeratorRequestContext {
 ////////////////////////////////////////////////
 
 impl ActionError for ModeratorActionError {
-	fn private_error(&self) -> DescriptiveError {
+	fn private_error(&self) -> Option<DescriptiveError> {
 		match self {
-			ModeratorActionError::NotAllowed(data) => DescriptiveError::data(data),
+			ModeratorActionError::NotAllowed(data) => Some(DescriptiveError::data(data)),
 		}
 	}
 

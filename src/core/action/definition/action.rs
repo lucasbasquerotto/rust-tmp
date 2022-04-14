@@ -46,7 +46,7 @@ impl ActionOutput for () {}
 ////////////////////////////////////////////////
 
 pub trait ActionError: Debug {
-	fn private_error(&self) -> DescriptiveError;
+	fn private_error(&self) -> Option<DescriptiveError>;
 
 	fn public_error(&self) -> Option<ErrorData>;
 

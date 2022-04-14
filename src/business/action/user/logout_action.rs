@@ -26,7 +26,7 @@ pub enum Error {
 }
 
 impl ActionError for Error {
-	fn private_error(&self) -> DescriptiveError {
+	fn private_error(&self) -> Option<DescriptiveError> {
 		match self {
 			Error::UserError(error) => error.private_error(),
 		}

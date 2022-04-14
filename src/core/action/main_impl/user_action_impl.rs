@@ -236,10 +236,10 @@ impl<T> From<UserAuthRequestInput<T>> for UserRequestInput<T> {
 ////////////////////////////////////////////////
 
 impl ActionError for UserActionError {
-	fn private_error(&self) -> DescriptiveError {
+	fn private_error(&self) -> Option<DescriptiveError> {
 		match self {
-			UserActionError::Authenticated => DescriptiveError::empty(),
-			UserActionError::Unauthenticated => DescriptiveError::empty(),
+			UserActionError::Authenticated => None,
+			UserActionError::Unauthenticated => None,
 		}
 	}
 

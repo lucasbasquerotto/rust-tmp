@@ -38,8 +38,8 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 			action_id = error_context.action_type.id(),
 		);
 		let private = private_error
-			.msg
 			.as_ref()
+			.and_then(|error| error.msg.as_ref())
 			.map(|private| format!("[private={private}]"))
 			.unwrap_or_else(|| "".into());
 		let public = format!(
@@ -56,13 +56,13 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 			.map(|context| format!("[context={context}]", context = context.description()))
 			.unwrap_or_else(|| "".into());
 		let data = private_error
-			.data
 			.as_ref()
+			.and_then(|error| error.data.as_ref())
 			.map(|data| format!("[data={data}]"))
 			.unwrap_or_else(|| "".into());
 		let source = private_error
-			.source
 			.as_ref()
+			.and_then(|error| error.source.as_ref())
 			.map(|source| format!("[source={source}]"))
 			.unwrap_or_else(|| "".into());
 
@@ -75,7 +75,10 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 	}
 
 	fn handle(self) -> Option<ErrorData> {
-		error!("{}", self.description());
+		if self.error.private_error().is_some() {
+			error!("{}", self.description());
+		}
+
 		self.error.public_error()
 	}
 }
@@ -135,17 +138,19 @@ mod tests {
 	struct TestActionError(TestActionType);
 
 	impl ActionError for TestActionError {
-		fn private_error(&self) -> DescriptiveError {
+		fn private_error(&self) -> Option<DescriptiveError> {
 			let action_type = &self.0;
 
 			if action_type.0 == 1 {
-				DescriptiveError {
-					msg: Some("Private message 01".into()),
-					data: Some("Data 01".into()),
-					source: Some("Source 01".into()),
-				}
+				None
+			} else if action_type.0 == 2 {
+				Some(DescriptiveError {
+					msg: Some("Private message 02".into()),
+					data: Some("Data 02".into()),
+					source: Some("Source 02".into()),
+				})
 			} else {
-				DescriptiveError::empty()
+				Some(DescriptiveError::empty())
 			}
 		}
 
@@ -193,27 +198,7 @@ mod tests {
 				})
 			);
 
-			let action = format!(
-				"[action({action_scope:?}::{action_type} - {action_id})]",
-				action_scope = TestActionType::scope(),
-				action_type = ActionTypeWrapper(action_type),
-				action_id = action_type.id(),
-			);
-			let private = format!("[private={private}]", private = "Private message 01");
-			let public = format!(
-				"[public={public}]",
-				public = "Test public error (action_id=1)",
-			);
-			let context = format!("[context={context}]", context = "My error #01");
-			let data = format!("[data={data}]", data = "Data 01");
-			let source = format!("[source={source}]", source = "Source 01");
-
-			assert_eq!(
-				&helper.pop_log(),
-				&Some(
-					format!("ERROR - {action} {private} {public} {context} {data} {source}").into()
-				)
-			);
+			assert_eq!(&helper.pop_log(), &None);
 		})
 		.await;
 	}
@@ -247,11 +232,59 @@ mod tests {
 				action_type = ActionTypeWrapper(action_type),
 				action_id = action_type.id(),
 			);
+			let private = format!("[private={private}]", private = "Private message 02");
 			let public = format!(
 				"[public={public}]",
 				public = "Test public error (action_id=2)",
 			);
 			let context = format!("[context={context}]", context = "My error #02");
+			let data = format!("[data={data}]", data = "Data 02");
+			let source = format!("[source={source}]", source = "Source 02");
+
+			assert_eq!(
+				&helper.pop_log(),
+				&Some(
+					format!("ERROR - {action} {private} {public} {context} {data} {source}").into()
+				)
+			);
+		})
+		.await;
+	}
+
+	#[tokio::test]
+	async fn test_3() {
+		run_test(|helper| async move {
+			let action_type = TestActionType(3);
+			let context = TestRequestContext("My error #03".into());
+			let error = TestActionError(action_type);
+			let error_context = ActionContext {
+				action_type,
+				context: Some(context),
+			};
+			let error_info = ActionErrorInfo {
+				action_context: error_context,
+				error,
+			};
+			let public_error = error_info.handle();
+			assert_eq!(
+				&public_error,
+				&Some(ErrorData {
+					msg: "Test public error (action_id=3)".into(),
+					params: None
+				})
+			);
+
+			let action = format!(
+				"[action({action_scope:?}::{action_type} - {action_id})]",
+				action_scope = TestActionType::scope(),
+				action_type = ActionTypeWrapper(action_type),
+				action_id = action_type.id(),
+			);
+			let public = format!(
+				"[public={public}]",
+				public = "Test public error (action_id=3)",
+			);
+			let context = format!("[context={context}]", context = "My error #03");
 
 			assert_eq!(
 				&helper.pop_log(),

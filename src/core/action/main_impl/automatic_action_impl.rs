@@ -155,10 +155,10 @@ impl<T> From<HookRequestInput<T>> for AutomaticRequestInput<T> {
 ////////////////////////////////////////////////
 
 impl ActionError for AutomaticActionError {
-	fn private_error(&self) -> DescriptiveError {
+	fn private_error(&self) -> Option<DescriptiveError> {
 		match self {
-			AutomaticActionError::NotInternal => DescriptiveError::empty(),
-			AutomaticActionError::NotHook => DescriptiveError::empty(),
+			AutomaticActionError::NotInternal => None,
+			AutomaticActionError::NotHook => None,
 		}
 	}
 

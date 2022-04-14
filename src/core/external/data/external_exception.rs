@@ -10,9 +10,9 @@ pub enum ExternalException {
 }
 
 impl ActionError for ExternalException {
-	fn private_error(&self) -> DescriptiveError {
+	fn private_error(&self) -> Option<DescriptiveError> {
 		match self {
-			ExternalException::Unknown => DescriptiveError::empty(),
+			ExternalException::Unknown => Some(DescriptiveError::empty()),
 		}
 	}
 
