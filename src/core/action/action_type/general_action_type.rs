@@ -1,10 +1,16 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Debug)]
 pub enum ActionScope {
 	User,
 	Moderator,
 	Automatic,
+}
+
+impl Display for ActionScope {
+	fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+		write!(f, "{:?}", self)
+	}
 }
 
 pub trait ActionType: Clone + Copy + Debug + Eq + PartialEq {

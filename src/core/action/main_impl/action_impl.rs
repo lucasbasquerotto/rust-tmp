@@ -32,7 +32,7 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 		let private_error = &self.error.private_error();
 		let error_context = &self.action_context;
 		let action = format!(
-			"[action({action_scope:?}::{action_type} - {action_id})]",
+			"[action({action_scope}::{action_type} - {action_id})]",
 			action_scope = T::scope(),
 			action_type = ActionTypeWrapper(error_context.action_type),
 			action_id = error_context.action_type.id(),
@@ -42,14 +42,12 @@ impl<T: ActionType, C: DescriptiveRequestContext, E: ActionError> ActionErrorHel
 			.and_then(|error| error.msg.as_ref())
 			.map(|private| format!("[private={private}]"))
 			.unwrap_or_else(|| "".into());
-		let public = format!(
-			"[public={public}]",
-			public = self
-				.error
-				.public_error()
-				.map(|data| data.msg)
-				.unwrap_or_else(|| "".into())
-		);
+		let public = self
+			.error
+			.public_error()
+			.map(|data| data.msg)
+			.map(|public| format!("[public={public}]"))
+			.unwrap_or_else(|| "".into());
 		let context = error_context
 			.context
 			.as_ref()
@@ -111,11 +109,9 @@ mod tests {
 	};
 	use crate::core::action::definition::action::ActionError;
 	use crate::core::action::definition::action_helpers::ActionErrorHelper;
+	use crate::core::action::definition::action_helpers::DescriptiveInfo;
 	use crate::core::action::{
 		action_type::general_action_type::ActionScope, data::action_data::RequestContext,
-	};
-	use crate::core::action::{
-		definition::action_helpers::DescriptiveInfo, main_impl::action_impl::ActionTypeWrapper,
 	};
 	use crate::lib::data::str::Str;
 	use crate::tests::test_utils::tests::run_test;
@@ -139,24 +135,36 @@ mod tests {
 
 	impl ActionError for TestActionError {
 		fn private_error(&self) -> Option<DescriptiveError> {
-			let action_type = &self.0;
+			let action_id = &self.0.id();
 
-			if action_type.0 == 1 {
-				None
-			} else if action_type.0 == 2 {
-				Some(DescriptiveError {
+			match action_id {
+				1 => None,
+				2 => Some(DescriptiveError {
 					msg: Some("Private message 02".into()),
 					data: Some("Data 02".into()),
 					source: Some("Source 02".into()),
-				})
-			} else {
-				Some(DescriptiveError::empty())
+				}),
+				3 => Some(DescriptiveError::empty()),
+				4 => Some(DescriptiveError {
+					msg: None,
+					data: None,
+					source: Some("Source 04".into()),
+				}),
+				5 => None,
+				_ => panic!(),
 			}
 		}
 
 		fn public_error(&self) -> Option<ErrorData> {
 			let action_id = self.0.id();
-			Self::error_msg(format!("Test public error (action_id={action_id})").into())
+
+			match action_id {
+				1..=3 => {
+					Self::error_msg(format!("Test public error (action_id={action_id})").into())
+				}
+				4 | 5 => None,
+				_ => panic!(),
+			}
 		}
 	}
 
@@ -166,17 +174,17 @@ mod tests {
 		}
 
 		fn id(&self) -> u32 {
-			let TestActionType(id) = self;
+			let Self(id) = self;
 			*id
 		}
 
 		fn from_id(id: u32) -> Option<Self> {
-			Some(TestActionType(id))
+			Some(Self(id))
 		}
 	}
 
 	#[tokio::test]
-	async fn test_1() {
+	async fn test_1_public_error() {
 		run_test(|helper| async move {
 			let action_type = TestActionType(1);
 			let context = TestRequestContext("My error #01".into());
@@ -189,7 +197,9 @@ mod tests {
 				action_context: error_context,
 				error,
 			};
+
 			let public_error = error_info.handle();
+
 			assert_eq!(
 				&public_error,
 				&Some(ErrorData {
@@ -204,7 +214,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_2() {
+	async fn test_2_private_public() {
 		run_test(|helper| async move {
 			let action_type = TestActionType(2);
 			let context = TestRequestContext("My error #02".into());
@@ -217,7 +227,9 @@ mod tests {
 				action_context: error_context,
 				error,
 			};
+
 			let public_error = error_info.handle();
+
 			assert_eq!(
 				&public_error,
 				&Some(ErrorData {
@@ -226,20 +238,12 @@ mod tests {
 				})
 			);
 
-			let action = format!(
-				"[action({action_scope:?}::{action_type} - {action_id})]",
-				action_scope = TestActionType::scope(),
-				action_type = ActionTypeWrapper(action_type),
-				action_id = action_type.id(),
-			);
-			let private = format!("[private={private}]", private = "Private message 02");
-			let public = format!(
-				"[public={public}]",
-				public = "Test public error (action_id=2)",
-			);
-			let context = format!("[context={context}]", context = "My error #02");
-			let data = format!("[data={data}]", data = "Data 02");
-			let source = format!("[source={source}]", source = "Source 02");
+			let action = "[action(Automatic::TestActionType - 2)]";
+			let private = "[private=Private message 02]";
+			let public = "[public=Test public error (action_id=2)]";
+			let context = "[context=My error #02]";
+			let data = "[data=Data 02]";
+			let source = "[source=Source 02]";
 
 			assert_eq!(
 				&helper.pop_log(),
@@ -252,7 +256,7 @@ mod tests {
 	}
 
 	#[tokio::test]
-	async fn test_3() {
+	async fn test_3_private_public() {
 		run_test(|helper| async move {
 			let action_type = TestActionType(3);
 			let context = TestRequestContext("My error #03".into());
@@ -265,7 +269,9 @@ mod tests {
 				action_context: error_context,
 				error,
 			};
+
 			let public_error = error_info.handle();
+
 			assert_eq!(
 				&public_error,
 				&Some(ErrorData {
@@ -274,22 +280,69 @@ mod tests {
 				})
 			);
 
-			let action = format!(
-				"[action({action_scope:?}::{action_type} - {action_id})]",
-				action_scope = TestActionType::scope(),
-				action_type = ActionTypeWrapper(action_type),
-				action_id = action_type.id(),
-			);
-			let public = format!(
-				"[public={public}]",
-				public = "Test public error (action_id=3)",
-			);
-			let context = format!("[context={context}]", context = "My error #03");
+			let action = "[action(Automatic::TestActionType - 3)]";
+			let public = "[public=Test public error (action_id=3)]";
+			let context = "[context=My error #03]";
 
 			assert_eq!(
 				&helper.pop_log(),
 				&Some(format!("ERROR - {action} {public} {context}").into())
 			);
+		})
+		.await;
+	}
+
+	#[tokio::test]
+	async fn test_4_private_error() {
+		run_test(|helper| async move {
+			let action_type = TestActionType(4);
+			let context = TestRequestContext("My error #04".into());
+			let error = TestActionError(action_type);
+			let error_context = ActionContext {
+				action_type,
+				context: Some(context),
+			};
+			let error_info = ActionErrorInfo {
+				action_context: error_context,
+				error,
+			};
+
+			let public_error = error_info.handle();
+
+			assert_eq!(&public_error, &None);
+
+			let action = "[action(Automatic::TestActionType - 4)]";
+			let context = "[context=My error #04]";
+			let source = "[source=Source 04]";
+
+			assert_eq!(
+				&helper.pop_log(),
+				&Some(format!("ERROR - {action} {context} {source}").into())
+			);
+		})
+		.await;
+	}
+
+	#[tokio::test]
+	async fn test_5_empty_error() {
+		run_test(|helper| async move {
+			let action_type = TestActionType(5);
+			let context = TestRequestContext("My error #05".into());
+			let error = TestActionError(action_type);
+			let error_context = ActionContext {
+				action_type,
+				context: Some(context),
+			};
+			let error_info = ActionErrorInfo {
+				action_context: error_context,
+				error,
+			};
+
+			let public_error = error_info.handle();
+
+			assert_eq!(&public_error, &None);
+
+			assert_eq!(&helper.pop_log(), &None);
 		})
 		.await;
 	}
