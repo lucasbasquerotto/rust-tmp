@@ -12,6 +12,8 @@ use crate::{
 use rocket::serde::json::Json;
 use std::fmt::Debug;
 
+pub type WebActionResult<O> = Result<Json<O>, Json<Option<ErrorData>>>;
+
 pub trait WebAction<I, O, E, R, C, A, N>: Debug
 where
 	I: ActionInput + Send,

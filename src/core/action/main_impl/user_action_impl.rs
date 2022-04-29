@@ -1,10 +1,15 @@
 use std::borrow::Cow;
 
+use chrono::Utc;
+
 use crate::core::action::{
-	data::user_action_data::{
-		UserActionInput, UserAuthInputResult, UserAuthRequestInput, UserNoAuthInputResult,
-		UserNoAuthRequestInput, UserRequestInput, UserUnconfirmedInputResult,
-		UserUnconfirmedRequestInput,
+	data::{
+		action_data::{Application, Request, RequestBasicData},
+		user_action_data::{
+			UserActionInput, UserAuthInputResult, UserAuthRequestInput, UserNoAuthInputResult,
+			UserNoAuthRequestInput, UserNoAuthSession, UserRequestInput,
+			UserUnconfirmedInputResult, UserUnconfirmedRequestInput,
+		},
 	},
 	definition::action::{Action, ActionError, UserAction},
 	definition::action::{ActionInput, ActionOutput},
@@ -45,6 +50,29 @@ impl DescriptiveInfo for UserSession {
 impl DescriptiveInfo for UserRequestContext {
 	fn description(&self) -> Cow<'_, str> {
 		self.session.description()
+	}
+}
+
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
+impl<I> From<RequestBasicData<I>> for Result<UserRequestInput<I>, UserActionError> {
+	fn from(input: RequestBasicData<I>) -> Self {
+		Ok(UserRequestInput {
+			data: input.data,
+			context: UserRequestContext {
+				application: Application {
+					request_timeout: 1000,
+				},
+				session: UserSession::NoAuth(UserNoAuthSession {
+					created_at: Utc::now(),
+				}),
+				request: Request {
+					ip: "1.2.3.4".into(),
+				},
+			},
+		})
 	}
 }
 

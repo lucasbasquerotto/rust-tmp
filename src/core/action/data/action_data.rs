@@ -26,6 +26,24 @@ pub struct Application {
 	pub request_timeout: u32,
 }
 
+pub struct AuthBasicContext {
+	pub token: Option<String>,
+}
+
+pub struct RequestBasicData<I> {
+	pub data: I,
+	pub context: AuthBasicContext,
+}
+
+impl AuthBasicContext {
+	pub fn data<I>(self, data: I) -> RequestBasicData<I> {
+		RequestBasicData {
+			data,
+			context: self,
+		}
+	}
+}
+
 ////////////////////////////////////////////////
 //////////////////// OUTPUT ////////////////////
 ////////////////////////////////////////////////

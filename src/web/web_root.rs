@@ -1,16 +1,7 @@
-use chrono::Utc;
-use rocket::serde::json::Json;
+use crate::core::action::data::action_data::AuthBasicContext;
+use crate::core::web::definition::web_action::{WebAction, WebActionResult};
+use crate::{business::action::user::select_action, shared::data::user_data::UserId};
 use rocket::{Build, Rocket};
-
-use crate::core::action::data::action_data::{Application, ErrorData, Request};
-use crate::core::action::data::user_action_data::{
-	UserNoAuthSession, UserRequestContext, UserSession,
-};
-use crate::core::web::definition::web_action::WebAction;
-use crate::{
-	business::action::user::select_action, core::action::data::action_data::RequestInput,
-	shared::data::user_data::UserId,
-};
 
 #[derive(FromFormField)]
 enum Lang {
@@ -64,22 +55,8 @@ fn hello(lang: Option<Lang>, opt: Options<'_>) -> String {
 }
 
 #[get("/<id>")]
-async fn select_user(id: u64) -> Result<Json<select_action::Output>, Json<Option<ErrorData>>> {
-	select_action::Action::request(RequestInput {
-		data: select_action::Input { id: UserId(id) },
-		context: UserRequestContext {
-			application: Application {
-				request_timeout: 1000,
-			},
-			session: UserSession::NoAuth(UserNoAuthSession {
-				created_at: Utc::now(),
-			}),
-			request: Request {
-				ip: "1.2.3.4".into(),
-			},
-		},
-	})
-	.await
+async fn select_user(context: AuthBasicContext, id: u64) -> WebActionResult<select_action::Output> {
+	select_action::Action::request(context.data(select_action::Input { id: UserId(id) })).await
 }
 
 pub fn launch_rocket() -> Rocket<Build> {
