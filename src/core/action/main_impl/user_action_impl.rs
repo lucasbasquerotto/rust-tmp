@@ -261,10 +261,10 @@ impl ActionError for UserActionError {
 
 impl<I: 'static, O, E, T> Action<UserActionInput<I>, UserOutputInfo<O>, UserErrorInfo<E>> for T
 where
-	I: ActionInput,
+	I: ActionInput + Send,
 	O: ActionOutput,
-	E: ActionError + From<UserActionError>,
-	T: UserAction<I, O, E>,
+	E: ActionError + From<UserActionError> + Send,
+	T: UserAction<I, O, E> + Send,
 {
 	fn run(input: UserActionInput<I>) -> AsyncResult<UserOutputInfo<O>, UserErrorInfo<E>> {
 		Box::pin(async {

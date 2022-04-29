@@ -108,7 +108,7 @@ impl DescriptiveError {
 	}
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Serialize)]
 pub struct ErrorData {
 	pub msg: Str,
 	pub params: Option<HashMap<Str, Str>>,

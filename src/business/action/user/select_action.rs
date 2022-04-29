@@ -41,7 +41,7 @@ impl ActionInput for Input {}
 //////////////////// OUTPUT ////////////////////
 ////////////////////////////////////////////////
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct ItemOutput {
 	pub id: UserId,
 	pub name: String,
@@ -57,7 +57,7 @@ impl From<user_dao::SelectOutput> for ItemOutput {
 	}
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub struct Output {
 	pub first: ItemOutput,
 	pub last: ItemOutput,

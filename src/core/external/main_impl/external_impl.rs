@@ -66,9 +66,9 @@ pub mod tests {
 
 	impl<I: 'static, O, T> ExternalAction<I, O> for T
 	where
-		I: serde::Serialize,
+		I: serde::Serialize + Send + Sync,
 		O: DeserializeOwned,
-		T: ExternalTest<I, O>,
+		T: ExternalTest<I, O> + Send,
 	{
 		fn run(input: I) -> AsyncResult<O, ExternalException> {
 			Box::pin(async { Ok(test_external(Self::name(), Self::method(), input).await) })

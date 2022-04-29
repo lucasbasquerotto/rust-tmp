@@ -45,6 +45,29 @@ pub struct Select;
 ///////////////////// IMPL /////////////////////
 ////////////////////////////////////////////////
 
+async fn select(input: SelectInput) -> Result<SelectOutput, ExternalException> {
+	Ok(match input {
+		SelectInput::ById(id) => SelectOutput {
+			id,
+			name: format!("User {id:?}").into(),
+			email: format!("user-{id:?}@domain.test").into(),
+			encrypted_pass: format!("p4$$w0rd{id:?}").into(),
+		},
+		SelectInput::First => SelectOutput {
+			id: UserId(11),
+			name: "User 20".into(),
+			email: "user-20@domain.test".into(),
+			encrypted_pass: "p4$$w0rd20".into(),
+		},
+		SelectInput::Last => SelectOutput {
+			id: UserId(13),
+			name: "User 13".into(),
+			email: "user-13@domain.test".into(),
+			encrypted_pass: "p4$$w0rd13".into(),
+		},
+	})
+}
+
 #[cfg(not(test))]
 pub mod main {
 	use crate::{
@@ -63,8 +86,7 @@ pub mod main {
 
 	impl ExternalAction<super::SelectInput, super::SelectOutput> for super::Select {
 		fn run(input: super::SelectInput) -> AsyncResult<super::SelectOutput, ExternalException> {
-			drop(input);
-			todo!()
+			Box::pin(async { super::select(input).await })
 		}
 	}
 }
@@ -73,7 +95,9 @@ pub mod main {
 //////////////////// TESTS /////////////////////
 ////////////////////////////////////////////////
 
-use crate::shared::data::user_data::UserId;
+use crate::{
+	core::external::data::external_exception::ExternalException, shared::data::user_data::UserId,
+};
 
 #[cfg(test)]
 pub mod tests {

@@ -179,10 +179,10 @@ impl ActionError for AutomaticActionError {
 impl<I: 'static, O, E, T>
 	Action<AutomaticActionInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> for T
 where
-	I: ActionInput,
+	I: ActionInput + Send,
 	O: ActionOutput,
-	E: ActionError + From<AutomaticActionError>,
-	T: AutomaticAction<I, O, E>,
+	E: ActionError + From<AutomaticActionError> + Send,
+	T: AutomaticAction<I, O, E> + Send,
 {
 	fn run(
 		input: AutomaticActionInput<I>,

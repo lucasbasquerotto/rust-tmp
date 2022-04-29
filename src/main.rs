@@ -1,6 +1,9 @@
+use web::web_root::launch_rocket;
+
 extern crate chrono;
-#[macro_use]
 extern crate log;
+#[macro_use]
+extern crate rocket;
 #[macro_use]
 extern crate serde;
 extern crate strum;
@@ -10,9 +13,12 @@ mod core;
 mod external;
 mod lib;
 mod shared;
+mod web;
 
-#[tokio::main]
-async fn main() {}
+#[launch]
+fn rocket() -> _ {
+	launch_rocket()
+}
 
 #[cfg(test)]
 pub mod tests {

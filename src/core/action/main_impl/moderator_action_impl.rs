@@ -69,10 +69,10 @@ impl ActionError for ModeratorActionError {
 impl<I: 'static, O, E, T>
 	Action<ModeratorActionInput<I>, ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> for T
 where
-	I: ActionInput,
+	I: ActionInput + Send,
 	O: ActionOutput,
-	E: ActionError + From<ModeratorActionError>,
-	T: ModeratorAction<I, O, E>,
+	E: ActionError + From<ModeratorActionError> + Send,
+	T: ModeratorAction<I, O, E> + Send,
 	Self: Sized,
 {
 	fn run(
