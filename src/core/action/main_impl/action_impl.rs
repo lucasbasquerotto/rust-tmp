@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use crate::core::action::{
 	action_type::general_action_type::ActionType,
-	data::action_data::{ActionErrorInfo, ErrorData, ErrorInfo},
+	data::action_data::{ActionErrorInfo, ErrorData, ErrorInfo, RequestContext, RequestInput},
 };
 use crate::{
 	core::action::definition::{
@@ -12,6 +12,16 @@ use crate::{
 	},
 	lib::data::str::Str,
 };
+
+////////////////////////////////////////////////
+//////////////////// INPUT /////////////////////
+////////////////////////////////////////////////
+
+impl<I, E, C: RequestContext> From<RequestInput<I, C>> for Result<RequestInput<I, C>, E> {
+	fn from(input: RequestInput<I, C>) -> Self {
+		Ok(input)
+	}
+}
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////

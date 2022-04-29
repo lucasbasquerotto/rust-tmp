@@ -6,10 +6,9 @@ use crate::core::action::data::action_data::{Application, ErrorData, Request};
 use crate::core::action::data::user_action_data::{
 	UserNoAuthSession, UserRequestContext, UserSession,
 };
-use crate::core::action::definition::action_helpers::ActionErrorHelper;
+use crate::core::web::definition::web_action::WebAction;
 use crate::{
-	business::action::user::select_action,
-	core::action::{data::action_data::RequestInput, definition::action::Action},
+	business::action::user::select_action, core::action::data::action_data::RequestInput,
 	shared::data::user_data::UserId,
 };
 
@@ -66,7 +65,7 @@ fn hello(lang: Option<Lang>, opt: Options<'_>) -> String {
 
 #[get("/<id>")]
 async fn select_user(id: u64) -> Result<Json<select_action::Output>, Json<Option<ErrorData>>> {
-	let result = select_action::Action::run(Ok(RequestInput {
+	select_action::Action::request(RequestInput {
 		data: select_action::Input { id: UserId(id) },
 		context: UserRequestContext {
 			application: Application {
@@ -79,11 +78,8 @@ async fn select_user(id: u64) -> Result<Json<select_action::Output>, Json<Option
 				ip: "1.2.3.4".into(),
 			},
 		},
-	}))
+	})
 	.await
-	.map(|out| Json(out.data))
-	.map_err(|err| Json(err.handle()));
-	result
 }
 
 pub fn launch_rocket() -> Rocket<Build> {

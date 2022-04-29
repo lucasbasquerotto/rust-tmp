@@ -45,6 +45,7 @@ pub struct Select;
 ///////////////////// IMPL /////////////////////
 ////////////////////////////////////////////////
 
+#[cfg_attr(test, allow(dead_code))]
 async fn select(input: SelectInput) -> Result<SelectOutput, ExternalException> {
 	Ok(match input {
 		SelectInput::ById(id) => SelectOutput {
