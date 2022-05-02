@@ -47,10 +47,14 @@ pub struct ItemOutput {
 
 impl From<user_dao::SelectOutput> for ItemOutput {
 	fn from(data: user_dao::SelectOutput) -> Self {
-		let user_dao::SelectOutput {
+		let user_dao::SelectOutput(user_dao::User {
 			id, name, email, ..
-		} = data;
-		Self { id, name, email }
+		}) = data;
+		Self {
+			id: UserId(id),
+			name,
+			email,
+		}
 	}
 }
 
@@ -162,29 +166,29 @@ pub mod tests {
 		pub mocks: Vec<Mock>,
 	}
 
-	pub fn mock_action(user_id: u64) -> ActionMock {
-		let first = user_dao::SelectOutput {
-			id: UserId(11),
+	pub fn mock_action(user_id: UserId) -> ActionMock {
+		let UserId(user_id) = user_id;
+
+		let first = user_dao::SelectOutput(user_dao::User {
+			id: 11,
 			name: "User 20".into(),
 			email: "user-20@domain.test".into(),
 			encrypted_pass: "p4$$w0rd20".into(),
-		};
+		});
 
-		let by_id = user_dao::SelectOutput {
-			id: UserId(user_id),
+		let by_id = user_dao::SelectOutput(user_dao::User {
+			id: user_id,
 			name: format!("User {user_id}").into(),
 			email: format!("user-{user_id}@domain.test").into(),
 			encrypted_pass: format!("p4$$w0rd{user_id}").into(),
-		};
+		});
 
-		let last = user_dao::SelectOutput {
-			id: UserId(13),
+		let last = user_dao::SelectOutput(user_dao::User {
+			id: 13,
 			name: "User 13".into(),
 			email: "user-13@domain.test".into(),
 			encrypted_pass: "p4$$w0rd13".into(),
-		};
-
-		let user_id = by_id.id;
+		});
 
 		let output = super::Output {
 			first: first.clone().into(),
@@ -194,12 +198,12 @@ pub mod tests {
 
 		let mocks = vec![
 			user_dao::Select::mock(user_dao::SelectInput::First, first),
-			user_dao::Select::mock(user_dao::SelectInput::ById(by_id.id), by_id),
+			user_dao::Select::mock(user_dao::SelectInput::ById(UserId(user_id)), by_id),
 			user_dao::Select::mock(user_dao::SelectInput::Last, last),
 		];
 
 		ActionMock {
-			user_id,
+			user_id: UserId(user_id),
 			output,
 			mocks,
 		}
@@ -212,7 +216,7 @@ pub mod tests {
 				user_id,
 				output,
 				mocks: _m,
-			} = mock_action(12);
+			} = mock_action(UserId(12));
 
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {

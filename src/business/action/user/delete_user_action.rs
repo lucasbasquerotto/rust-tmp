@@ -125,8 +125,7 @@ pub mod tests {
 		pub mocks: Vec<Mock>,
 	}
 
-	pub fn mock_action(user_id: u64) -> ActionMock {
-		let user_id = UserId(user_id);
+	pub fn mock_action(user_id: UserId) -> ActionMock {
 		let mocks = vec![user_dao::Delete::mock(user_dao::DeleteInput(user_id), ())];
 		ActionMock { user_id, mocks }
 	}
@@ -134,7 +133,7 @@ pub mod tests {
 	#[tokio::test]
 	async fn test_ok() {
 		run_test(|_| async {
-			let ActionMock { user_id, mocks: _m } = mock_action(12);
+			let ActionMock { user_id, mocks: _m } = mock_action(UserId(12));
 
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {

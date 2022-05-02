@@ -17,7 +17,7 @@ async fn register_user(
 }
 
 #[delete("/<id>")]
-async fn delete_user(context: AuthBasicContext, id: u64) -> WebActionResult<()> {
+async fn delete_user(context: AuthBasicContext, id: i64) -> WebActionResult<()> {
 	let input = context.data(delete_user_action::Input(UserId(id)));
 	delete_user_action::Action::request(input).await
 }
@@ -25,7 +25,7 @@ async fn delete_user(context: AuthBasicContext, id: u64) -> WebActionResult<()> 
 #[get("/<id>")]
 async fn select_user(
 	context: AuthBasicContext,
-	id: u64,
+	id: i64,
 ) -> WebActionResult<select_user_action::Output> {
 	let input = context.data(select_user_action::Input(UserId(id)));
 	select_user_action::Action::request(input).await
@@ -37,8 +37,9 @@ pub fn routes() -> Vec<rocket::Route> {
 
 #[cfg(test)]
 mod tests {
-	use crate::business::action::user::{
-		delete_user_action, register_user_action, select_user_action,
+	use crate::{
+		business::action::user::{delete_user_action, register_user_action, select_user_action},
+		shared::data::user_data::UserId,
 	};
 	use rocket::{http::Status, local::blocking::Client};
 
@@ -93,7 +94,7 @@ mod tests {
 		let client = get_client();
 
 		let delete_user_action::tests::ActionMock { user_id, mocks: _m } =
-			delete_user_action::tests::mock_action(123);
+			delete_user_action::tests::mock_action(UserId(123));
 		let user_id = user_id.0;
 		let uri = format!("/user/{user_id}");
 		let response = client.delete(uri).dispatch();
@@ -124,7 +125,7 @@ mod tests {
 			user_id,
 			output,
 			mocks: _m,
-		} = select_user_action::tests::mock_action(123);
+		} = select_user_action::tests::mock_action(UserId(123));
 		let user_id = user_id.0;
 		let uri = format!("/user/{user_id}");
 		let response = client.get(uri).dispatch();

@@ -1,0 +1,3 @@
+[default.databases.main]
+url = "db/main/db.sqlite"
+timeout = 10

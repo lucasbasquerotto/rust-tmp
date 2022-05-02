@@ -1,3 +1,5 @@
+use crate::core::dao::db_migration;
+
 use super::user::web_user;
 use rocket::{Build, Rocket};
 
@@ -54,6 +56,7 @@ fn hello(lang: Option<Lang>, opt: Options<'_>) -> String {
 
 pub fn launch_rocket() -> Rocket<Build> {
 	rocket::build()
+		.attach(db_migration::stage())
 		.mount("/", routes![hello])
 		.mount("/hello", routes![world, mir])
 		.mount("/wave", routes![wave])

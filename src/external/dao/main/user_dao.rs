@@ -1,3 +1,29 @@
+use diesel::{Insertable, Queryable};
+
+////////////////////////////////////////////////
+//////////////////// TABLE /////////////////////
+////////////////////////////////////////////////
+
+#[database("diesel")]
+struct Db(diesel::SqliteConnection);
+
+table! {
+	user (id) {
+		id -> BigInt,
+		name -> Text,
+		email -> Text,
+		encrypted_pass -> Text,
+	}
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Queryable, Insertable)]
+#[table_name = "user"]
+pub struct User {
+	pub id: i64,
+	pub name: String,
+	pub email: String,
+	pub encrypted_pass: String,
+}
+
 ////////////////////////////////////////////////
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
@@ -29,12 +55,7 @@ pub struct InsertOutput {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct SelectOutput {
-	pub id: UserId,
-	pub name: String,
-	pub email: String,
-	pub encrypted_pass: String,
-}
+pub struct SelectOutput(pub User);
 
 ////////////////////////////////////////////////
 /////////////////// ACTIONS ////////////////////
@@ -53,24 +74,24 @@ pub struct Delete;
 #[cfg_attr(test, allow(dead_code))]
 async fn select(input: SelectInput) -> Result<SelectOutput, ExternalException> {
 	Ok(match input {
-		SelectInput::ById(id) => SelectOutput {
+		SelectInput::ById(UserId(id)) => SelectOutput(User {
 			id,
 			name: format!("User {id:?}").into(),
 			email: format!("user-{id:?}@domain.test").into(),
 			encrypted_pass: format!("p4$$w0rd{id:?}").into(),
-		},
-		SelectInput::First => SelectOutput {
-			id: UserId(11),
+		}),
+		SelectInput::First => SelectOutput(User {
+			id: 11,
 			name: "User 20".into(),
 			email: "user-20@domain.test".into(),
 			encrypted_pass: "p4$$w0rd20".into(),
-		},
-		SelectInput::Last => SelectOutput {
-			id: UserId(13),
+		}),
+		SelectInput::Last => SelectOutput(User {
+			id: 13,
 			name: "User 13".into(),
 			email: "user-13@domain.test".into(),
 			encrypted_pass: "p4$$w0rd13".into(),
-		},
+		}),
 	})
 }
 

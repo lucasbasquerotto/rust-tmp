@@ -1,1 +1,3 @@
+/db/main/*
+!/db/**/.gitkeep
 /target/
