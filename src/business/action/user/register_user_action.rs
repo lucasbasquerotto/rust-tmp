@@ -10,7 +10,6 @@ use crate::{
 		external::definition::external::ExternalAction,
 	},
 	external::dao::main::user_dao,
-	lib::data::result::AsyncResult,
 };
 use crate::{
 	core::{
@@ -110,28 +109,25 @@ impl From<ExternalException> for Error {
 #[derive(Debug)]
 pub struct Action(UserNoAuthRequestInput<Input>);
 
+#[rocket::async_trait]
 impl UserAction<Input, Output, Error> for Action {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserRequestInput<Input>) -> AsyncResult<Self, Error> {
-		Box::pin(async {
-			UserNoAuthInputResult::from(input)
-				.map(Self)
-				.map_err(Error::from)
-		})
+	async fn new(input: UserRequestInput<Input>) -> Result<Self, Error> {
+		UserNoAuthInputResult::from(input)
+			.map(Self)
+			.map_err(Error::from)
 	}
 
-	fn run_inner(self) -> AsyncResult<Output, Error> {
-		Box::pin(async {
-			let Self(input) = self;
-			let name = input.data.name.to_string();
-			let user_dao::InsertOutput { id } =
-				user_dao::Insert::run(user_dao::InsertInput::from(input.data)).await?;
-			let result = Output { id, name };
-			Ok(result)
-		})
+	async fn run_inner(self) -> Result<Output, Error> {
+		let Self(input) = self;
+		let name = input.data.name.to_string();
+		let user_dao::InsertOutput { id } =
+			user_dao::Insert::run(user_dao::InsertInput::from(input.data)).await?;
+		let result = Output { id, name };
+		Ok(result)
 	}
 }
 

@@ -8,18 +8,15 @@ use crate::core::action::{
 	definition::action::{Action, ActionError, AutomaticAction},
 	definition::action::{ActionInput, ActionOutput},
 };
-use crate::{
-	core::action::{
-		data::{
-			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
-			automatic_action_data::{
-				AutomaticActionError, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequest,
-				AutomaticRequestContext, HookRequestContext, InternalRequestContext,
-			},
+use crate::core::action::{
+	data::{
+		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
+		automatic_action_data::{
+			AutomaticActionError, AutomaticErrorInfo, AutomaticOutputInfo, AutomaticRequest,
+			AutomaticRequestContext, HookRequestContext, InternalRequestContext,
 		},
-		definition::action_helpers::DescriptiveInfo,
 	},
-	lib::data::result::AsyncResult,
+	definition::action_helpers::DescriptiveInfo,
 };
 
 ////////////////////////////////////////////////
@@ -176,59 +173,58 @@ impl ActionError for AutomaticActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
+#[rocket::async_trait]
 impl<I: 'static, O, E, T>
 	Action<AutomaticActionInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> for T
 where
 	I: ActionInput + Send,
 	O: ActionOutput,
 	E: ActionError + From<AutomaticActionError> + Send,
-	T: AutomaticAction<I, O, E> + Send,
+	T: AutomaticAction<I, O, E> + Send + 'static,
 {
-	fn run(
+	async fn run(
 		input: AutomaticActionInput<I>,
-	) -> AsyncResult<AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> {
-		Box::pin(async {
-			let context = input
-				.as_ref()
-				.map(|ok_input| Some(ok_input.context.clone()))
-				.unwrap_or(None);
+	) -> Result<AutomaticOutputInfo<O>, AutomaticErrorInfo<E>> {
+		let context = input
+			.as_ref()
+			.map(|ok_input| Some(ok_input.context.clone()))
+			.unwrap_or(None);
 
-			let action_context = ActionContext {
-				action_type: Self::action_type(),
-				context,
-			};
+		let action_context = ActionContext {
+			action_type: Self::action_type(),
+			context,
+		};
 
-			match input {
-				Ok(ok_input) => {
-					let action_result = Self::new(ok_input).await;
+		match input {
+			Ok(ok_input) => {
+				let action_result = Self::new(ok_input).await;
 
-					match action_result {
-						Ok(action) => {
-							let result = action.run_inner().await;
+				match action_result {
+					Ok(action) => {
+						let result = action.run_inner().await;
 
-							match result {
-								Ok(data) => Ok(AutomaticOutputInfo {
-									action_context,
-									data,
-								}),
-								Err(error) => Err(AutomaticErrorInfo {
-									action_context,
-									error,
-								}),
-							}
+						match result {
+							Ok(data) => Ok(AutomaticOutputInfo {
+								action_context,
+								data,
+							}),
+							Err(error) => Err(AutomaticErrorInfo {
+								action_context,
+								error,
+							}),
 						}
-						Err(error) => Err(AutomaticErrorInfo {
-							action_context,
-							error,
-						}),
 					}
+					Err(error) => Err(AutomaticErrorInfo {
+						action_context,
+						error,
+					}),
 				}
-				Err(error) => Err(AutomaticErrorInfo {
-					action_context,
-					error: E::from(error),
-				}),
 			}
-		})
+			Err(error) => Err(AutomaticErrorInfo {
+				action_context,
+				error: E::from(error),
+			}),
+		}
 	}
 }
 
@@ -252,7 +248,6 @@ pub mod tests {
 		action_type::automatic_action_type::AutomaticActionType,
 		data::action_data::{ActionContext, ActionErrorInfo},
 	};
-	use crate::lib::data::result::AsyncResult;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]
@@ -264,77 +259,70 @@ pub mod tests {
 	#[derive(Debug)]
 	pub struct TestActionInternal(RequestInput<(), InternalRequestContext>);
 
+	#[rocket::async_trait]
 	impl AutomaticAction<(), (), AutomaticActionError> for TestAction {
 		fn action_type() -> AutomaticActionType {
 			AutomaticActionType::Test
 		}
 
-		fn new(
+		async fn new(
 			input: RequestInput<(), AutomaticRequestContext>,
-		) -> AsyncResult<Self, AutomaticActionError> {
-			Box::pin(async { Ok(Self(input)) })
+		) -> Result<Self, AutomaticActionError> {
+			Ok(Self(input))
 		}
 
-		fn run_inner(self) -> AsyncResult<(), AutomaticActionError> {
-			Box::pin(async move {
-				match self.0.context.request {
-					AutomaticRequest::Internal => info!("automatic action test (internal)"),
-					AutomaticRequest::Hook(_) => info!("automatic action test (hook)"),
-				};
-				Ok(())
-			})
+		async fn run_inner(self) -> Result<(), AutomaticActionError> {
+			match self.0.context.request {
+				AutomaticRequest::Internal => info!("automatic action test (internal)"),
+				AutomaticRequest::Hook(_) => info!("automatic action test (hook)"),
+			};
+			Ok(())
 		}
 	}
 
+	#[rocket::async_trait]
 	impl AutomaticAction<(), (), AutomaticActionError> for TestActionHook {
 		fn action_type() -> AutomaticActionType {
 			AutomaticActionType::Test
 		}
 
-		fn new(
+		async fn new(
 			input: RequestInput<(), AutomaticRequestContext>,
-		) -> AsyncResult<Self, AutomaticActionError> {
-			Box::pin(async {
-				let real_input = input.into();
+		) -> Result<Self, AutomaticActionError> {
+			let real_input = input.into();
 
-				match real_input {
-					Err(err) => Err(err),
-					Ok(real_ok_input) => Ok(Self(real_ok_input)),
-				}
-			})
+			match real_input {
+				Err(err) => Err(err),
+				Ok(real_ok_input) => Ok(Self(real_ok_input)),
+			}
 		}
 
-		fn run_inner(self) -> AsyncResult<(), AutomaticActionError> {
-			Box::pin(async {
-				info!("automatic action test (only hook)");
-				Ok(())
-			})
+		async fn run_inner(self) -> Result<(), AutomaticActionError> {
+			info!("automatic action test (only hook)");
+			Ok(())
 		}
 	}
 
+	#[rocket::async_trait]
 	impl AutomaticAction<(), (), AutomaticActionError> for TestActionInternal {
 		fn action_type() -> AutomaticActionType {
 			AutomaticActionType::Test
 		}
 
-		fn new(
+		async fn new(
 			input: RequestInput<(), AutomaticRequestContext>,
-		) -> AsyncResult<Self, AutomaticActionError> {
-			Box::pin(async {
-				let real_input = input.into();
+		) -> Result<Self, AutomaticActionError> {
+			let real_input = input.into();
 
-				match real_input {
-					Err(err) => Err(err),
-					Ok(real_ok_input) => Ok(Self(real_ok_input)),
-				}
-			})
+			match real_input {
+				Err(err) => Err(err),
+				Ok(real_ok_input) => Ok(Self(real_ok_input)),
+			}
 		}
 
-		fn run_inner(self) -> AsyncResult<(), AutomaticActionError> {
-			Box::pin(async {
-				info!("automatic action test (only internal)");
-				Ok(())
-			})
+		async fn run_inner(self) -> Result<(), AutomaticActionError> {
+			info!("automatic action test (only internal)");
+			Ok(())
 		}
 	}
 

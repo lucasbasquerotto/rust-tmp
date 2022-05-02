@@ -1,13 +1,10 @@
 use crate::core::action::definition::action::{ActionError, UserAction};
-use crate::{
-	core::action::{
-		action_type::user_action_type::UserActionType,
-		data::{
-			action_data::{DescriptiveError, ErrorData},
-			user_action_data::{UserActionError, UserRequestInput},
-		},
+use crate::core::action::{
+	action_type::user_action_type::UserActionType,
+	data::{
+		action_data::{DescriptiveError, ErrorData},
+		user_action_data::{UserActionError, UserRequestInput},
 	},
-	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -52,20 +49,19 @@ impl From<UserActionError> for Error {
 #[derive(Debug)]
 pub struct Action(UserRequestInput<()>);
 
+#[rocket::async_trait]
 impl UserAction<(), (), Error> for Action {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserRequestInput<()>) -> AsyncResult<Self, Error> {
-		Box::pin(async { Ok(Self(input)) })
+	async fn new(input: UserRequestInput<()>) -> Result<Self, Error> {
+		Ok(Self(input))
 	}
 
-	fn run_inner(self) -> AsyncResult<(), Error> {
-		Box::pin(async {
-			println!("TODO: logout");
-			Ok(())
-		})
+	async fn run_inner(self) -> Result<(), Error> {
+		println!("TODO: logout");
+		Ok(())
 	}
 }
 

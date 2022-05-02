@@ -2,19 +2,16 @@ use std::borrow::Cow;
 
 use chrono::Utc;
 
-use crate::{
-	core::action::{
-		data::{
-			action_data::{ActionContext, DescriptiveError, ErrorData},
-			user_action_data::{
-				UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
-				UserNoAuthRequestContext, UserOutputInfo, UserRequestContext, UserSession,
-				UserUnconfirmedRequestContext, UserUnconfirmedSession,
-			},
+use crate::core::action::{
+	data::{
+		action_data::{ActionContext, DescriptiveError, ErrorData},
+		user_action_data::{
+			UserActionError, UserAuthRequestContext, UserAuthSession, UserErrorInfo,
+			UserNoAuthRequestContext, UserOutputInfo, UserRequestContext, UserSession,
+			UserUnconfirmedRequestContext, UserUnconfirmedSession,
 		},
-		definition::action_helpers::DescriptiveInfo,
 	},
-	lib::data::result::AsyncResult,
+	definition::action_helpers::DescriptiveInfo,
 };
 use crate::{
 	core::action::{
@@ -291,56 +288,55 @@ impl ActionError for UserActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
+#[rocket::async_trait]
 impl<I: 'static, O, E, T> Action<UserActionInput<I>, UserOutputInfo<O>, UserErrorInfo<E>> for T
 where
 	I: ActionInput + Send,
 	O: ActionOutput,
 	E: ActionError + From<UserActionError> + Send,
-	T: UserAction<I, O, E> + Send,
+	T: UserAction<I, O, E> + Send + 'static,
 {
-	fn run(input: UserActionInput<I>) -> AsyncResult<UserOutputInfo<O>, UserErrorInfo<E>> {
-		Box::pin(async {
-			let context = input
-				.as_ref()
-				.map(|ok_input| Some(ok_input.context.clone()))
-				.unwrap_or(None);
+	async fn run(input: UserActionInput<I>) -> Result<UserOutputInfo<O>, UserErrorInfo<E>> {
+		let context = input
+			.as_ref()
+			.map(|ok_input| Some(ok_input.context.clone()))
+			.unwrap_or(None);
 
-			let action_context = ActionContext {
-				action_type: Self::action_type(),
-				context,
-			};
+		let action_context = ActionContext {
+			action_type: Self::action_type(),
+			context,
+		};
 
-			match input {
-				Ok(ok_input) => {
-					let action_result = Self::new(ok_input).await;
+		match input {
+			Ok(ok_input) => {
+				let action_result = Self::new(ok_input).await;
 
-					match action_result {
-						Ok(action) => {
-							let result = action.run_inner().await;
+				match action_result {
+					Ok(action) => {
+						let result = action.run_inner().await;
 
-							match result {
-								Ok(data) => Ok(UserOutputInfo {
-									action_context,
-									data,
-								}),
-								Err(error) => Err(UserErrorInfo {
-									action_context,
-									error,
-								}),
-							}
+						match result {
+							Ok(data) => Ok(UserOutputInfo {
+								action_context,
+								data,
+							}),
+							Err(error) => Err(UserErrorInfo {
+								action_context,
+								error,
+							}),
 						}
-						Err(error) => Err(UserErrorInfo {
-							action_context,
-							error,
-						}),
 					}
+					Err(error) => Err(UserErrorInfo {
+						action_context,
+						error,
+					}),
 				}
-				Err(error) => Err(UserErrorInfo {
-					action_context,
-					error: E::from(error),
-				}),
 			}
-		})
+			Err(error) => Err(UserErrorInfo {
+				action_context,
+				error: E::from(error),
+			}),
+		}
 	}
 }
 
@@ -366,7 +362,6 @@ pub mod tests {
 	use crate::core::action::{
 		action_type::user_action_type::UserActionType, data::action_data::ActionErrorInfo,
 	};
-	use crate::lib::data::result::AsyncResult;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]
@@ -381,106 +376,96 @@ pub mod tests {
 	#[derive(Debug)]
 	pub struct TestActionUnconfirmed(RequestInput<(), UserUnconfirmedRequestContext>);
 
+	#[rocket::async_trait]
 	impl UserAction<(), (), UserActionError> for TestAction {
 		fn action_type() -> UserActionType {
 			UserActionType::Test
 		}
 
-		fn new(input: RequestInput<(), UserRequestContext>) -> AsyncResult<Self, UserActionError> {
-			Box::pin(async { Ok(Self(input)) })
+		async fn new(input: RequestInput<(), UserRequestContext>) -> Result<Self, UserActionError> {
+			Ok(Self(input))
 		}
 
-		fn run_inner(self) -> AsyncResult<(), UserActionError> {
-			Box::pin(async move {
-				match self.0.context.session {
-					UserSession::Auth(UserAuthSession { user_id, .. }) => {
-						info!("user action test: {user_id}")
-					}
-					UserSession::Unconfirmed(UserUnconfirmedSession { user_id, .. }) => {
-						info!("user action test: [unconfirmed] {user_id}")
-					}
-					UserSession::NoAuth(_) => info!("user action test"),
-				};
-				Ok(())
-			})
+		async fn run_inner(self) -> Result<(), UserActionError> {
+			match self.0.context.session {
+				UserSession::Auth(UserAuthSession { user_id, .. }) => {
+					info!("user action test: {user_id}")
+				}
+				UserSession::Unconfirmed(UserUnconfirmedSession { user_id, .. }) => {
+					info!("user action test: [unconfirmed] {user_id}")
+				}
+				UserSession::NoAuth(_) => info!("user action test"),
+			};
+			Ok(())
 		}
 	}
 
+	#[rocket::async_trait]
 	impl UserAction<(), (), UserActionError> for TestActionNoAuth {
 		fn action_type() -> UserActionType {
 			UserActionType::Test
 		}
 
-		fn new(input: RequestInput<(), UserRequestContext>) -> AsyncResult<Self, UserActionError> {
-			Box::pin(async {
-				let real_input = input.into();
+		async fn new(input: RequestInput<(), UserRequestContext>) -> Result<Self, UserActionError> {
+			let real_input = input.into();
 
-				match real_input {
-					Err(err) => Err(err),
-					Ok(ok_input) => Ok(Self(ok_input)),
-				}
-			})
+			match real_input {
+				Err(err) => Err(err),
+				Ok(ok_input) => Ok(Self(ok_input)),
+			}
 		}
 
-		fn run_inner(self) -> AsyncResult<(), UserActionError> {
-			Box::pin(async {
-				info!("user action test (no auth)");
-				Ok(())
-			})
+		async fn run_inner(self) -> Result<(), UserActionError> {
+			info!("user action test (no auth)");
+			Ok(())
 		}
 	}
 
+	#[rocket::async_trait]
 	impl UserAction<(), (), UserActionError> for TestActionAuth {
 		fn action_type() -> UserActionType {
 			UserActionType::Test
 		}
 
-		fn new(input: RequestInput<(), UserRequestContext>) -> AsyncResult<Self, UserActionError> {
-			Box::pin(async {
-				let real_input = input.into();
+		async fn new(input: RequestInput<(), UserRequestContext>) -> Result<Self, UserActionError> {
+			let real_input = input.into();
 
-				match real_input {
-					Err(err) => Err(err),
-					Ok(ok_input) => Ok(Self(ok_input)),
-				}
-			})
+			match real_input {
+				Err(err) => Err(err),
+				Ok(ok_input) => Ok(Self(ok_input)),
+			}
 		}
 
-		fn run_inner(self) -> AsyncResult<(), UserActionError> {
-			Box::pin(async move {
-				info!(
-					"user action test (auth): {user_id}",
-					user_id = self.0.context.session.user_id
-				);
-				Ok(())
-			})
+		async fn run_inner(self) -> Result<(), UserActionError> {
+			info!(
+				"user action test (auth): {user_id}",
+				user_id = self.0.context.session.user_id
+			);
+			Ok(())
 		}
 	}
 
+	#[rocket::async_trait]
 	impl UserAction<(), (), UserActionError> for TestActionUnconfirmed {
 		fn action_type() -> UserActionType {
 			UserActionType::Test
 		}
 
-		fn new(input: RequestInput<(), UserRequestContext>) -> AsyncResult<Self, UserActionError> {
-			Box::pin(async {
-				let real_input = input.into();
+		async fn new(input: RequestInput<(), UserRequestContext>) -> Result<Self, UserActionError> {
+			let real_input = input.into();
 
-				match real_input {
-					Err(err) => Err(err),
-					Ok(ok_input) => Ok(Self(ok_input)),
-				}
-			})
+			match real_input {
+				Err(err) => Err(err),
+				Ok(ok_input) => Ok(Self(ok_input)),
+			}
 		}
 
-		fn run_inner(self) -> AsyncResult<(), UserActionError> {
-			Box::pin(async move {
-				info!(
-					"user action test (unconfirmed): {user_id}",
-					user_id = self.0.context.session.user_id
-				);
-				Ok(())
-			})
+		async fn run_inner(self) -> Result<(), UserActionError> {
+			info!(
+				"user action test (unconfirmed): {user_id}",
+				user_id = self.0.context.session.user_id
+			);
+			Ok(())
 		}
 	}
 

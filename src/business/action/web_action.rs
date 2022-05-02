@@ -1,20 +1,17 @@
 use crate::core::action::definition::action::{
 	ActionError, ActionInput, ActionOutput, AutomaticAction, ModeratorAction, UserAction,
 };
-use crate::{
-	core::action::{
-		action_type::{
-			automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
-			user_action_type::UserActionType,
-		},
-		data::{
-			action_data::{DescriptiveError, ErrorData, ErrorInfo},
-			automatic_action_data::{AutomaticActionError, AutomaticRequestInput},
-			moderator_action_data::{ModeratorActionError, ModeratorRequestInput},
-			user_action_data::{UserActionError, UserRequestInput},
-		},
+use crate::core::action::{
+	action_type::{
+		automatic_action_type::AutomaticActionType, moderator_action_type::ModeratorActionType,
+		user_action_type::UserActionType,
 	},
-	lib::data::result::AsyncResult,
+	data::{
+		action_data::{DescriptiveError, ErrorData, ErrorInfo},
+		automatic_action_data::{AutomaticActionError, AutomaticRequestInput},
+		moderator_action_data::{ModeratorActionError, ModeratorRequestInput},
+		user_action_data::{UserActionError, UserRequestInput},
+	},
 };
 
 ////////////////////////////////////////////////
@@ -115,20 +112,19 @@ impl From<WebSharedError> for UserError {
 #[derive(Debug)]
 pub struct User(UserRequestInput<Input>);
 
+#[rocket::async_trait]
 impl UserAction<Input, Output, UserError> for User {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserRequestInput<Input>) -> AsyncResult<Self, UserError> {
-		Box::pin(async { Ok(Self(input)) })
+	async fn new(input: UserRequestInput<Input>) -> Result<Self, UserError> {
+		Ok(Self(input))
 	}
 
-	fn run_inner(self) -> AsyncResult<Output, UserError> {
-		Box::pin(async move {
-			let Self(input) = &self;
-			Ok(run(&input.data).await?)
-		})
+	async fn run_inner(self) -> Result<Output, UserError> {
+		let Self(input) = &self;
+		Ok(run(&input.data).await?)
 	}
 }
 
@@ -177,20 +173,19 @@ impl From<WebSharedError> for ModeratorError {
 #[derive(Debug)]
 pub struct Moderator(ModeratorRequestInput<Input>);
 
+#[rocket::async_trait]
 impl ModeratorAction<Input, Output, ModeratorError> for Moderator {
 	fn action_type() -> ModeratorActionType {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorRequestInput<Input>) -> AsyncResult<Self, ModeratorError> {
-		Box::pin(async { Ok(Self(input)) })
+	async fn new(input: ModeratorRequestInput<Input>) -> Result<Self, ModeratorError> {
+		Ok(Self(input))
 	}
 
-	fn run_inner(self) -> AsyncResult<Output, ModeratorError> {
-		Box::pin(async move {
-			let Self(input) = &self;
-			Ok(run(&input.data).await?)
-		})
+	async fn run_inner(self) -> Result<Output, ModeratorError> {
+		let Self(input) = &self;
+		Ok(run(&input.data).await?)
 	}
 }
 
@@ -239,20 +234,19 @@ impl From<WebSharedError> for AutomaticError {
 #[derive(Debug)]
 pub struct Automatic(AutomaticRequestInput<Input>);
 
+#[rocket::async_trait]
 impl AutomaticAction<Input, Output, AutomaticError> for Automatic {
 	fn action_type() -> AutomaticActionType {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticRequestInput<Input>) -> AsyncResult<Self, AutomaticError> {
-		Box::pin(async { Ok(Self(input)) })
+	async fn new(input: AutomaticRequestInput<Input>) -> Result<Self, AutomaticError> {
+		Ok(Self(input))
 	}
 
-	fn run_inner(self) -> AsyncResult<Output, AutomaticError> {
-		Box::pin(async move {
-			let Self(input) = &self;
-			Ok(run(&input.data).await?)
-		})
+	async fn run_inner(self) -> Result<Output, AutomaticError> {
+		let Self(input) = &self;
+		Ok(run(&input.data).await?)
 	}
 }
 

@@ -21,7 +21,6 @@ use crate::{
 			},
 		},
 	},
-	lib::data::result::AsyncResult,
 	lib::data::str::Str,
 };
 
@@ -59,17 +58,19 @@ pub trait ActionError: Debug + Send {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
+#[rocket::async_trait]
 pub trait Action<I, O, E>: Debug
 where
 	Self: Sized,
 {
-	fn run(input: I) -> AsyncResult<O, E>;
+	async fn run(input: I) -> Result<O, E>;
 }
 
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
+#[rocket::async_trait]
 pub trait UserAction<I, O, E>:
 	Action<UserActionInput<I>, UserOutputInfo<O>, UserErrorInfo<E>>
 where
@@ -79,14 +80,15 @@ where
 	Self: Sized,
 {
 	fn action_type() -> UserActionType;
-	fn new(input: UserRequestInput<I>) -> AsyncResult<Self, E>;
-	fn run_inner(self) -> AsyncResult<O, E>;
+	async fn new(input: UserRequestInput<I>) -> Result<Self, E>;
+	async fn run_inner(self) -> Result<O, E>;
 }
 
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
+#[rocket::async_trait]
 pub trait ModeratorAction<I, O, E>:
 	Action<ModeratorActionInput<I>, ModeratorOutputInfo<O>, ModeratorErrorInfo<E>>
 where
@@ -96,14 +98,15 @@ where
 	Self: Sized,
 {
 	fn action_type() -> ModeratorActionType;
-	fn new(input: ModeratorRequestInput<I>) -> AsyncResult<Self, E>;
-	fn run_inner(self) -> AsyncResult<O, E>;
+	async fn new(input: ModeratorRequestInput<I>) -> Result<Self, E>;
+	async fn run_inner(self) -> Result<O, E>;
 }
 
 ////////////////////////////////////////////////
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
+#[rocket::async_trait]
 pub trait AutomaticAction<I, O, E>:
 	Action<AutomaticActionInput<I>, AutomaticOutputInfo<O>, AutomaticErrorInfo<E>>
 where
@@ -113,6 +116,6 @@ where
 	Self: Sized,
 {
 	fn action_type() -> AutomaticActionType;
-	fn new(input: AutomaticRequestInput<I>) -> AsyncResult<Self, E>;
-	fn run_inner(self) -> AsyncResult<O, E>;
+	async fn new(input: AutomaticRequestInput<I>) -> Result<Self, E>;
+	async fn run_inner(self) -> Result<O, E>;
 }

@@ -1,13 +1,10 @@
 use crate::core::action::definition::action::{ActionError, ModeratorAction};
-use crate::{
-	core::action::{
-		action_type::moderator_action_type::ModeratorActionType,
-		data::{
-			action_data::{DescriptiveError, ErrorData},
-			moderator_action_data::{ModeratorActionError, ModeratorRequestInput},
-		},
+use crate::core::action::{
+	action_type::moderator_action_type::ModeratorActionType,
+	data::{
+		action_data::{DescriptiveError, ErrorData},
+		moderator_action_data::{ModeratorActionError, ModeratorRequestInput},
 	},
-	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -52,20 +49,19 @@ impl From<ModeratorActionError> for Error {
 #[derive(Debug)]
 pub struct Action(ModeratorRequestInput<()>);
 
+#[rocket::async_trait]
 impl ModeratorAction<(), (), Error> for Action {
 	fn action_type() -> ModeratorActionType {
 		MODERATOR_ACTION_TYPE
 	}
 
-	fn new(input: ModeratorRequestInput<()>) -> AsyncResult<Self, Error> {
-		Box::pin(async { Ok(Self(input)) })
+	async fn new(input: ModeratorRequestInput<()>) -> Result<Self, Error> {
+		Ok(Self(input))
 	}
 
-	fn run_inner(self) -> AsyncResult<(), Error> {
-		Box::pin(async {
-			error!("echo error action");
-			Ok(())
-		})
+	async fn run_inner(self) -> Result<(), Error> {
+		error!("echo error action");
+		Ok(())
 	}
 }
 

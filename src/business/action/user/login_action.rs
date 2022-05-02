@@ -10,7 +10,6 @@ use crate::{
 			user_action_data::{UserActionError, UserNoAuthRequestInput},
 		},
 	},
-	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -79,30 +78,27 @@ impl From<UserActionError> for Error {
 #[derive(Debug)]
 pub struct Action(UserNoAuthRequestInput<Input>);
 
+#[rocket::async_trait]
 impl UserAction<Input, Output, Error> for Action {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserRequestInput<Input>) -> AsyncResult<Self, Error> {
-		Box::pin(async {
-			UserNoAuthInputResult::from(input)
-				.map(Self)
-				.map_err(Error::from)
-		})
+	async fn new(input: UserRequestInput<Input>) -> Result<Self, Error> {
+		UserNoAuthInputResult::from(input)
+			.map(Self)
+			.map_err(Error::from)
 	}
 
-	fn run_inner(self) -> AsyncResult<Output, Error> {
-		Box::pin(async move {
-			let Self(input) = &self;
-			let Input { name, pass } = &input.data;
-			println!("TODO: login: {name} ({pass})");
-			let result = Output {
-				id: 1,
-				name: name.into(),
-			};
-			Ok(result)
-		})
+	async fn run_inner(self) -> Result<Output, Error> {
+		let Self(input) = &self;
+		let Input { name, pass } = &input.data;
+		println!("TODO: login: {name} ({pass})");
+		let result = Output {
+			id: 1,
+			name: name.into(),
+		};
+		Ok(result)
 	}
 }
 

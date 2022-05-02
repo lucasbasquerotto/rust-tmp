@@ -1,16 +1,13 @@
 use crate::core::action::{
+	action_type::automatic_action_type::AutomaticActionType,
+	data::{
+		action_data::{DescriptiveError, ErrorData, RequestContext, RequestInput},
+		automatic_action_data::{AutomaticActionError, HookRequestInput, InternalRequestInput},
+	},
+};
+use crate::core::action::{
 	data::automatic_action_data::{AutomaticRequestInput, HookInputResult, InternalInputResult},
 	definition::action::{ActionError, ActionInput, ActionOutput, AutomaticAction},
-};
-use crate::{
-	core::action::{
-		action_type::automatic_action_type::AutomaticActionType,
-		data::{
-			action_data::{DescriptiveError, ErrorData, RequestContext, RequestInput},
-			automatic_action_data::{AutomaticActionError, HookRequestInput, InternalRequestInput},
-		},
-	},
-	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -81,24 +78,21 @@ impl From<AutomaticActionError> for Error {
 #[derive(Debug)]
 pub struct Internal(InternalRequestInput<Input>);
 
+#[rocket::async_trait]
 impl AutomaticAction<Input, Output, Error> for Internal {
 	fn action_type() -> AutomaticActionType {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticRequestInput<Input>) -> AsyncResult<Self, Error> {
-		Box::pin(async {
-			InternalInputResult::from(input)
-				.map(Self)
-				.map_err(Error::from)
-		})
+	async fn new(input: AutomaticRequestInput<Input>) -> Result<Self, Error> {
+		InternalInputResult::from(input)
+			.map(Self)
+			.map_err(Error::from)
 	}
 
-	fn run_inner(self) -> AsyncResult<Output, Error> {
-		Box::pin(async {
-			let Self(input) = self;
-			run(input, "internal".into())
-		})
+	async fn run_inner(self) -> Result<Output, Error> {
+		let Self(input) = self;
+		run(input, "internal".into())
 	}
 }
 
@@ -109,20 +103,19 @@ impl AutomaticAction<Input, Output, Error> for Internal {
 #[derive(Debug)]
 pub struct Hook(HookRequestInput<Input>);
 
+#[rocket::async_trait]
 impl AutomaticAction<Input, Output, Error> for Hook {
 	fn action_type() -> AutomaticActionType {
 		AUTOMATIC_ACTION_TYPE
 	}
 
-	fn new(input: AutomaticRequestInput<Input>) -> AsyncResult<Self, Error> {
-		Box::pin(async { HookInputResult::from(input).map(Self).map_err(Error::from) })
+	async fn new(input: AutomaticRequestInput<Input>) -> Result<Self, Error> {
+		HookInputResult::from(input).map(Self).map_err(Error::from)
 	}
 
-	fn run_inner(self) -> AsyncResult<Output, Error> {
-		Box::pin(async {
-			let Self(input) = self;
-			run(input, "hook".into())
-		})
+	async fn run_inner(self) -> Result<Output, Error> {
+		let Self(input) = self;
+		run(input, "hook".into())
 	}
 }
 

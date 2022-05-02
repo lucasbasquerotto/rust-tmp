@@ -1,15 +1,12 @@
-use crate::{
-	core::action::{
-		action_type::general_action_type::ActionType,
-		data::{
-			action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
-			moderator_action_data::{
-				ModeratorActionError, ModeratorErrorInfo, ModeratorOutputInfo,
-				ModeratorRequestContext, ModeratorSession,
-			},
+use crate::core::action::{
+	action_type::general_action_type::ActionType,
+	data::{
+		action_data::{ActionContext, DescriptiveError, ErrorData, RequestInput},
+		moderator_action_data::{
+			ModeratorActionError, ModeratorErrorInfo, ModeratorOutputInfo, ModeratorRequestContext,
+			ModeratorSession,
 		},
 	},
-	lib::data::result::AsyncResult,
 };
 use crate::{
 	core::action::{
@@ -66,76 +63,75 @@ impl ActionError for ModeratorActionError {
 /////////////////// ACTION /////////////////////
 ////////////////////////////////////////////////
 
+#[rocket::async_trait]
 impl<I: 'static, O, E, T>
 	Action<ModeratorActionInput<I>, ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> for T
 where
 	I: ActionInput + Send,
 	O: ActionOutput,
 	E: ActionError + From<ModeratorActionError> + Send,
-	T: ModeratorAction<I, O, E> + Send,
+	T: ModeratorAction<I, O, E> + Send + 'static,
 	Self: Sized,
 {
-	fn run(
+	async fn run(
 		input: ModeratorActionInput<I>,
-	) -> AsyncResult<ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> {
-		Box::pin(async {
-			let action_type = Self::action_type();
+	) -> Result<ModeratorOutputInfo<O>, ModeratorErrorInfo<E>> {
+		let action_type = Self::action_type();
 
-			let context = input
-				.as_ref()
-				.map(|ok_input| Some(ok_input.context.clone()))
-				.unwrap_or(None);
+		let context = input
+			.as_ref()
+			.map(|ok_input| Some(ok_input.context.clone()))
+			.unwrap_or(None);
 
-			let action_context = ActionContext {
-				action_type,
-				context,
-			};
+		let action_context = ActionContext {
+			action_type,
+			context,
+		};
 
-			match input {
-				Ok(ok_input) => {
-					let allowed = ok_input.context.session.admin
-						|| ok_input
-							.context
-							.session
-							.allowed_actions
-							.contains(&action_type);
+		match input {
+			Ok(ok_input) => {
+				let allowed = ok_input.context.session.admin
+					|| ok_input
+						.context
+						.session
+						.allowed_actions
+						.contains(&action_type);
 
-					if !allowed {
-						Err(ModeratorErrorInfo {
-							action_context,
-							error: E::from(ModeratorActionError::NotAllowed(action_type)),
-						})
-					} else {
-						let action_result = Self::new(ok_input).await;
+				if !allowed {
+					Err(ModeratorErrorInfo {
+						action_context,
+						error: E::from(ModeratorActionError::NotAllowed(action_type)),
+					})
+				} else {
+					let action_result = Self::new(ok_input).await;
 
-						match action_result {
-							Ok(action) => {
-								let result = action.run_inner().await;
+					match action_result {
+						Ok(action) => {
+							let result = action.run_inner().await;
 
-								match result {
-									Ok(data) => Ok(ModeratorOutputInfo {
-										action_context,
-										data,
-									}),
-									Err(error) => Err(ModeratorErrorInfo {
-										action_context,
-										error,
-									}),
-								}
+							match result {
+								Ok(data) => Ok(ModeratorOutputInfo {
+									action_context,
+									data,
+								}),
+								Err(error) => Err(ModeratorErrorInfo {
+									action_context,
+									error,
+								}),
 							}
-							Err(error) => Err(ModeratorErrorInfo {
-								action_context,
-								error,
-							}),
 						}
+						Err(error) => Err(ModeratorErrorInfo {
+							action_context,
+							error,
+						}),
 					}
 				}
-				Err(error) => Err(ModeratorErrorInfo {
-					action_context,
-					error: E::from(error),
-				}),
 			}
-		})
+			Err(error) => Err(ModeratorErrorInfo {
+				action_context,
+				error: E::from(error),
+			}),
+		}
 	}
 }
 
@@ -159,28 +155,26 @@ pub mod tests {
 		action_type::moderator_action_type::ModeratorActionType,
 		data::action_data::{ActionContext, ActionErrorInfo},
 	};
-	use crate::lib::data::result::AsyncResult;
 	use crate::tests::test_utils::tests::run_test;
 
 	#[derive(Debug)]
 	pub struct TestAction<T: RequestContext>(RequestInput<(), T>);
 
+	#[rocket::async_trait]
 	impl ModeratorAction<(), (), ModeratorActionError> for TestAction<ModeratorRequestContext> {
 		fn action_type() -> ModeratorActionType {
 			ModeratorActionType::Test
 		}
 
-		fn new(
+		async fn new(
 			input: RequestInput<(), ModeratorRequestContext>,
-		) -> AsyncResult<Self, ModeratorActionError> {
-			Box::pin(async { Ok(Self(input)) })
+		) -> Result<Self, ModeratorActionError> {
+			Ok(Self(input))
 		}
 
-		fn run_inner(self) -> AsyncResult<(), ModeratorActionError> {
-			Box::pin(async {
-				info!("moderator action test");
-				Ok(())
-			})
+		async fn run_inner(self) -> Result<(), ModeratorActionError> {
+			info!("moderator action test");
+			Ok(())
 		}
 	}
 

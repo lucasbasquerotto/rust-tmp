@@ -17,7 +17,6 @@ use crate::{
 		external::definition::external::ExternalAction,
 	},
 	external::dao::main::user_dao,
-	lib::data::result::AsyncResult,
 };
 
 ////////////////////////////////////////////////
@@ -111,35 +110,34 @@ impl From<ExternalException> for Error {
 #[derive(Debug)]
 pub struct Action(UserRequestInput<Input>);
 
+#[rocket::async_trait]
 impl UserAction<Input, Output, Error> for Action {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
 
-	fn new(input: UserRequestInput<Input>) -> AsyncResult<Self, Error> {
-		Box::pin(async { Ok(Self(input)) })
+	async fn new(input: UserRequestInput<Input>) -> Result<Self, Error> {
+		Ok(Self(input))
 	}
 
-	fn run_inner(self) -> AsyncResult<Output, Error> {
-		Box::pin(async {
-			let Self(input) = self;
-			let Input { id } = input.data;
+	async fn run_inner(self) -> Result<Output, Error> {
+		let Self(input) = self;
+		let Input { id } = input.data;
 
-			let first = user_dao::Select::run(user_dao::SelectInput::First)
-				.await?
-				.into();
+		let first = user_dao::Select::run(user_dao::SelectInput::First)
+			.await?
+			.into();
 
-			let last = user_dao::Select::run(user_dao::SelectInput::Last)
-				.await?
-				.into();
+		let last = user_dao::Select::run(user_dao::SelectInput::Last)
+			.await?
+			.into();
 
-			let by_id = user_dao::Select::run(user_dao::SelectInput::ById(id))
-				.await?
-				.into();
+		let by_id = user_dao::Select::run(user_dao::SelectInput::ById(id))
+			.await?
+			.into();
 
-			let result = Output { first, last, by_id };
-			Ok(result)
-		})
+		let result = Output { first, last, by_id };
+		Ok(result)
 	}
 }
 
