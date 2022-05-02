@@ -1,6 +1,6 @@
 use crate::{
 	core::{
-		action::definition::action::{ActionError, ActionInput, ActionOutput, UserAction},
+		action::definition::action::{ActionError, ActionInput, UserAction},
 		external::data::external_exception::ExternalException,
 	},
 	shared::data::user_data::UserId,
@@ -32,36 +32,13 @@ const USER_ACTION_TYPE: UserActionType = UserActionType::Register;
 #[derive(Debug, PartialEq)]
 pub struct Input(pub UserId);
 
-impl ActionInput for Input {}
-
-////////////////////////////////////////////////
-//////////////////// OUTPUT ////////////////////
-////////////////////////////////////////////////
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct ItemOutput {
-	pub id: UserId,
-	pub name: String,
-	pub email: String,
-}
-
-impl From<user_dao::SelectOutput> for ItemOutput {
-	fn from(data: user_dao::SelectOutput) -> Self {
-		let user_dao::SelectOutput {
-			id, name, email, ..
-		} = data;
-		Self { id, name, email }
+impl From<Input> for user_dao::DeleteInput {
+	fn from(input: Input) -> Self {
+		user_dao::DeleteInput(input.0)
 	}
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-pub struct Output {
-	pub first: ItemOutput,
-	pub last: ItemOutput,
-	pub by_id: ItemOutput,
-}
-
-impl ActionOutput for Output {}
+impl ActionInput for Input {}
 
 ////////////////////////////////////////////////
 //////////////////// ERROR /////////////////////
@@ -109,7 +86,7 @@ impl From<ExternalException> for Error {
 pub struct Action(UserRequestInput<Input>);
 
 #[rocket::async_trait]
-impl UserAction<Input, Output, Error> for Action {
+impl UserAction<Input, (), Error> for Action {
 	fn action_type() -> UserActionType {
 		USER_ACTION_TYPE
 	}
@@ -118,24 +95,11 @@ impl UserAction<Input, Output, Error> for Action {
 		Ok(Self(input))
 	}
 
-	async fn run_inner(self) -> Result<Output, Error> {
+	async fn run_inner(self) -> Result<(), Error> {
 		let Self(input) = self;
-		let Input(id) = input.data;
-
-		let first = user_dao::Select::run(user_dao::SelectInput::First)
-			.await?
-			.into();
-
-		let last = user_dao::Select::run(user_dao::SelectInput::Last)
-			.await?
-			.into();
-
-		let by_id = user_dao::Select::run(user_dao::SelectInput::ById(id))
-			.await?
-			.into();
-
-		let result = Output { first, last, by_id };
-		Ok(result)
+		user_dao::Delete::run(input.data.into())
+			.await
+			.map_err(Error::from)
 	}
 }
 
@@ -158,61 +122,19 @@ pub mod tests {
 
 	pub struct ActionMock {
 		pub user_id: UserId,
-		pub output: super::Output,
 		pub mocks: Vec<Mock>,
 	}
 
 	pub fn mock_action(user_id: u64) -> ActionMock {
-		let first = user_dao::SelectOutput {
-			id: UserId(11),
-			name: "User 20".into(),
-			email: "user-20@domain.test".into(),
-			encrypted_pass: "p4$$w0rd20".into(),
-		};
-
-		let by_id = user_dao::SelectOutput {
-			id: UserId(user_id),
-			name: format!("User {user_id}").into(),
-			email: format!("user-{user_id}@domain.test").into(),
-			encrypted_pass: format!("p4$$w0rd{user_id}").into(),
-		};
-
-		let last = user_dao::SelectOutput {
-			id: UserId(13),
-			name: "User 13".into(),
-			email: "user-13@domain.test".into(),
-			encrypted_pass: "p4$$w0rd13".into(),
-		};
-
-		let user_id = by_id.id;
-
-		let output = super::Output {
-			first: first.clone().into(),
-			by_id: by_id.clone().into(),
-			last: last.clone().into(),
-		};
-
-		let mocks = vec![
-			user_dao::Select::mock(user_dao::SelectInput::First, first),
-			user_dao::Select::mock(user_dao::SelectInput::ById(by_id.id), by_id),
-			user_dao::Select::mock(user_dao::SelectInput::Last, last),
-		];
-
-		ActionMock {
-			user_id,
-			output,
-			mocks,
-		}
+		let user_id = UserId(user_id);
+		let mocks = vec![user_dao::Delete::mock(user_dao::DeleteInput(user_id), ())];
+		ActionMock { user_id, mocks }
 	}
 
 	#[tokio::test]
 	async fn test_ok() {
 		run_test(|_| async {
-			let ActionMock {
-				user_id,
-				output,
-				mocks: _m,
-			} = mock_action(12);
+			let ActionMock { user_id, mocks: _m } = mock_action(12);
 
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
@@ -230,7 +152,7 @@ pub mod tests {
 				&result,
 				&Ok(UserOutputInfo {
 					action_context,
-					data: output,
+					data: (),
 				}),
 			);
 		})

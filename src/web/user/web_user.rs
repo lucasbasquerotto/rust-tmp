@@ -21,7 +21,7 @@ async fn select_user(
 	context: AuthBasicContext,
 	id: u64,
 ) -> WebActionResult<select_user_action::Output> {
-	let input = context.data(select_user_action::Input { id: UserId(id) });
+	let input = context.data(select_user_action::Input(UserId(id)));
 	select_user_action::Action::request(input).await
 }
 

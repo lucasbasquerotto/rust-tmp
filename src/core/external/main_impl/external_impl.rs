@@ -1,5 +1,6 @@
 #[cfg(test)]
 pub mod tests {
+	use crate::tests::test_utils::tests::run_test;
 	use mockito::{mock, Mock};
 	use serde::de::DeserializeOwned;
 
@@ -112,90 +113,93 @@ pub mod tests {
 
 	#[tokio::test]
 	async fn test_external_mock_call() {
-		//run_test(|_| async {});
-		let _m1 = mock_external("test".into(), MockExternalMethod::Insert, (), ());
+		run_test(|_| async {
+			let _m1 = mock_external("test".into(), MockExternalMethod::Insert, (), ());
 
-		let input1 = TestInput {
-			nickname: "test-01".into(),
-		};
+			let input1 = TestInput {
+				nickname: "test-01".into(),
+			};
 
-		let _m2 = mock_external(
-			"test-out".into(),
-			MockExternalMethod::Insert,
-			input1.clone(),
-			(),
-		);
+			let _m2 = mock_external(
+				"test-out".into(),
+				MockExternalMethod::Insert,
+				input1.clone(),
+				(),
+			);
 
-		let output1 = TestOutput {
-			id: 1,
-			name: "Test 01".into(),
-		};
+			let output1 = TestOutput {
+				id: 1,
+				name: "Test 01".into(),
+			};
 
-		let _m3 = mock_external(
-			"test-out".into(),
-			MockExternalMethod::Select,
-			(),
-			output1.clone(),
-		);
+			let _m3 = mock_external(
+				"test-out".into(),
+				MockExternalMethod::Select,
+				(),
+				output1.clone(),
+			);
 
-		let input2 = TestInput {
-			nickname: "test-01".into(),
-		};
+			let input2 = TestInput {
+				nickname: "test-01".into(),
+			};
 
-		let output2 = TestOutput {
-			id: 2,
-			name: "Test 02".into(),
-		};
+			let output2 = TestOutput {
+				id: 2,
+				name: "Test 02".into(),
+			};
 
-		let _m4 = mock_external(
-			"test-out".into(),
-			MockExternalMethod::Select,
-			input2.clone(),
-			output2.clone(),
-		);
+			let _m4 = mock_external(
+				"test-out".into(),
+				MockExternalMethod::Select,
+				input2.clone(),
+				output2.clone(),
+			);
 
-		let _m5 = mock_external(
-			"test-enum".into(),
-			MockExternalMethod::Update,
-			TestEnumInput::First,
-			TestEnumOutput::First,
-		);
+			let _m5 = mock_external(
+				"test-enum".into(),
+				MockExternalMethod::Update,
+				TestEnumInput::First,
+				TestEnumOutput::First,
+			);
 
-		let _m6 = mock_external(
-			"test-enum".into(),
-			MockExternalMethod::Update,
-			TestEnumInput::Last,
-			TestEnumOutput::Last,
-		);
+			let _m6 = mock_external(
+				"test-enum".into(),
+				MockExternalMethod::Update,
+				TestEnumInput::Last,
+				TestEnumOutput::Last,
+			);
 
-		let result: () = test_external("test".into(), MockExternalMethod::Insert, ()).await;
-		assert_eq!(&result, &(), "no input / no output");
+			let result: () = test_external("test".into(), MockExternalMethod::Insert, ()).await;
+			assert_eq!(&result, &(), "no input / no output");
 
-		let result: () = test_external("test-out".into(), MockExternalMethod::Insert, input1).await;
-		assert_eq!(&result, &(), "with input / no output");
+			let result: () =
+				test_external("test-out".into(), MockExternalMethod::Insert, input1).await;
+			assert_eq!(&result, &(), "with input / no output");
 
-		let result: TestOutput =
-			test_external("test-out".into(), MockExternalMethod::Select, ()).await;
-		assert_eq!(&result, &output1, "no input / with output");
+			let result: TestOutput =
+				test_external("test-out".into(), MockExternalMethod::Select, ()).await;
+			assert_eq!(&result, &output1, "no input / with output");
 
-		let result: TestOutput =
-			test_external("test-out".into(), MockExternalMethod::Select, input2).await;
-		assert_eq!(&result, &output2, "with input / with output");
+			let result: TestOutput =
+				test_external("test-out".into(), MockExternalMethod::Select, input2).await;
+			assert_eq!(&result, &output2, "with input / with output");
 
-		let result: TestEnumOutput = test_external(
-			"test-enum".into(),
-			MockExternalMethod::Update,
-			TestEnumInput::First,
-		)
+			let result: TestEnumOutput = test_external(
+				"test-enum".into(),
+				MockExternalMethod::Update,
+				TestEnumInput::First,
+			)
+			.await;
+			assert_eq!(&result, &TestEnumOutput::First, "first enum");
+
+			let result: TestEnumOutput = test_external(
+				"test-enum".into(),
+				MockExternalMethod::Update,
+				TestEnumInput::Last,
+			)
+			.await;
+			assert_eq!(&result, &TestEnumOutput::Last, "last enum");
+		})
 		.await;
-		assert_eq!(&result, &TestEnumOutput::First, "first enum");
-
-		let result: TestEnumOutput = test_external(
-			"test-enum".into(),
-			MockExternalMethod::Update,
-			TestEnumInput::Last,
-		)
-		.await;
-		assert_eq!(&result, &TestEnumOutput::Last, "last enum");
 	}
 }

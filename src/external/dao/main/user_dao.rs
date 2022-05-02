@@ -10,6 +10,9 @@ pub struct InsertInput {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct DeleteInput(pub UserId);
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum SelectInput {
 	ById(UserId),
 	First,
@@ -40,6 +43,8 @@ pub struct SelectOutput {
 pub struct Insert;
 
 pub struct Select;
+
+pub struct Delete;
 
 ////////////////////////////////////////////////
 ///////////////////// IMPL /////////////////////
@@ -84,6 +89,14 @@ pub mod main {
 	}
 
 	#[rocket::async_trait]
+	impl ExternalAction<super::DeleteInput, ()> for super::Delete {
+		async fn run(input: super::DeleteInput) -> Result<(), ExternalException> {
+			drop(input);
+			todo!()
+		}
+	}
+
+	#[rocket::async_trait]
 	impl ExternalAction<super::SelectInput, super::SelectOutput> for super::Select {
 		async fn run(input: super::SelectInput) -> Result<super::SelectOutput, ExternalException> {
 			super::select(input).await
@@ -113,6 +126,16 @@ pub mod tests {
 
 		fn method() -> MockExternalMethod {
 			MockExternalMethod::Insert
+		}
+	}
+
+	impl ExternalTest<super::DeleteInput, ()> for super::Delete {
+		fn name() -> Str {
+			"delete-user".into()
+		}
+
+		fn method() -> MockExternalMethod {
+			MockExternalMethod::Delete
 		}
 	}
 
