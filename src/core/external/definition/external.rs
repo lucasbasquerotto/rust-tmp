@@ -1,9 +1,8 @@
-use crate::{
-	core::external::data::external_exception::ExternalException, lib::data::result::AsyncResult,
-};
+use crate::core::external::data::external_exception::ExternalException;
 
+#[rocket::async_trait]
 pub trait ExternalAction<I, O> {
-	fn run(input: I) -> AsyncResult<O, ExternalException>;
+	async fn run(input: I) -> Result<O, ExternalException>;
 }
 
 #[cfg(test)]

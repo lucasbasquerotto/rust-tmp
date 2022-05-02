@@ -7,13 +7,14 @@ use crate::{
 			action_helpers::DescriptiveRequestContext,
 		},
 	},
-	lib::{data::result::AsyncResult, traits::async_from::AsyncInto},
+	lib::traits::async_from::AsyncInto,
 };
 use rocket::serde::json::Json;
 use std::fmt::Debug;
 
 pub type WebActionResult<O> = Result<Json<O>, Json<Option<ErrorData>>>;
 
+#[rocket::async_trait]
 pub trait WebAction<I, O, E, R, C, A, N>: Debug
 where
 	I: ActionInput + Send,
@@ -24,5 +25,5 @@ where
 	A: ActionType,
 	N: AsyncInto<Result<RequestInput<I, C>, R>> + Send + 'static,
 {
-	fn request(input: N) -> AsyncResult<Json<O>, Json<Option<ErrorData>>>;
+	async fn request(input: N) -> Result<Json<O>, Json<Option<ErrorData>>>;
 }

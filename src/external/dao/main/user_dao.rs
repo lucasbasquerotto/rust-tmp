@@ -71,23 +71,22 @@ async fn select(input: SelectInput) -> Result<SelectOutput, ExternalException> {
 
 #[cfg(not(test))]
 pub mod main {
-	use crate::{
-		core::external::{
-			data::external_exception::ExternalException, definition::external::ExternalAction,
-		},
-		lib::data::result::AsyncResult,
+	use crate::core::external::{
+		data::external_exception::ExternalException, definition::external::ExternalAction,
 	};
 
+	#[rocket::async_trait]
 	impl ExternalAction<super::InsertInput, super::InsertOutput> for super::Insert {
-		fn run(input: super::InsertInput) -> AsyncResult<super::InsertOutput, ExternalException> {
+		async fn run(input: super::InsertInput) -> Result<super::InsertOutput, ExternalException> {
 			drop(input);
 			todo!()
 		}
 	}
 
+	#[rocket::async_trait]
 	impl ExternalAction<super::SelectInput, super::SelectOutput> for super::Select {
-		fn run(input: super::SelectInput) -> AsyncResult<super::SelectOutput, ExternalException> {
-			Box::pin(async { super::select(input).await })
+		async fn run(input: super::SelectInput) -> Result<super::SelectOutput, ExternalException> {
+			super::select(input).await
 		}
 	}
 }

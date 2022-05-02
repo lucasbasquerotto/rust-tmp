@@ -11,7 +11,7 @@ pub mod tests {
 				ExternalAction,
 			},
 		},
-		lib::data::{result::AsyncResult, str::Str},
+		lib::data::str::Str,
 	};
 
 	pub async fn test_external<I, O>(action: Str, method: MockExternalMethod, input: I) -> O
@@ -64,14 +64,15 @@ pub mod tests {
 			.create()
 	}
 
+	#[rocket::async_trait]
 	impl<I: 'static, O, T> ExternalAction<I, O> for T
 	where
 		I: serde::Serialize + Send + Sync,
 		O: DeserializeOwned,
-		T: ExternalTest<I, O> + Send,
+		T: ExternalTest<I, O> + Send + 'static,
 	{
-		fn run(input: I) -> AsyncResult<O, ExternalException> {
-			Box::pin(async { Ok(test_external(Self::name(), Self::method(), input).await) })
+		async fn run(input: I) -> Result<O, ExternalException> {
+			Ok(test_external(Self::name(), Self::method(), input).await)
 		}
 	}
 
