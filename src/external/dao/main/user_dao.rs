@@ -1,4 +1,6 @@
-use diesel::{Insertable, Queryable};
+use diesel::{Insertable, Queryable, RunQueryDsl};
+use rocket_sync_db_pools::diesel;
+use rocket_sync_db_pools::diesel::prelude::ExpressionMethods;
 
 ////////////////////////////////////////////////
 //////////////////// TABLE /////////////////////
@@ -93,6 +95,17 @@ async fn select(input: SelectInput) -> Result<SelectOutput, ExternalException> {
 			encrypted_pass: "p4$$w0rd13".into(),
 		}),
 	})
+}
+
+async fn delete(db: Db, input: DeleteInput) -> Result<(), ExternalException> {
+	let DeleteInput(UserId(id)) = input;
+	db.run(move |conn| {
+		diesel::delete(user::table)
+			.filter(user::id.eq(id))
+			.execute(conn)
+	})
+	.await?;
+	Ok(())
 }
 
 #[cfg(not(test))]
