@@ -41,7 +41,7 @@ impl ActionInput for Input {}
 //////////////////// OUTPUT ////////////////////
 ////////////////////////////////////////////////
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ItemOutput {
 	pub id: UserId,
 	pub name: String,
@@ -57,7 +57,7 @@ impl From<user_dao::SelectOutput> for ItemOutput {
 	}
 }
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Output {
 	pub first: ItemOutput,
 	pub last: ItemOutput,
@@ -148,7 +148,9 @@ impl UserAction<Input, Output, Error> for Action {
 ////////////////////////////////////////////////
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
+	use mockito::Mock;
+
 	use crate::core::action::data::action_data::{ActionContext, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserOutputInfo;
@@ -158,36 +160,63 @@ mod tests {
 	use crate::shared::data::user_data::UserId;
 	use crate::tests::test_utils::tests::run_test;
 
+	pub struct ActionMock {
+		pub user_id: UserId,
+		pub output: super::Output,
+		pub mocks: Vec<Mock>,
+	}
+
+	pub fn mock_action(user_id: u64) -> ActionMock {
+		let first = user_dao::SelectOutput {
+			id: UserId(11),
+			name: "User 20".into(),
+			email: "user-20@domain.test".into(),
+			encrypted_pass: "p4$$w0rd20".into(),
+		};
+
+		let by_id = user_dao::SelectOutput {
+			id: UserId(user_id),
+			name: format!("User {user_id}").into(),
+			email: format!("user-{user_id}@domain.test").into(),
+			encrypted_pass: format!("p4$$w0rd{user_id}").into(),
+		};
+
+		let last = user_dao::SelectOutput {
+			id: UserId(13),
+			name: "User 13".into(),
+			email: "user-13@domain.test".into(),
+			encrypted_pass: "p4$$w0rd13".into(),
+		};
+
+		let user_id = by_id.id;
+
+		let output = super::Output {
+			first: first.clone().into(),
+			by_id: by_id.clone().into(),
+			last: last.clone().into(),
+		};
+
+		let mocks = vec![
+			user_dao::Select::mock(user_dao::SelectInput::First, first),
+			user_dao::Select::mock(user_dao::SelectInput::ById(by_id.id), by_id),
+			user_dao::Select::mock(user_dao::SelectInput::Last, last),
+		];
+
+		ActionMock {
+			user_id,
+			output,
+			mocks,
+		}
+	}
+
 	#[tokio::test]
 	async fn test_ok() {
 		run_test(|_| async {
-			let first = user_dao::SelectOutput {
-				id: UserId(11),
-				name: "User 20".into(),
-				email: "user-20@domain.test".into(),
-				encrypted_pass: "p4$$w0rd20".into(),
-			};
-
-			let by_id = user_dao::SelectOutput {
-				id: UserId(12),
-				name: "User 12".into(),
-				email: "user-12@domain.test".into(),
-				encrypted_pass: "p4$$w0rd12".into(),
-			};
-
-			let last = user_dao::SelectOutput {
-				id: UserId(13),
-				name: "User 13".into(),
-				email: "user-13@domain.test".into(),
-				encrypted_pass: "p4$$w0rd13".into(),
-			};
-
-			let _m_first = user_dao::Select::mock(user_dao::SelectInput::First, first.clone());
-
-			let _m_by_id =
-				user_dao::Select::mock(user_dao::SelectInput::ById(by_id.id), by_id.clone());
-
-			let _m_last = user_dao::Select::mock(user_dao::SelectInput::Last, last.clone());
+			let ActionMock {
+				user_id,
+				output,
+				mocks: _m,
+			} = mock_action(12);
 
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
@@ -196,7 +225,7 @@ mod tests {
 			};
 
 			let result = super::Action::run(Ok(RequestInput {
-				data: super::Input { id: by_id.id },
+				data: super::Input { id: user_id },
 				context,
 			}))
 			.await;
@@ -205,11 +234,7 @@ mod tests {
 				&result,
 				&Ok(UserOutputInfo {
 					action_context,
-					data: super::Output {
-						first: first.into(),
-						by_id: by_id.into(),
-						last: last.into()
-					},
+					data: output,
 				}),
 			);
 		})

@@ -1,6 +1,4 @@
-use crate::core::action::data::action_data::AuthBasicContext;
-use crate::core::web::definition::web_action::{WebAction, WebActionResult};
-use crate::{business::action::user::select_action, shared::data::user_data::UserId};
+use super::user::web_user;
 use rocket::{Build, Rocket};
 
 #[derive(FromFormField)]
@@ -54,17 +52,12 @@ fn hello(lang: Option<Lang>, opt: Options<'_>) -> String {
 	greeting
 }
 
-#[get("/<id>")]
-async fn select_user(context: AuthBasicContext, id: u64) -> WebActionResult<select_action::Output> {
-	select_action::Action::request(context.data(select_action::Input { id: UserId(id) })).await
-}
-
 pub fn launch_rocket() -> Rocket<Build> {
 	rocket::build()
 		.mount("/", routes![hello])
 		.mount("/hello", routes![world, mir])
 		.mount("/wave", routes![wave])
-		.mount("/user", routes![select_user])
+		.mount("/user", web_user::routes())
 }
 
 #[cfg(test)]

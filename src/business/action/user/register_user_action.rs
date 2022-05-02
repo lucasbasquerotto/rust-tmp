@@ -33,7 +33,7 @@ const USER_ACTION_TYPE: UserActionType = UserActionType::Register;
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Input {
 	pub name: String,
 	pub email: String,
@@ -42,11 +42,22 @@ pub struct Input {
 
 impl ActionInput for Input {}
 
+impl From<Input> for user_dao::InsertInput {
+	fn from(input: Input) -> Self {
+		let Input { name, email, pass } = input;
+		user_dao::InsertInput {
+			name: name,
+			email,
+			pass,
+		}
+	}
+}
+
 ////////////////////////////////////////////////
 //////////////////// OUTPUT ////////////////////
 ////////////////////////////////////////////////
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Output {
 	pub id: UserId,
 	pub name: String,
@@ -115,13 +126,9 @@ impl UserAction<Input, Output, Error> for Action {
 	fn run_inner(self) -> AsyncResult<Output, Error> {
 		Box::pin(async {
 			let Self(input) = self;
-			let Input { name, email, pass } = input.data;
-			let user_dao::InsertOutput { id } = user_dao::Insert::run(user_dao::InsertInput {
-				name: name.to_string(),
-				email,
-				pass,
-			})
-			.await?;
+			let name = input.data.name.to_string();
+			let user_dao::InsertOutput { id } =
+				user_dao::Insert::run(user_dao::InsertInput::from(input.data)).await?;
 			let result = Output { id, name };
 			Ok(result)
 		})
@@ -133,7 +140,9 @@ impl UserAction<Input, Output, Error> for Action {
 ////////////////////////////////////////////////
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
+	use mockito::Mock;
+
 	use crate::core::action::data::action_data::{ActionContext, ActionErrorInfo, RequestInput};
 	use crate::core::action::data::user_action_data::tests::UserRequestContextBuilder;
 	use crate::core::action::data::user_action_data::UserActionError;
@@ -143,6 +152,26 @@ mod tests {
 	use crate::external::dao::main::user_dao;
 	use crate::shared::data::user_data::UserId;
 	use crate::tests::test_utils::tests::run_test;
+
+	pub struct ActionMock {
+		pub output: super::Output,
+		pub mocks: Vec<Mock>,
+	}
+
+	pub fn mock_action(input: super::Input) -> ActionMock {
+		let input = user_dao::InsertInput::from(input);
+		let user_id = UserId(7);
+		let dao_result = user_dao::InsertOutput { id: user_id };
+
+		let output = super::Output {
+			id: user_id,
+			name: input.name.to_string(),
+		};
+
+		let mocks = vec![user_dao::Insert::mock(input, dao_result)];
+
+		ActionMock { output, mocks }
+	}
 
 	#[tokio::test]
 	async fn test_error_auth() {
@@ -179,16 +208,13 @@ mod tests {
 			let name = "User 02";
 			let email = "user-02@domain.test";
 			let pass = "p4$$w0rd2";
-			let id = UserId(7);
 
-			let dao_input = user_dao::InsertInput {
+			let input = super::Input {
 				name: name.into(),
 				email: email.into(),
 				pass: pass.into(),
 			};
-			let dao_result = user_dao::InsertOutput { id };
-
-			let _m = user_dao::Insert::mock(dao_input, dao_result);
+			let ActionMock { output, mocks: _m } = mock_action(input.clone());
 
 			let context = UserRequestContextBuilder::build_no_auth();
 			let action_context = ActionContext {
@@ -197,11 +223,7 @@ mod tests {
 			};
 
 			let result = super::Action::run(Ok(RequestInput {
-				data: super::Input {
-					name: name.into(),
-					email: email.into(),
-					pass: pass.into(),
-				},
+				data: input,
 				context,
 			}))
 			.await;
@@ -210,10 +232,7 @@ mod tests {
 				&result,
 				&Ok(UserOutputInfo {
 					action_context,
-					data: super::Output {
-						id,
-						name: name.into(),
-					},
+					data: output,
 				}),
 			);
 		})
