@@ -1,5 +1,5 @@
 use crate::{
-	business::action::user::{register_user_action, select_user_action},
+	business::action::user::{delete_user_action, register_user_action, select_user_action},
 	core::{
 		action::data::action_data::AuthBasicContext,
 		web::definition::web_action::{WebAction, WebActionResult},
@@ -16,6 +16,12 @@ async fn register_user(
 	register_user_action::Action::request(context.data(input.0)).await
 }
 
+#[delete("/<id>")]
+async fn delete_user(context: AuthBasicContext, id: u64) -> WebActionResult<()> {
+	let input = context.data(delete_user_action::Input(UserId(id)));
+	delete_user_action::Action::request(input).await
+}
+
 #[get("/<id>")]
 async fn select_user(
 	context: AuthBasicContext,
@@ -26,12 +32,14 @@ async fn select_user(
 }
 
 pub fn routes() -> Vec<rocket::Route> {
-	routes![register_user, select_user]
+	routes![register_user, delete_user, select_user]
 }
 
 #[cfg(test)]
 mod tests {
-	use crate::business::action::user::{register_user_action, select_user_action};
+	use crate::business::action::user::{
+		delete_user_action, register_user_action, select_user_action,
+	};
 	use rocket::{http::Status, local::blocking::Client};
 
 	fn get_client() -> Client {
@@ -75,6 +83,34 @@ mod tests {
 		let input_json = rocket::serde::json::serde_json::to_string(&input).unwrap();
 
 		let response = client.post("/user").body(input_json).dispatch();
+
+		assert_eq!(response.status(), Status::InternalServerError);
+		assert_eq!(response.into_json(), output);
+	}
+
+	#[test]
+	fn delete_user_ok() {
+		let client = get_client();
+
+		let delete_user_action::tests::ActionMock { user_id, mocks: _m } =
+			delete_user_action::tests::mock_action(123);
+		let user_id = user_id.0;
+		let uri = format!("/user/{user_id}");
+		let response = client.delete(uri).dispatch();
+
+		assert_eq!(response.status(), Status::Ok);
+		assert_eq!(response.into_json(), Some(()));
+	}
+
+	#[test]
+	fn delete_user_error() {
+		let client = get_client();
+
+		let user_id = 123;
+		let uri = format!("/user/{user_id}");
+		let response = client.get(uri).dispatch();
+
+		let output: Option<()> = None;
 
 		assert_eq!(response.status(), Status::InternalServerError);
 		assert_eq!(response.into_json(), output);
