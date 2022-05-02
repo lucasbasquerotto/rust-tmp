@@ -29,7 +29,7 @@ use crate::{
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
 
-pub trait ActionInput: Debug {}
+pub trait ActionInput: Debug + Send {}
 
 impl ActionInput for () {}
 
@@ -45,7 +45,7 @@ impl ActionOutput for () {}
 //////////////////// ERROR /////////////////////
 ////////////////////////////////////////////////
 
-pub trait ActionError: Debug {
+pub trait ActionError: Debug + Send {
 	fn private_error(&self) -> Option<DescriptiveError>;
 
 	fn public_error(&self) -> Option<ErrorData>;

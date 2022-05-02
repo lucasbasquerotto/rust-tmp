@@ -2,18 +2,6 @@ use std::borrow::Cow;
 
 use chrono::Utc;
 
-use crate::core::action::{
-	data::{
-		action_data::{Application, Request, RequestBasicData},
-		user_action_data::{
-			UserActionInput, UserAuthInputResult, UserAuthRequestInput, UserNoAuthInputResult,
-			UserNoAuthRequestInput, UserNoAuthSession, UserRequestInput,
-			UserUnconfirmedInputResult, UserUnconfirmedRequestInput,
-		},
-	},
-	definition::action::{Action, ActionError, UserAction},
-	definition::action::{ActionInput, ActionOutput},
-};
 use crate::{
 	core::action::{
 		data::{
@@ -27,6 +15,21 @@ use crate::{
 		definition::action_helpers::DescriptiveInfo,
 	},
 	lib::data::result::AsyncResult,
+};
+use crate::{
+	core::action::{
+		data::{
+			action_data::{Application, Request, RequestBasicData},
+			user_action_data::{
+				UserActionInput, UserAuthInputResult, UserAuthRequestInput, UserNoAuthInputResult,
+				UserNoAuthRequestInput, UserNoAuthSession, UserRequestInput,
+				UserUnconfirmedInputResult, UserUnconfirmedRequestInput,
+			},
+		},
+		definition::action::{Action, ActionError, UserAction},
+		definition::action::{ActionInput, ActionOutput},
+	},
+	lib::traits::async_from::AsyncFrom,
 };
 
 ////////////////////////////////////////////////
@@ -57,8 +60,9 @@ impl DescriptiveInfo for UserRequestContext {
 //////////////////// INPUT /////////////////////
 ////////////////////////////////////////////////
 
-impl<I> From<RequestBasicData<I>> for Result<UserRequestInput<I>, UserActionError> {
-	fn from(input: RequestBasicData<I>) -> Self {
+#[rocket::async_trait]
+impl<I: Send> AsyncFrom<RequestBasicData<I>> for Result<UserRequestInput<I>, UserActionError> {
+	async fn from(input: RequestBasicData<I>) -> Self {
 		Ok(UserRequestInput {
 			data: input.data,
 			context: UserRequestContext {

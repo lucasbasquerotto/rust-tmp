@@ -7,7 +7,7 @@ use crate::{
 			action_helpers::DescriptiveRequestContext,
 		},
 	},
-	lib::data::result::AsyncResult,
+	lib::{data::result::AsyncResult, traits::async_from::AsyncInto},
 };
 use rocket::serde::json::Json;
 use std::fmt::Debug;
@@ -22,7 +22,7 @@ where
 	R: Into<E> + Send,
 	C: DescriptiveRequestContext + Send,
 	A: ActionType,
-	N: Into<Result<RequestInput<I, C>, R>> + Send + 'static,
+	N: AsyncInto<Result<RequestInput<I, C>, R>> + Send + 'static,
 {
 	fn request(input: N) -> AsyncResult<Json<O>, Json<Option<ErrorData>>>;
 }
